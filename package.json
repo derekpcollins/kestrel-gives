@@ -10,7 +10,9 @@
   "scripts": {
     "prepare": "git config core.hooksPath .githooks",
     "build": "tsc -p tsconfig.client.json",
-    "check:types": "tsc -p tsconfig.json && tsc -p tsconfig.client.json --noEmit"
+    "check:types": "tsc -p tsconfig.json && tsc -p tsconfig.client.json --noEmit",
+    "db:migrate": "node --env-file=.env.local scripts/migrate.ts",
+    "db:seed": "node --env-file=.env.local scripts/seed.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.2.0",
