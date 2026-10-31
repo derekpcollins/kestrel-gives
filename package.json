@@ -12,7 +12,8 @@
     "build": "tsc -p tsconfig.client.json",
     "check:types": "tsc -p tsconfig.json && tsc -p tsconfig.client.json --noEmit",
     "db:migrate": "node --env-file=.env.local scripts/migrate.ts",
-    "db:seed": "node --env-file=.env.local scripts/seed.ts"
+    "db:seed": "node --env-file=.env.local scripts/seed.ts",
+    "test:rules": "NODE_ENV=test node --env-file-if-exists=.env.local --test 'tests/unit/**/*.test.ts'"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.2.0",

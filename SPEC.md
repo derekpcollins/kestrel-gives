@@ -1,6 +1,6 @@
 # Kestrel Gives — Build Spec & Conformance Rules
 
-**Status:** v1.1 · Owner: Derek Collins · Last updated: Oct 31, 2026
+**Status:** v1.2 · Owner: Derek Collins · Last updated: Oct 31, 2026
 
 This document describes what to build and the rules every contribution must follow, whether a person or an AI agent writes it. Read it in full before writing any code. If something here conflicts with a request, stop and ask.
 
@@ -103,7 +103,8 @@ The Vercel CLI is installed globally, not as a project dependency. Node's built-
 - Two branches: **`main`** for the deployed demo, **`dev`** for local work and tests. Tests reseed `dev` before each run and MUST NOT touch `main`.
 
 ### File storage
-- **One public Vercel Blob store** on the deployed site, for item photos and proof images.
+- **One public Vercel Blob store** on the deployed site, for item photos and proof images uploaded through the app. Production and Preview share it, each under its own path prefix (`production/`, `preview/`); the storage layer MUST refuse to delete anything outside the current environment's prefix.
+- **Seed photos** are committed to the repo as static files, never stored in Blob, so restoring demo data costs no Blob operations and works the same everywhere.
 - Local dev and tests store uploads in a local folder (ignored by git), so tests don't use up Blob's monthly operation allowance.
 - Upload limits: images only (JPEG, PNG, WebP), size-capped, validated on the server.
 
@@ -253,7 +254,7 @@ The agent proposes the final schema in Milestone 2. Expected tables: `events`, `
 - **7 users:** 2 admins and 5 employees, with invented names.
 - **16 items:** 10 silent auction and 6 instant sale, the kind of thing coworkers actually donate (a pottery class for two, a sourdough starter, a custom pet portrait, a weekend at a lake cabin, guitar lessons…). All invented; no real businesses.
 - **States covered**, so every screen state appears in the visual review: no bids yet, the current viewer outbid, the current viewer winning, ending soon, won, sold out, low stock, cancelled, and proofs pending, approved, and rejected.
-- **Photos:** real free-license stock photos (for example Unsplash or Pexels) with no visible brands, logos, or identifiable faces. Most items get one photo, three get three, and one gets five. Every photo is logged in `CREDITS.md` with its source link, photographer, and license, checked when downloaded. The owner approves the photos in Milestone 2.
+- **Photos** (committed as static files; see section 4): real free-license stock photos (for example Unsplash or Pexels) with no visible brands, logos, or identifiable faces. Most items get one photo, three get three, and one gets five. Every photo is logged in `CREDITS.md` with its source link, photographer, and license, checked when downloaded. The owner approves the photos in Milestone 2.
 - No past events.
 
 ## 11. Code conventions
