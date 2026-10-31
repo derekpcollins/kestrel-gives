@@ -1,0 +1,25 @@
+{
+  // Server side: Vercel Functions, shared lib, scripts, and tests. Type-check only;
+  // Vercel compiles api/ on deploy and Node 24 runs .ts scripts directly.
+  // Imports use explicit .ts extensions everywhere so Node's type stripping can
+  // resolve them; the client build rewrites them to .js.
+  "compilerOptions": {
+    "strict": true,
+    "target": "es2023",
+    "lib": ["es2023"],
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "types": ["node"],
+    "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true,
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "noEmit": true
+  },
+  "include": ["api", "lib", "scripts", "tests"]
+}

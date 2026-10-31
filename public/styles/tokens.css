@@ -1,0 +1,5 @@
+/* Design tokens: the only file allowed to hold raw color, size, spacing, radius,
+   shadow, and motion values (SPEC §5). The look is decided in Milestone 1. */
+:root {
+  color-scheme: light dark;
+}

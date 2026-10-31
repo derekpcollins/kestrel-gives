@@ -1,0 +1,13 @@
+{
+  // Browser side: src/ compiles to native ES modules in public/js/. No bundler (SPEC §4).
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["es2023", "dom", "dom.iterable"],
+    "types": [],
+    "noEmit": false,
+    "rootDir": "src",
+    "outDir": "public/js",
+    "sourceMap": true
+  },
+  "include": ["src"]
+}

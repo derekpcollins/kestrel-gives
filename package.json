@@ -1,0 +1,25 @@
+{
+  "name": "kestrel-gives",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Kestrel Gives: a charity auction web app, recreated from memory as a case study in designing and building with AI.",
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "prepare": "git config core.hooksPath .githooks",
+    "build": "tsc -p tsconfig.client.json",
+    "check:types": "tsc -p tsconfig.json && tsc -p tsconfig.client.json --noEmit"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.2.0",
+    "@vercel/blob": "^2.8.2"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^24.19.2",
+    "typescript": "^7.0.2"
+  }
+}
