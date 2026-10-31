@@ -15,7 +15,12 @@
     "db:seed": "node --env-file=.env.local scripts/seed.ts",
     "test:rules": "NODE_ENV=test node --env-file-if-exists=.env.local --test 'tests/unit/**/*.test.ts'",
     "db:check": "node --env-file=.env.local scripts/db-check.ts",
-    "start": "node scripts/dev.ts"
+    "start": "node scripts/dev.ts",
+    "check:deps": "node scripts/check-deps.ts",
+    "check:tokens": "node scripts/check-tokens.ts",
+    "check:a11y": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test tests/e2e/a11y.spec.ts",
+    "check:visual": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test tests/e2e/visual.spec.ts",
+    "check": "npm run check:deps && npm run check:tokens && npm run check:types && npm run test:rules && npm run check:a11y && npm run check:visual"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.2.0",

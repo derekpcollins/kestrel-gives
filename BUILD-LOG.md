@@ -9,7 +9,7 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 ## Milestone 0: Local infrastructure
 
 **Started:** 2026-10-31 12:07 EDT
-**Ended:** —
+**Ended:** 2026-10-31 13:16 EDT (pending the owner's sign-off on the Group H checkpoint) · about 1 hour 10 minutes
 
 ### 2026-10-31 — Kickoff
 - **Built:** nothing yet. Claude read SPEC.md v1.0 in full, summarized it back, and proposed a plan for the eight infrastructure steps.
@@ -68,3 +68,30 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 - **Owner stepped in:** checked the protected preview in a browser (`{"ok":true,"db":"dev"}`), ran the production migration on `main` personally (`applied 001_init.sql`), and confirmed in the Neon console that only `main` and `dev` exist, so the preview didn't create a database branch. Asked for a proposal in Milestone 2 on how production migrations should run going forward.
 - **Cleanup:** deleted the `preview-smoke-test` branch (local and GitHub) and removed its preview deployment.
 - **Minor:** `/js/main.js.map` returns 403 on Vercel; not needed in production, left as is.
+
+### 2026-10-31 — Group H: conformance checks
+- **Built:** all six SPEC §12 checks as npm scripts, plus `npm run check` to run them all (#36):
+  - `check:deps` reads the allowlist from SPEC.md's own table.
+  - `check:tokens` flags hex colors, color functions, and non-zero px/rem/em outside `tokens.css`, with unit-tested rules.
+  - `check:types`.
+  - `test:rules`: 22 passing tests, plus the 9 SPEC §7 rules listed as todos.
+  - `check:a11y`: axe WCAG 2.2 AA, light and dark.
+  - `check:visual`: screenshots to `visual-review/`, light and dark, `?demo=off`.
+  - The browser checks reseed `dev` first.
+- **Proved each check can fail:** an unapproved package, raw `12px`/`#c0ffee` in `src/`, and a page missing `lang` and image `alt` each produced a clear failure.
+- **Hard / caught:** Playwright's default hard kill of the web server skipped the dev runner's cleanup and left `tsc` and `vercel dev` running. Fixed with Playwright's `gracefulShutdown` (SIGTERM); confirmed nothing is left after a run. Playwright browsers install into `node_modules/` rather than the home-folder cache, to keep everything inside the project (#37).
+- **Full run:** `npm run check` passed all six from a clean state. `npm audit`: only the accepted zod chain (#27).
+
+### Milestone 0 retrospective
+- **AI did well:**
+  - Raised gaps before writing code (`@types/node`, the Marketplace ordering, the tokens path).
+  - Kept secrets out of the transcript throughout: endpoint IDs only, temp files deleted, a format check before writing.
+  - Built guards that paid off the same day: the main-branch guard and the backup before `vercel blob create-store` rewrote `.env.local`.
+  - Proved each check could fail, not just pass.
+- **Where it went wrong or needed the owner:**
+  - Spent several rounds of experiments trying to keep `npm run dev`; the owner called it and chose `npm start`.
+  - The clipboard handoff failed twice before working.
+  - The first hook version printed part of the offending line.
+  - Two cleanup bugs (orphaned processes) were caught only by testing.
+  - Claude Code's permission system blocked the production migration, so the owner ran it.
+- **Owner decisions that shaped it:** push rules tied to checkpoints, previews on the `dev` database, no infrastructure IDs on the public site, a prefix-scoped delete guard for the shared Blob store, seed photos as static files, and `npm start`.
