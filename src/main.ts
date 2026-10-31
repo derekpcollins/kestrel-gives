@@ -5,7 +5,8 @@ const status = document.querySelector<HTMLElement>("[data-api-status]");
 if (status) {
   try {
     const response = await fetch("/api/health");
-    status.textContent = response.ok ? "API: ok" : `API: error ${response.status}`;
+    const body: { db?: string } = await response.json();
+    status.textContent = response.ok ? `API: ok · database: ${body.db}` : `API: error ${response.status}`;
   } catch {
     status.textContent = "API: unreachable";
   }

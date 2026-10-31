@@ -1,5 +1,8 @@
 // Every database script resolves its connection through here, so local work and
 // tests can't touch the live demo (main) by accident (SPEC §4, DECISIONS #25).
+import { endpointOf } from "../lib/db-endpoint.ts";
+
+export { endpointOf };
 
 export function databaseUrl(argv: readonly string[] = process.argv): string {
   const url = process.env["DATABASE_URL"];
@@ -12,13 +15,6 @@ export function databaseUrl(argv: readonly string[] = process.argv): string {
     fail("Refusing to run against the main (live demo) branch. Pass --allow-main if that's intended.");
   }
   return url;
-}
-
-// Neon's pooled hosts add "-pooler" to the endpoint ID; strip it so both forms compare equal.
-// Endpoint IDs aren't secret, so this is what scripts print instead of the URL.
-export function endpointOf(url: string): string {
-  const label = new URL(url).hostname.split(".")[0] ?? "";
-  return label.replace(/-pooler$/, "");
 }
 
 function fail(message: string): never {
