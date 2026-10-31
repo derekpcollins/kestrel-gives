@@ -1,0 +1,31 @@
+#!/bin/sh
+# Blocks secrets from being committed (SPEC §4). No dependencies: POSIX sh + git.
+# Enabled per clone by `git config core.hooksPath .githooks` (npm's prepare script does this).
+
+status=0
+
+env_files=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '(^|/)\.env($|\.)')
+if [ -n "$env_files" ]; then
+  echo "pre-commit: refusing to commit .env files:" >&2
+  echo "$env_files" | sed 's/^/  /' >&2
+  status=1
+fi
+
+# A postgres URL with an @ carries credentials. Only added lines are scanned, and
+# only file:line is printed so the secret itself never reaches the terminal.
+db_urls=$(git diff --cached -U0 --diff-filter=ACMR | awk '
+  /^\+\+\+ b\// { file = substr($0, 7); next }
+  /^@@/ { split($3, a, ","); line = substr(a[1], 2); next }
+  /^\+/ { if (tolower($0) ~ /postgres(ql)?:\/\/[^[:space:]]*@/) print file ":" line; line++ }
+')
+if [ -n "$db_urls" ]; then
+  echo "pre-commit: refusing to commit what looks like a database URL with credentials:" >&2
+  echo "$db_urls" | sed 's/^/  /' >&2
+  echo "Move it to .env.local." >&2
+  status=1
+fi
+
+if [ $status -ne 0 ]; then
+  echo "Commit blocked. Unstage the files above and try again." >&2
+fi
+exit $status

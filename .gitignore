@@ -1,0 +1,23 @@
+# Secrets: never committed (SPEC §4)
+.env
+.env.*
+
+# Local upload storage for dev and tests (SPEC §4)
+.local-uploads/
+
+# Dependencies and build output
+node_modules/
+public/js/
+*.tsbuildinfo
+
+# Vercel
+.vercel/
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# OS / editor
+.DS_Store

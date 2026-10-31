@@ -1,0 +1,44 @@
+# Kestrel Gives — Decisions
+
+Every significant decision: date, decision, options considered, and why. Decisions that change the spec bump SPEC.md's version.
+
+## v1.0 — Oct 30, 2026
+
+All made while finalizing v1.0. Moved here from SPEC.md in v1.1.
+
+| # | Decision | Options considered | Why |
+|---|---|---|---|
+| 1 | Neon Postgres (free plan) | Neon Postgres; Turso (hosted SQLite) | Row-level locking for simultaneous bids and purchases; SQLite locks the whole database per write. Postgres is also the more common choice at the target companies. |
+| 2 | Compile with `tsc` only | `tsc` only; Vite | Browsers load native ES modules directly; avoids a second dev server next to `vercel dev` and one dependency. Tradeoff: no hot reload. |
+| 3 | One public Vercel Blob store; local folder in dev and tests | Public + private Blob stores; database; AWS S3 | Storing images in the database bloats it. Private storage adds an authenticated serving path just to protect fake receipts. Local storage in tests protects the free monthly operation allowance. |
+| 4 | Automated screenshot checking out of scope (listed under Future ideas) | Stretch goal; out of scope | It's the only feature with a per-use cost and needs an API key and another dependency; checking fake receipts proves little. |
+| 5 | Own design system from scratch; organization "Kestrel," event "Kestrel Gives" | Own system; restyle an open-source system. Names: Kestrel Works (taken by a real company), Kestrelwood, Fernhill Collective, Lumen & Loom | Open-source systems ship as CSS frameworks or component libraries, which section 4 bans; a hand-built system is itself portfolio material. "Kestrel" is a generic word with an original logo and footer disclaimer. |
+| 6 | Dark mode now, following the system setting, no toggle | Now; later; now with a toggle | Cheap if tokens have light and dark values from day one; expensive to retrofit. Skipping the toggle saves a control and a third state. |
+| 7 | Mock login with a "Viewing as" demo bar; 7 users (2 admins, 5 employees), 16 items (10 auction, 6 instant) | 12 users / 24 items; 6 users; with or without a past event | Enough people for real outbid scenarios and enough items to fill a grid. No past event; the yearly reset covers reuse. |
+| 8 | $10 minimum starting bid, flat $5 increment, first saved bid wins, no time extensions | Tiered increments; extending on late bids | Flat increments are easier to explain at this scale. Extensions complicate the close, winner selection, and reset lock. |
+| 9 | Playwright + axe, `node:test` for rules, token-check script | Playwright only for everything | Built-in unit tests give faster, clearer failures for business rules with no extra package. |
+| 10 | Repo `derekpcollins/kestrel-gives`, public from day one | Public now; private until Milestone 7 | Reviewers can read the spec, decisions, build log, and commit history alongside the code, which backs up the clean-room claim. |
+| 11a | Yearly reset (wipes auction data, keeps users, roles, charities, templates, settings), locked 30 days after close; demo bar with Viewing as, Jump to, Restore demo data | Floating or draggable panel; no demo controls | Matches the original's reset. A public demo needs to repair itself and show every phase. An in-flow top bar never covers content and is keyboard-friendly. |
+| 11b | Phases driven by dates only; winners finalized on first request after close; 3 charities; proof due 7 days after close with admin review; no emails sent, statuses in-app; 6 editable templates with variables and preview; unpaid winners handled outside the app | Close-event button; scheduled jobs; sent-emails log; forfeit/next-bidder flow | Matches the original (no close button, admins handled edge cases). Avoids free-plan scheduling limits. Templates were a real admin feature in the original; sending is pointless with fake people. |
+| 11c | Sale-type radio cards first; 1–5 photos (≥1) with arrow reordering; no approval queue; edit/delete by submitter or admin; cancel admin-only; type and prices lock once a bid or purchase exists; no self-outbid; bid confirmation; admins can remove bids; no per-person purchase limit | Approval queue; optional photos; drag-to-reorder | Matches the original (trusted employees, no approval). Requiring a photo keeps tiles complete. Arrow buttons are accessible. Locks keep edits fair to existing bidders. |
+| 11d | Free-license stock photos, credited in `CREDITS.md`, approved by the owner | AI-generated images; illustrations | Real photos make portfolio screenshots look finished. |
+| 11e | Event time zone stored per event, default America/New_York; `@neondatabase/serverless`; migration script with no dependencies; `main` and `dev` database branches; pre-commit secret check; global Vercel CLI; free `vercel.app` URL; latest two browser versions | Pacific default (original); ORM; a single database branch | The owner is in Eastern. Plain SQL keeps dependencies at five. A separate branch keeps tests away from the live demo. |
+| 12 | Public bid history with names; original top-bidder crown on avatars; initials avatars | Hide bidder names from employees | Matches the original: competition among coworkers was the fun. Initials avoid photos of people. The crown is drawn from scratch. |
+| 13 | Admin totals: auction, instant sale, and grand total, each as pledged and confirmed | One total | The original showed the three totals; pledged vs. confirmed shows progress without inflating the number. |
+| 14 | Nav: Home, Silent Auction, Instant Sale, Your Items, Submit an Item (submission window only); admin link in the avatar menu; phase banners below the header | Single browse page with a type filter; admin link in the main nav | Matches the original. |
+| 15 | Staged work with checkpoints; the spec is living and versioned | — | The owner's working style: check that things are on track before much work is done. |
+| 16 | Home: event wordmark hero, description, how to participate, charity cards; no item lists | Home with item highlights | Matches the original. |
+| 17 | One donation destination, split equally among the three charities; proof records amount and screenshot only | Donor picks a charity | Matches the original, and simplifies the proof form and templates. |
+| 18 | Charities seeded and read-only; no admin charity management | Admin add/edit/remove (as in the original) | Charities rarely change and the reset keeps them; saves a form and logo uploads a demo never needs. |
+| 19 | One Claude Code agent, not parallel agents | Lead + front-end + back-end + reviewer agents in worktrees | Considered for showing multi-agent work, but declined for this project to keep coordination simple. |
+
+## v1.1 — Oct 31, 2026
+
+| # | Decision | Options considered | Why |
+|---|---|---|---|
+| 20 | Add `@types/node@24` as a dev dependency (approved list grows to six) | Add it; write Node code as untyped JS; hand-write partial Node declarations | `tsc` ships no Node types, so the API, scripts, and `node:test` tests can't be type-checked without it. Types only: nothing at runtime, no lock-in. Pinned to the Node 24 line to match the runtime. |
+| 21 | Design tokens live at `public/styles/tokens.css` (served as `/styles/tokens.css`); the token check targets that path | `styles/tokens.css` at the repo root | `public/` is the static site root, so tokens must sit inside it to be served. |
+| 22 | Decisions move from the bottom of SPEC.md into this file; SPEC.md keeps a one-line pointer | Keep them in SPEC.md; split between both | One place for the decision history; keeps the spec focused on what to build. |
+| 23 | Create the Vercel project during database setup (before the first deploy) | Create it at the deploy step | The Neon Marketplace integration has to attach to an existing Vercel project. |
+| 24 | Connect the GitHub repo to Vercel: `main` deploys the demo, other branches get preview URLs; Neon preview database branches turned off | CLI-only `vercel deploy`; Neon branch per preview | Push-to-deploy is simpler and shows the pipeline. A Neon branch per preview would eat free-plan branch and compute limits. |
+| 25 | The Vercel Preview environment's `DATABASE_URL` points at the Neon `dev` branch; only Production uses `main` | Previews share `main`; a Neon branch per preview (ruled out in #24) | Keeps the live demo's data safe from preview builds. Tests reseed `dev` before each run, so a test run can reset a preview's data at any time. That's acceptable because previews are throwaway. |
