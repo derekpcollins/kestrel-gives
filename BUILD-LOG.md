@@ -230,3 +230,8 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   - The first card layout nested the pane grid inside each pane, giving one huge card per row; cards now use a compact grid.
 - **AI did well:** kept every value on tokens, and mapped the eight SPEC states for each component instead of only the interactive ones.
 - **Checks:** `npm run check` passes all seven.
+
+### 2026-11-01 — Stage A checkpoint: owner review (15:40–15:55 EST)
+- **Owner stepped in:** approved stage A with fixes. Removed payment language from the samples ("Pay now", "Paid", "Proof of payment due" → "Upload proof", "Approved"/"Proof due", "Proof of donation due"), corrected the demo banner (no nightly reset), made the donor a coworker, made the info banner neutral, and asked for a content rule in DESIGN-SYSTEM.md (#51).
+- **Hard / caught:** the longer "Upload proof" button pushed the success banner 11px past a 320px screen; the reflow check caught it, and banner actions now wrap. "Receipt" was left off the banned-word list because SPEC names the "bid receipt" and "purchase receipt" statuses.
+- **Checks:** `npm run check` passes all seven.

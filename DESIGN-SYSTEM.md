@@ -12,6 +12,14 @@ Every component, its variants and states, and how to use it. Required by SPEC §
 - **Motion** uses the duration tokens, which become 0ms under `prefers-reduced-motion`.
 - **Light and dark.** Every color token has both values, so components need no mode-specific rules.
 
+### Content guidance
+
+- **No payment language.** The app never takes payments: winners donate to the charity themselves and upload proof. Never write pay, paid, payment or checkout. (SPEC's "bid receipt" and "purchase receipt" status names are fine: they confirm a bid or an instant-sale claim, not a payment.) Use **donate**, **donation** and **proof** ("Donate and upload proof by November 21", "Proof of donation due", "Upload proof").
+- **Donors are coworkers.** Items are donated by people in the organization (SPEC §10), never by businesses: "donated by Maya Okafor".
+- **Describe the demo accurately.** It doesn't reset on a schedule; people start over with **Restore demo data** in the top bar.
+- **Computed amounts.** Minimum-bid and increment copy comes from the event settings and the current high bid, never hard-coded (SPEC §7.4).
+- Fictional names only (SPEC §2). Sentence case, plain words, and labels that start with a verb.
+
 ### Figma names
 
 | Code | Figma |
@@ -74,7 +82,7 @@ The same pattern applies to every component below. Each entry's **Figma** line g
 
 ## Status pill
 
-**Purpose:** a short, non-interactive status label such as "Paid", "Ending soon" or "Outbid". SPEC calls it badge/status pill.
+**Purpose:** a short, non-interactive status label such as "Approved", "Proof due", "Ending soon" or "Outbid". SPEC calls it badge/status pill.
 
 - **Classes:** `.pill`; tones `--success`, `--warning`, `--danger`; neutral has no modifier. Optional leading icon (sized sm automatically).
 - **States:** default only. Hover, focus, active and disabled are N/A: it isn't interactive. Loading and empty are N/A. Error: use `--danger`.
@@ -86,7 +94,7 @@ The same pattern applies to every component below. Each entry's **Figma** line g
 
 **Purpose:** a message about the whole page or event that stays until the situation changes.
 
-- **Classes:** `.banner` with `__body`, `__title`, `__text`, `__action`, and a leading icon. Tones: `--phase` (butter; where the event is: "Bidding is open"), `--success`, `--warning`, `--danger`, `--info`.
+- **Classes:** `.banner` with `__body`, `__title`, `__text`, `__action`, and a leading icon. Tones: `--phase` (butter; where the event is: "Bidding is open"), `--info` (neutral: `--color-surface-muted` fill with an accent icon; also the default fill), `--success` (teal-soft fill), `--warning`, `--danger`.
 - **States:** default. Hover, focus, active, disabled and loading are N/A on the banner itself; its action button has its own states. **Error** is `--danger`. Empty: N/A (no banner is shown).
 - **Accessibility:** the phase banner and banners that appear after page load use `role="status"`. A danger banner that appears after a failed submit uses `role="alert"`, or focus moves to it, and it links to the field to fix. Icons are decorative.
 - **Do:** say what happened and what to do next. **Don't:** use a banner for a passing confirmation (use a toast); don't stack more than two.
