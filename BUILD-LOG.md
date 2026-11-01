@@ -363,3 +363,15 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   - **The direct URL now comes from `DATABASE_URL_UNPOOLED`** (the Neon integration's, Production only, confirmed by name and scope), with the same main check plus a pooled-host refusal, and no fallback to stripping `-pooler` (#67 amended; SPEC v1.8 §4 wording corrected before its first push). 11 unit tests.
   - **Preview → dev:** Preview's `DATABASE_URL` is a sensitive variable, so `vercel env pull` returns a placeholder and it can't be compared from the CLI. No throwaway branch; the Milestone 0 browser check stands. **To do:** next time a preview deploys in the normal course of work, check its `/api/health` shows `"db":"dev"` and note it here.
 - **First production run (16:53 EST):** pushed `fb8d19d`, `3e2627a` and `0945649`; production build Ready. Build log: unit tests 68 pass / 0 fail, then `deploy-db: production build; DATABASE_URL_UNPOOLED confirmed as the main branch (direct connection).`, `recorded checksum for 001_init.sql`, `Up to date.`, `deploy-db: first deploy, seeded (app_meta has 1 row(s)).` `/api/health` → `{"ok":true,"db":"main","schema":"001"}`. Stage 2A is complete.
+
+### 2026-11-01 — Stage 2B: the schema
+- **Owner stepped in:** ordering for `app_meta` and seed-if-empty (2B adds only; 2C switches the seed check with the real seed; the drop ships after 2C is live). `UNIQUE (id, item_id)` on bids, the auction-only winner check, and "a winner is never a removed bid", recomputed in the bid-removal code with both people's proofs reopened, plus a test for it.
+- **Built:**
+  - `migrations/002_schema.sql`: events, users, charities, items, item_photos, bids, purchases, proofs (one per person per event, with the total at upload), email_templates. Applied to `dev`; `main` gets it on the next push.
+  - `lib/data/`: `withTransaction`, `donationTotalIn`, `recheckProofsIn`, `finalizeWinnersIn` (once, by a conditional update), `removeBidIn`.
+  - `tests/db/schema.test.ts`: 19 tests, each in a rolled-back transaction, so `dev` is untouched: timestamptz everywhere, the bids index, money, stock, sale-type columns, winners (wrong type, wrong item, removed), removal pairs, rejection reasons, template keys, photo positions, one current event; finalizing once; totals; and removing the winning bid after close (the winner moves to the next highest bid, the old winner's total drops, the new winner's rises, both proofs go back to pending).
+- **Hard / caught:**
+  - **"Not removed" in the database:** a CHECK can't see another table. A probe on a throwaway schema on `dev` showed a deferred foreign key carrying a generated "removed" flag does enforce it, so it's in, alongside the approved two-column key.
+  - **Deferred keys and rolled-back tests:** a deferred key is only checked at commit, which a rolled-back test never reaches; the tests force the check with `SET CONSTRAINTS ALL IMMEDIATE`.
+  - **Proving the test can fail:** with the winner recompute deliberately removed from `removeBidIn`, the removal test failed; restored and confirmed identical.
+
