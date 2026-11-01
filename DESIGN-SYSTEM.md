@@ -342,3 +342,60 @@ How forms behave, for every component below:
 - **Accessibility:** one name, "Kestrel Gives", instead of the mark and two separate words.
 - **Do:** use the card in both modes (the mark's file is white). **Don't:** recolor, redraw or crop the mark beyond whitespace (logo rule, #39).
 - **Figma:** *Hero lockup* · no variants.
+
+---
+
+## Overlays and data (stage C2)
+
+## Dialog
+
+**Purpose:** asks for a yes or no before something that matters: placing a bid, restoring the demo data, cancelling an item, or the yearly reset (SPEC §7.8).
+
+- **Markup:** a native `<dialog class="dialog dialog--confirm|--danger|--type-to-confirm">` opened with `showModal()`, with `aria-labelledby` (the title) and `aria-describedby` (the body). Inside: `form.dialog__form` > `h2.dialog__title`, `.dialog__body` (text, or for a bid an item summary `.dialog__item` with `.dialog__item-thumb` and `.dialog__item-title`, plus `.dialog__amount`), an optional *Form field* for type-to-confirm, `.dialog__error` (`role="alert"`) and `.dialog__actions` (dismiss, then confirm). Behavior: `confirmDialog()` in `src/components/dialog.ts` resolves `true` once the request succeeds and `false` if dismissed. `.dialog--static` draws a closed dialog in the flow, for the gallery only.
+- **Variants:**
+  - **Confirm:** says exactly what you're agreeing to, with every amount computed from the data ("Place a $65 bid?"). First focus: the confirm button.
+  - **Danger:** a destructive action; the confirm button is a *Button* (Danger). First focus: the dismiss button, so Enter never destroys anything by accident. The dismiss button says "Cancel", or "Keep item" next to "Cancel item".
+  - **Type-to-confirm:** the danger variant plus a text field; the confirm button stays inactive (`aria-disabled`) until the event name is typed exactly. First focus: the field.
+- **States:**
+  - Open: enters with a short rise and fade (instant under reduced motion); the page behind is inert under a backdrop.
+  - **Loading:** `aria-busy` on the dialog, the confirm button shows its loading label ("Placing bid…"), the dismiss button is `aria-disabled`, and Escape is ignored until the request finishes.
+  - **Error:** the request's plain message shows in `.dialog__error`, and the dialog stays open so you can try again or cancel.
+  - Hover, focus and active belong to its buttons. Disabled: only the type-to-confirm button, as above. Empty: N/A.
+- **Accessibility:** native modal, so focus moves in and stays in. Escape closes it (except while loading) and focus returns to the control that opened it. The title names the action; the body says what happens and whether it can be undone.
+- **Do:** name the action on the confirm button ("Place bid", not "OK"). **Don't:** use a dialog for information that needs no decision (use a toast or banner).
+- **Figma:** *Dialog* · Variant = Confirm / Danger / Type-to-confirm × State = Default / Loading / Error (9). The body is a slot; the buttons are nested *Button* instances.
+
+## Item tile
+
+**Purpose:** one item in a browse grid (Silent Auction, Instant Sale) and in Your Items (SPEC §8).
+
+- **Markup:** `ul.item-grid` (wraps at `--size-tile-min`, no breakpoints) of `li` > `.card.card--link.item-tile` with `.card__media` (photo, and the status pill `.pill.item-tile__status` over it), `h3` > the title link, `.item-tile__amount` and `.item-tile__detail`. Built by `renderItemTile()` in `src/components/item-tile.ts`.
+- **Words come from data:** `tileText()` in `src/components/item-tile-rules.ts` computes the amount line and the one status from the item, the viewer and the phase; nothing on a tile is typed in. Unit tests: `tests/unit/item-tile-rules.test.ts`.
+  - Silent auction: "Starts at $40 / No bids yet", "Top bid $240 / 6 bids"; after close "Winning bid $310 / 9 bids" or "Starting bid $40 / No bids".
+  - Instant sale: "$20 / 2 left"; "12 available" during submissions; "None left".
+- **Status (one, most important first):** Cancelled (danger) › after close: You won (success), Ended, Sold out › during submissions: "Opens Nov 17" › live silent auction: You're winning (success), Outbid (danger) › live instant sale: Sold out, "2 left" (warning, at 3 or fewer) › Ending soon (warning, within 24 hours of close). No status if none applies. The low-stock and ending-soon thresholds are provisional (DECISIONS #61).
+- **States:** the card link's default, hover (lift), active and focus (ring). **Muted** (`.item-tile--muted`, ended and cancelled): the photo fades and the amount turns muted; the pill keeps full contrast. **Cancelled** appears only in Your Items, never in browse grids. Disabled: N/A (a tile always opens its item). Loading: Milestone 3 decides whether grids need skeletons. Empty: the grid's *Empty state*, not the tile. Error: N/A.
+- **Accessibility:** the whole tile is one link, named by the title with the status appended as visually hidden text ("Sourdough starter and a loaf a month, Outbid"); the pill itself is `aria-hidden` so it isn't read twice. Status isn't shown by color alone: the pill has words.
+- **Do:** keep titles to two lines in the design; long ones wrap. **Don't:** show more than one status, or put buttons inside the tile.
+- **Figma:** *Item tile* · Type = Auction / Instant × Phase = Submission / Live / Ended (6), with Status as a nested *Status pill* instance (or hidden) and Muted as a boolean. The text is overridden per example.
+
+## Photo carousel
+
+**Purpose:** an item's 1–5 photos on its page, one at a time.
+
+- **Markup:** `<section class="carousel" aria-label="Photos of …" data-carousel>` > `.carousel__stage` (4:3) with `figure.carousel__slide`s (all but one `hidden`), `button.carousel__nav.carousel__nav--prev` and `--next` (round icon buttons over the photo), and `p.carousel__count` ("Photo 2 of 5", `aria-live="polite"`); then `ul.carousel__thumbs` of `button.carousel__thumb` (named "Photo 2 of 5", the current one `aria-current="true"`). Behavior: `enhanceCarousel()` in `src/components/carousel.ts`. With one photo, `.carousel--single` hides the arrows and thumbnails.
+- **States:** arrows and thumbnails have hover, active and focus (ring). **Current** thumbnail: a strong border and `aria-current`. At either end the arrow is **inactive** (`aria-disabled="true"`, faded) but stays focusable, so focus never vanishes. Loading: Milestone 5 decides (real photos replace the placeholders then); no spinner. Error and empty: N/A (an item always has at least one photo, SPEC §7).
+- **Accessibility:** no autoplay and no swipe-only control. Every change is announced through the count. Arrows and thumbnails are 44px tall. Each photo has alt text from the submitter's title ("Photo 2 of 5" until real photos land).
+- **Do:** keep the cover photo first. **Don't:** add autoplay or arrow-key shortcuts on the page.
+- **Figma:** *Photo carousel* · Photos = Single / Multiple × Position = First / Middle / Last (4; Single has no position). *Carousel thumbnail* · State = Default / Hover / Focus / Current (4).
+
+## Table
+
+**Purpose:** rows of records for admins: people, items, proofs waiting for review.
+
+- **Markup:** `<div class="table-wrap" role="region" aria-labelledby="(caption id)" data-table-scroll>` > `table.table` with a `caption`, `th scope="col"` headers, `th scope="row"` for each row's name, `.table__num` on number columns (right-aligned, tabular figures), and `.table__actions` in the last column (its header is visually hidden "Actions"). An empty table has one row: `td.table__empty` spanning every column. Behavior: `enhanceTableScroll()` in `src/components/table.ts`.
+- **Narrow screens:** the table keeps its columns and scrolls inside `.table-wrap` (WCAG's exception for two-dimensional content). The region joins the tab order (`tabindex="0"`) only while it actually scrolls, so keyboard users can scroll it with the arrow keys. The wrap is positioned so visually hidden text inside it can't widen the page.
+- **States:** rows have a hover fill. Row actions are *Button* Small (`--size-target-sm`, allowed in dense rows by SPEC §6) with the row's name in their label (visible "View bids", read as "View bids by Maya Okafor"). **Empty:** the message row, and the headers wrap so the message stays in view. Loading and error: Milestone 3 (an error uses a danger banner above the table). Disabled: N/A.
+- **Accessibility:** the caption names the table and the region. Column and row headers are real `th` elements. No sorting until a screen needs it.
+- **Do:** keep row actions to one or two. **Don't:** hide columns on small screens; scroll instead.
+- **Figma:** *Table* · Rows = Filled / Empty (2), built from *Table row* · Kind = Header / Body × State = Default / Hover (3; Header has Default only) and *Table cell* · Align = Start / End × Content = Text / Actions (4).

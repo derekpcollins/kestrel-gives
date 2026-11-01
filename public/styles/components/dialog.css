@@ -1,0 +1,32 @@
+/* Dialog (DESIGN-SYSTEM.md): a native modal <dialog> built by src/components/dialog.ts.
+   Variants: confirm, danger, type-to-confirm. .dialog--static shows one in place for the
+   gallery and Figma. */
+.dialog {
+  width: min(var(--size-dialog), calc(100% - var(--space-8)));
+  max-height: calc(100% - var(--space-8));
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-lg);
+}
+.dialog::backdrop { background: var(--color-overlay); }
+.dialog[open] { animation: dialog-in var(--duration-slow) var(--ease-standard); }
+.dialog[open]::backdrop { animation: dialog-fade var(--duration-slow) var(--ease-standard); }
+@keyframes dialog-in { from { opacity: 0; translate: 0 var(--space-4); } }
+@keyframes dialog-fade { from { opacity: 0; } }
+
+.dialog__form { display: grid; gap: var(--space-4); padding: var(--space-6); }
+.dialog__title { font: var(--type-heading-2); }
+.dialog__body { display: grid; gap: var(--space-3); color: var(--color-text); }
+.dialog__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-3); padding-top: var(--space-2); }
+.dialog--danger .dialog__title, .dialog--type-to-confirm .dialog__title { color: var(--color-danger); }
+
+/* The item being confirmed: thumbnail, title, the computed amount. */
+.dialog__item { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); border-radius: var(--radius-md); background: var(--color-surface-muted); }
+.dialog__item-thumb { flex: none; width: var(--size-target); height: var(--size-target); border-radius: var(--radius-sm); background: var(--color-border); }
+.dialog__item-title { font: var(--type-label); }
+.dialog__amount { font: var(--type-amount); color: var(--color-price); font-variant-numeric: var(--figures-amount); }
+
+.dialog--static { position: static; display: block; margin: 0; width: 100%; animation: none; }

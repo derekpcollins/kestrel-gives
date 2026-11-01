@@ -169,8 +169,7 @@ test("demo bar: announces who you're viewing as and the phase; restore raises an
   await expect(ended).toHaveAttribute("aria-pressed", "true");
   await expect(bar.getByRole("button", { name: "Bidding live" })).toHaveAttribute("aria-pressed", "false");
 
-  await bar.getByRole("button", { name: "Restore demo data" }).click();
-  await expect(page.locator(".toast-region")).toContainText("confirmation dialog");
+  // What Restore opens is covered by "demo bar's Restore opens the danger dialog".
 });
 
 test("demo bar: collapsed state is remembered, and ?demo=off removes the page's bar", async ({ page }) => {
@@ -203,4 +202,125 @@ test("demo bar: collapsed state is remembered, and ?demo=off removes the page's 
   await addBar();
   await expect(page.locator('[data-demo-bar="page"]')).toHaveCount(0);
   await expect(page.locator('[data-demo-bar="specimen"]')).toHaveCount(2);
+});
+
+test("confirm dialog: modal, Escape closes, focus returns; Escape waits while the request runs", async ({ page }) => {
+  await page.goto("/design-system/#dialogs");
+  const trigger = page.locator('[data-demo-dialog="bid"]');
+  await trigger.click();
+  const dialog = page.locator("dialog.dialog");
+  await expect(dialog).toBeVisible();
+  expect(await dialog.evaluate((el) => el.matches(":modal"))).toBe(true);
+  await expect(dialog.getByRole("heading", { name: "Place a $65 bid?" })).toBeVisible(); // $60 top bid + $5 increment
+  await expect(dialog.getByRole("button", { name: "Place bid" })).toBeFocused();
+
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+
+  await trigger.press("Enter");
+  await page.keyboard.press("Enter"); // confirm
+  await expect(dialog.getByRole("button", { name: "Placing bid…" })).toHaveAttribute("aria-busy", "true");
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeVisible(); // still running
+  await expect(dialog).toHaveCount(0, { timeout: 5000 });
+  await expect(trigger).toBeFocused();
+  await expect(page.locator(".toast-region")).toContainText("Bid placed.");
+});
+
+test("confirm dialog: a failed request shows the reason and stays open", async ({ page }) => {
+  await page.goto("/design-system/#dialogs");
+  await page.locator('[data-demo-dialog="bid-fail"]').click();
+  const dialog = page.locator("dialog.dialog");
+  await dialog.getByRole("button", { name: "Place bid" }).click();
+  await expect(dialog.locator(".dialog__error")).toHaveText("Someone just bid $65. The minimum is now $70.", { timeout: 5000 });
+  await expect(dialog.getByRole("button", { name: "Place bid" })).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+});
+
+test("danger dialog starts on the safe button; type-to-confirm needs the exact event name", async ({ page }) => {
+  await page.goto("/design-system/#dialogs");
+  await page.locator('[data-demo-dialog="cancel"]').click();
+  const dialog = page.locator("dialog.dialog");
+  await expect(dialog.getByRole("button", { name: "Keep item" })).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(dialog).toHaveCount(0);
+
+  const reset = page.locator('[data-demo-dialog="reset"]');
+  await reset.click();
+  const input = dialog.getByLabel("Type Kestrel Gives 2026 to confirm");
+  const confirm = dialog.getByRole("button", { name: "Reset for next year" });
+  await expect(input).toBeFocused();
+  await expect(confirm).toHaveAttribute("aria-disabled", "true");
+  await input.fill("kestrel gives 2026");
+  await page.keyboard.press("Enter");
+  await expect(dialog).toBeVisible();
+  await expect(confirm).toHaveAttribute("aria-disabled", "true");
+  await input.fill("Kestrel Gives 2026 ");
+  await expect(confirm).toHaveAttribute("aria-disabled", "true"); // exactly, no extra space
+  await input.fill("Kestrel Gives 2026");
+  await expect(confirm).not.toHaveAttribute("aria-disabled");
+  await page.keyboard.press("Enter");
+  await expect(dialog).toHaveCount(0, { timeout: 5000 });
+  await expect(reset).toBeFocused();
+});
+
+test("demo bar's Restore opens the danger dialog", async ({ page }) => {
+  await page.goto("/design-system/#demo-bar");
+  const restore = page.locator('[data-demo-bar="specimen"]').first().getByRole("button", { name: "Restore demo data" });
+  await restore.click();
+  await expect(page.locator("dialog.dialog--danger")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(restore).toBeFocused();
+});
+
+test("carousel: buttons and thumbnails move; current thumbnail marked; ends inactive; changes announced", async ({ page }) => {
+  await page.goto("/design-system/#carousel");
+  const carousel = page.locator("[data-carousel]").first();
+  const prev = carousel.getByRole("button", { name: "Previous photo" });
+  const next = carousel.getByRole("button", { name: "Next photo" });
+  const count = carousel.locator(".carousel__count");
+  await expect(prev).toHaveAttribute("aria-disabled", "true");
+  await expect(carousel.getByRole("button", { name: "Photo 1 of 5" })).toHaveAttribute("aria-current", "true");
+
+  await next.press("Enter");
+  await expect(count).toHaveText("Photo 2 of 5");
+  await expect(count).toHaveAttribute("aria-live", "polite");
+  await expect(carousel.getByRole("button", { name: "Photo 2 of 5" })).toHaveAttribute("aria-current", "true");
+  await expect(carousel.getByRole("button", { name: "Photo 1 of 5" })).not.toHaveAttribute("aria-current");
+  await expect(carousel.getByRole("img", { name: "Photo 2 of 5 (placeholder)" })).toBeVisible();
+
+  await carousel.getByRole("button", { name: "Photo 5 of 5" }).click();
+  await expect(next).toHaveAttribute("aria-disabled", "true");
+  await next.press("Enter"); // press, not click: Playwright won't click an aria-disabled button
+  await expect(count).toHaveText("Photo 5 of 5");
+  await expect(page.locator("[data-carousel]").nth(1).locator(".carousel__nav").first()).toBeHidden(); // single photo
+});
+
+test("item tiles: words come from the rules; cancelled only in Your Items", async ({ page }) => {
+  await page.goto("/design-system/#item-tiles");
+  const live = page.locator('[data-tiles="live-auction"]').first();
+  await expect(live.getByRole("link", { name: "Lakeside Cabin Weekend" })).toBeVisible();
+  await expect(live).toContainText("Top bid $240");
+  await expect(live).toContainText("Starts at $40");
+  // Chrome's name computation puts a space before the visually hidden ", Status"; speech is the same.
+  await expect(live.getByRole("link", { name: /^Sourdough starter and a loaf a month ?, Outbid$/ })).toBeVisible();
+  await expect(live.getByRole("link", { name: /^Bike tune-up at your desk ?, Ending soon$/ })).toBeVisible();
+  await expect(page.locator('[data-tiles="live-instant"]').first()).toContainText("2 left");
+  const ended = page.locator('[data-tiles="ended"]').first();
+  for (const label of ["You won", "Ended", "Sold out"]) await expect(ended.locator(".item-tile__status", { hasText: label }).first()).toBeVisible();
+  await expect(page.locator('.item-tile__status:text-is("Cancelled")')).toHaveCount(2); // the cancelled group, light and dark
+  await expect(page.locator('[data-tiles]:not([data-tiles="cancelled"]) .item-tile__status:text-is("Cancelled")')).toHaveCount(0);
+});
+
+test("table: the scroll region joins the tab order only while it scrolls", async ({ page }) => {
+  await page.goto("/design-system/#tables");
+  const wrap = page.locator("[data-table-scroll]").first();
+  // Resize the region itself so the test doesn't depend on the gallery's layout.
+  type Styled = { style: { width: string; maxWidth: string } };
+  await wrap.evaluate((el) => { const s = (el as unknown as Styled).style; s.maxWidth = "none"; s.width = "200rem"; });
+  await expect(wrap).not.toHaveAttribute("tabindex");
+  await wrap.evaluate((el) => { (el as unknown as Styled).style.width = "10rem"; });
+  await expect(wrap).toHaveAttribute("tabindex", "0");
 });

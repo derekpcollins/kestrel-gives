@@ -285,3 +285,20 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   - **Test race:** the demo bar test reloaded before the async `toggle` event had saved its state; it now waits for the save.
   - **Token check:** it flagged "64rem" in gallery prose; the prose names the token instead.
 - **Checks:** `npm run check` passes all seven.
+
+### 2026-11-01 — Stage C2 (overlays and data) (16:00–16:20 EST)
+- **Owner stepped in (the brief):** three dialog variants, including type-to-confirm for the yearly reset; tiles whose words are computed from data, with every status, and Cancelled only in Your Items; a carousel with no autoplay and thumbnails named "Photo 2 of 5"; a table with no sorting, but with a caption, tabular figures, row actions, a narrow-screen scroll region and an empty state.
+- **Built:**
+  - **Dialog:** `confirmDialog()` on native `<dialog>`, in confirm, danger and type-to-confirm variants, with loading and error states. The demo bar's Restore now opens the danger dialog.
+  - **Item tile:** `item-tile-rules.ts` (amount line and one status, 10 unit tests) and `renderItemTile()`. The gallery fills the tile grids from data for every phase.
+  - **Photo carousel:** `enhanceCarousel()`, arrows inactive at the ends, a live count, single-photo layout.
+  - **Table:** `.table`, `.table-wrap` and `enhanceTableScroll()`.
+  - **Keyboard tests (6 new):** dialog modality, Escape and focus return; a failed request; danger and type-to-confirm; Restore; carousel; tiles; table scroll focus.
+  - **Docs:** DESIGN-SYSTEM.md entries for all four; DECISIONS #61–#65.
+- **Hard / caught:**
+  - **axe:** ended and cancelled tiles faded the whole card, so their pills fell to about 2:1 contrast. Only the photo fades now (#64).
+  - **320px reflow:** the page scrolled sideways to 572px even though every table sat in a scroll box. The cause was visually hidden "by Maya Okafor" text in row actions: it's absolutely positioned and escaped the unpositioned wrapper. `.table-wrap` is now positioned (#63).
+  - **Specificity:** `.table td { white-space: nowrap }` beat `.table__empty`, so the empty message ran off sideways on narrow screens.
+  - **Tests:** Playwright won't click an `aria-disabled` button (it waits for it to be enabled), so the end-of-carousel check presses Enter. Chrome puts a space before visually hidden text in an accessible name ("…a month , Outbid"); speech is the same, so the test allows it.
+- **AI did well / owner to confirm:** the ending-soon (24 hours) and low-stock (3 or fewer) thresholds are provisional (#61).
+- **Checks:** `npm run check` passes all seven.

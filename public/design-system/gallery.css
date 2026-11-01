@@ -10,6 +10,7 @@
 .gallery__row { display: flex; flex-wrap: wrap; align-items: end; gap: var(--space-6); }
 .gallery__specimen { display: grid; justify-items: center; gap: var(--space-2); padding-top: var(--space-3); }
 .gallery__panes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--size-tile-min)), 1fr)); gap: var(--space-4); }
+.gallery__panes--stacked { grid-template-columns: minmax(0, 1fr); } /* wide specimens (tile grids): light above dark, full width */
 .gallery__pane { background: var(--color-bg); color: var(--color-text); border-radius: var(--radius-lg); padding: var(--space-5); box-shadow: var(--shadow-sm); display: grid; gap: var(--space-5); }
 .gallery__pane--light { color-scheme: light; }
 .gallery__pane--dark { color-scheme: dark; }
@@ -30,3 +31,11 @@
 .gallery__frame--tall { min-height: calc(var(--space-16) * 5); }
 .gallery__stack { grid-template-columns: minmax(0, 1fr); }
 .gallery__pane { grid-template-columns: minmax(0, 1fr); }
+/* Placeholder photos for the gallery only, until the seed photos land (Milestone 2). */
+.gallery__photo { display: grid; place-items: center; width: 100%; height: 100%; font: var(--type-display); color: var(--color-text); }
+.gallery__photo--small { font: var(--type-label); }
+.gallery__photo--accent-soft { background: var(--color-accent-soft); }
+.gallery__photo--success-soft { background: var(--color-success-soft); }
+.gallery__photo--warning-soft { background: var(--color-warning-soft); }
+.gallery__photo--danger-soft { background: var(--color-danger-soft); }
+.gallery__photo--banner { background: var(--color-banner); color: var(--color-on-banner); }

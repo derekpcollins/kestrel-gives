@@ -1,0 +1,18 @@
+/* Table (DESIGN-SYSTEM.md): rows of records for admins. A caption names it; numbers are
+   right-aligned in tabular figures; row actions sit in the last column. On narrow screens
+   it scrolls inside .table-wrap (src/components/table.ts makes that region focusable). The
+   wrap is positioned so visually hidden label text in row actions stays inside its scroll box. */
+.table-wrap { position: relative; max-width: 100%; overflow-x: auto; border: var(--border-thin) solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+.table-wrap:focus-visible { outline: var(--focus-width) solid var(--color-focus); outline-offset: var(--focus-offset); }
+.table { width: 100%; border-collapse: collapse; font: var(--type-body); }
+.table caption { padding: var(--space-3) var(--space-4); text-align: left; font: var(--type-heading-3); }
+.table th, .table td { padding: var(--space-2) var(--space-4); border-top: var(--border-thin) solid var(--color-border); text-align: left; vertical-align: middle; white-space: nowrap; }
+.table thead th { font: var(--type-label); color: var(--color-text-muted); background: var(--color-surface-muted); }
+.table tbody th { font-weight: var(--weight-semibold); }
+.table tbody tr:hover, .table tbody tr.is-hover { background: var(--color-accent-soft); }
+.table .table__num { text-align: right; font-variant-numeric: var(--figures-amount); }
+.table__actions { text-align: right; }
+.table__actions .btn + .btn { margin-left: var(--space-2); }
+.table .table__empty { padding: var(--space-8) var(--space-4); text-align: center; color: var(--color-text-muted); white-space: normal; }
+/* An empty table has nothing to scroll to: let its headers wrap so the message stays in view. */
+.table:has(.table__empty) th { white-space: normal; }

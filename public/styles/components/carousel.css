@@ -1,0 +1,28 @@
+/* Photo carousel (DESIGN-SYSTEM.md; SPEC §7.3): one photo, previous and next, thumbnails
+   beneath. Behavior in src/components/carousel.ts. No autoplay. */
+.carousel { display: grid; gap: var(--space-3); }
+.carousel__stage { position: relative; overflow: hidden; border-radius: var(--radius-lg); background: var(--color-surface-muted); aspect-ratio: 4 / 3; }
+.carousel__slide { position: absolute; inset: 0; margin: 0; }
+.carousel__slide[hidden] { display: none; }
+.carousel__slide img, .carousel__photo { display: block; width: 100%; height: 100%; object-fit: cover; }
+.carousel__nav { position: absolute; top: 50%; translate: 0 -50%; box-shadow: var(--shadow-md); }
+.carousel__nav--prev { left: var(--space-3); }
+.carousel__nav--next { right: var(--space-3); }
+.carousel__count { position: absolute; bottom: var(--space-3); right: var(--space-3); padding: 0 var(--space-2); border-radius: var(--radius-pill); background: var(--color-inverse); color: var(--color-on-inverse); font: var(--type-badge); font-variant-numeric: var(--figures-amount); }
+.carousel__thumbs { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.carousel__thumb {
+  display: block;
+  width: calc(var(--size-target) * 1.5);
+  height: var(--size-target);
+  padding: 0;
+  overflow: hidden;
+  border: var(--border-thick) solid transparent;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+  cursor: pointer;
+}
+.carousel__thumb > * { display: block; width: 100%; height: 100%; object-fit: cover; }
+.carousel__thumb:hover, .carousel__thumb.is-hover { border-color: var(--color-border-strong); }
+.carousel__thumb[aria-current="true"] { border-color: var(--color-accent); }
+.carousel__thumb.is-focus { outline: var(--focus-width) solid var(--color-focus); outline-offset: var(--focus-offset); }
+.carousel--single .carousel__nav, .carousel--single .carousel__thumbs { display: none; }
