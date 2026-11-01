@@ -1,7 +1,9 @@
 /* Radio card (DESIGN-SYSTEM.md): a choice between a few big options, each with a title
    and a line on when to choose it. A native radio inside a label, so arrows, Space and
    screen readers work as usual. Side by side when there's room, stacked when not. */
-.radio-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-16) * 3.5)), 1fr)); gap: var(--space-3); }
+/* The legend sits outside the fieldset's grid, so the space above the cards is a margin,
+   wider than the focus ring (width + offset): the ring never covers the question. */
+.radio-cards { margin-top: calc(var(--focus-width) + var(--focus-offset) + var(--space-2)); display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-16) * 3.5)), 1fr)); gap: var(--space-3); }
 .radio-card {
   display: grid;
   grid-template-columns: auto 1fr;

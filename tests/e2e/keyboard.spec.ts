@@ -59,6 +59,11 @@ test("photo uploader: reorder and remove with the keyboard, with announcements",
   await expect(thumbs.nth(0)).toHaveAttribute("alt", "Photo 1 of 3 (cover): a.png");
   await expect(uploader.locator(".uploader__status")).toHaveText("3 photos added. 3 of 5.");
 
+  // Every thumbnail control is a full-size target (--size-target, 44px).
+  for (const box of await uploader.locator(".uploader__actions .btn").evaluateAll((els) => els.map((el) => { const r = el.getBoundingClientRect(); return { width: r.width, height: r.height }; }))) {
+    expect(Math.min(box.width, box.height)).toBeGreaterThanOrEqual(44);
+  }
+
   // Move the cover right: focus follows the photo, and the change is announced.
   await uploader.getByRole("button", { name: "Move photo 1 right" }).press("Enter");
   await expect(thumbs.nth(0)).toHaveAttribute("alt", "Photo 1 of 3 (cover): b.png");

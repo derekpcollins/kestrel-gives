@@ -252,3 +252,12 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   - The gallery's bid-history list style leaked into the uploader lists, and radio cards spread their text to match a taller neighbor; both were fixed after reviewing the screenshots.
 - **AI did well:** kept the money rule in one tested module that the server can reuse, and treated the test failure as a UX bug instead of loosening the test.
 - **Checks:** `npm run check` passes all seven.
+
+### 2026-11-01 — Stage B checkpoint: owner review
+- **Owner stepped in:**
+  - **Tap targets:** made the thumbnail controls full 44px targets (I had shrunk them to 32px to fit 96px thumbnails).
+  - **Radio cards:** asked for space between the question and the cards, because the focus ring covered the question.
+  - **Figma:** set the *Button* matrix to 28 combinations.
+  - **Photo cap:** kept 4 MB as a placeholder and decided that Milestone 5 resizes photos in the browser before upload (#54, #55).
+- **Hard / caught:** a grid `gap` on the fieldset couldn't add the space, because a `<legend>` sits outside the fieldset's grid; a top margin on the cards does. Added a test that every thumbnail control measures at least 44px.
+- **Checks:** `npm run check` passes all seven, including reflow at 320px.

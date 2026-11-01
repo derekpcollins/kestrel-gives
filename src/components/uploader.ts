@@ -124,10 +124,10 @@ function item(photo: Photo, index: number, total: number): HTMLLIElement {
 function button(action: string, name: "chevron-left" | "chevron-right" | "trash", label: string, disabled: boolean): HTMLButtonElement {
   const b = document.createElement("button");
   b.type = "button";
-  b.className = "btn btn--secondary btn--icon btn--sm";
+  b.className = "btn btn--secondary btn--icon"; // full 44px target
   b.dataset.action = action;
   b.setAttribute("aria-label", label);
   if (disabled) b.setAttribute("aria-disabled", "true");
-  b.append(icon(name, { size: "sm" }));
+  b.append(icon(name));
   return b;
 }

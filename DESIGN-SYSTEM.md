@@ -25,7 +25,7 @@ Every component, its variants and states, and how to use it. Required by SPEC §
 | Code | Figma |
 |---|---|
 | `.btn` with `--primary` (none), `--secondary`, `--quiet`, `--danger` | Button · Variant = Primary / Secondary / Quiet / Danger |
-| `--sm` | Size = Small (default Medium) |
+| `--sm` | Size = Small (default Medium; Small is drawn in the Default state only) |
 | state | State = Default / Hover / Active / Focus / Disabled / Loading |
 | `--icon` | a separate component, *Icon button* (Variant × Size) |
 | `--block` | no variant: the *Button* instance is set to Fill width |
@@ -73,7 +73,7 @@ The same pattern applies to every component below. Each entry's **Figma** line g
   - Empty: N/A.
 - **Accessibility:** a real `<button type="button|submit">`. Minimum target `--size-target` (44px); `--sm` is 36px, for dense tables and toasts only. Icon-only buttons need `aria-label`.
 - **Do:** start labels with a verb ("Place bid", "Add photos"). **Don't:** put two primary buttons side by side; don't use a button to navigate.
-- **Figma:** *Button* · Variant = Primary / Secondary / Quiet / Danger × Size = Medium / Small × State = Default / Hover / Active / Focus / Disabled / Loading, with an optional leading icon (instance swap). **Split:** *Icon button* (`--icon`) · Variant × Size, with the icon as an instance swap. **Block** (`--block`) isn't a variant: set the *Button* instance to Fill width.
+- **Figma:** *Button* · Variant = Primary / Secondary / Quiet / Danger × State = Default / Hover / Active / Focus / Disabled / Loading at Size = Medium (24), plus Size = Small in the Default state only, one per variant (4): **28 combinations**. Optional leading icon as an instance swap. **Separate component:** *Icon button* (`--icon`) · Variant × Size, with the icon as an instance swap. **Block** (`--block`) isn't a variant: set the *Button* instance to Fill width.
 
 ## Link
 
@@ -216,7 +216,7 @@ How forms behave, for every component below:
 - **Markup:** `<fieldset class="field">` + `<legend class="field__label">` > `.radio-cards` > `<label class="radio-card">` with `<input class="radio-card__input" type="radio">`, `.radio-card__title` and `.radio-card__text`.
 - **States:** default; hover (accent border); **checked** (accent border, accent-soft fill); active (deeper fill); focus (ring around the card); disabled (muted, `cursor: not-allowed`); error (danger borders and a message under the group: "Choose a sale type."); loading and empty: N/A.
 - **Gating:** `enableWhenChosen(form, name, fieldset)` keeps the rest of a form in a `<fieldset disabled>` until an option is chosen.
-- **Accessibility:** native radios: Tab reaches the group, arrow keys move and select, and the legend names the group.
+- **Accessibility:** native radios: Tab reaches the group, arrow keys move and select, and the legend names the group. The space between the legend and the cards is wider than the focus ring, so the ring never covers the question.
 - **Do:** keep to 2–4 options, each with a "when to choose it" line. **Don't:** use radio cards for long lists (use a select).
 - **Figma:** *Radio card* · Checked = On / Off × State = Default / Hover / Active / Focus / Disabled / Error (12). The pair is laid out with auto layout, not as a variant.
 
@@ -226,7 +226,7 @@ How forms behave, for every component below:
 
 - **Markup:** `.field` > `.field__label` + `.uploader[data-uploader][data-required][data-max-mb]` with:
   - `.uploader__add`: a visually hidden `<input type="file" class="uploader__input">`, its `<label class="btn">` as the visible button, `.uploader__count` and help
-  - `.uploader__list` of `.uploader__item`: thumbnail, a "Cover" pill on the first, and move-left, move-right and remove buttons
+  - `.uploader__list` of `.uploader__item`: thumbnail, a "Cover" pill on the first, and a control row underneath with move-left, move-right and remove buttons. Each control is a full `--size-target` (44px) icon button, and each item is as wide as that row, so photos wrap to fewer per row on narrow screens
   - `.uploader__problems`
   - a visually hidden `.uploader__status` live region
   - Behavior: `createUploader(root)` in `src/components/uploader.ts`.
@@ -243,7 +243,7 @@ How forms behave, for every component below:
   - After a move, focus stays on the same button of the photo that moved, or on the other arrow at an end. After a remove, focus goes to the next photo's remove button, or to the add button.
   - Every change is announced ("Moved to photo 2 of 3.", "Photo removed. 2 of 5.").
 - **Do:** say the limits in the help text. **Don't:** hide a problem in a toast; problems stay until the next pick.
-- **Figma:** split in two. *Photo uploader* · State = Empty / With photos / Error / Full (4), with thumbnails as nested instances. *Photo thumbnail* · Position = Cover / Middle / Last / Only × Uploading = On / Off (8). Cover shows the pill and an inactive left arrow, Last an inactive right arrow, and Only (a single photo) both. The arrows and remove are nested *Icon button*s (Secondary, Small).
+- **Figma:** split in two. *Photo uploader* · State = Empty / With photos / Error / Full (4), with thumbnails as nested instances. *Photo thumbnail* · Position = Cover / Middle / Last / Only × Uploading = On / Off (8). Cover shows the pill and an inactive left arrow, Last an inactive right arrow, and Only (a single photo) both. The arrows and remove are nested *Icon button*s (Secondary, Medium: 44px).
 
 ## Error summary
 
