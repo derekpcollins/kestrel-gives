@@ -1,6 +1,6 @@
 # Kestrel Gives — Build Spec & Conformance Rules
 
-**Status:** v1.4 · Owner: Derek Collins · Last updated: Nov 1, 2026
+**Status:** v1.5 · Owner: Derek Collins · Last updated: Nov 1, 2026
 
 This document describes what to build and the rules every contribution must follow, whether a person or an AI agent writes it. Read it in full before writing any code. If something here conflicts with a request, stop and ask.
 
@@ -224,6 +224,8 @@ Each has a name, a one-sentence description, and an original logo. There is **on
 
 ### 7.9 Money
 Money MUST be stored as whole cents (integers), never floating point.
+- **Whole dollars only, everywhere** (added v1.5): starting bid, price, bids, and the proof amount. No cents anywhere. Stored amounts are always a multiple of 100 cents, and the API rejects any other value.
+- Money inputs are `type="text"` with `inputmode="numeric"` and a digits-only pattern, never `type="number"` (which allows decimals, "e" notation, and scroll-wheel changes). If someone types cents or symbols, the field shows the inline message "Whole dollars only."
 
 ## 8. Screens
 
@@ -284,7 +286,7 @@ These run before any change counts as done. Each is a script in `package.json`.
 
 1. **Dependency allowlist:** `package.json` contains only the packages in section 4.
 2. **Token check:** a short Node script (no dependencies) finds raw color, size, or spacing values outside `public/styles/tokens.css`. The only exceptions are the named breakpoint values, and only inside `@media` or `@container` conditions. It also flags `--text-*` scale steps used outside `tokens.css` (use a `--type-*` role), and confirms every color token in that file has a light and a dark value, written `light-dark(<light>, <dark>)`.
-3. **Accessibility:** axe checks via Playwright on every screen, in light and dark mode, at 390px and 1280px wide, with zero violations.
+3. **Accessibility:** axe checks via Playwright on every screen, in light and dark mode, at 390px and 1280px wide, with zero violations. The same check runs keyboard tests for interactive components (added v1.5): operating them with the keyboard alone, where focus goes, and what is announced.
 4. **Type check:** `tsc --noEmit` passes.
 5. **Business rules:** `node:test` tests cover section 7: bid minimums and increments, no self-outbidding, time windows for every phase, the inventory floor, simultaneous bids and purchases (against real Postgres on the `dev` branch), edit locks, delete and cancel rules, the reset lock, and template variable validation.
 6. **Visual review:** Playwright screenshots of every screen in every seeded state, in light and dark mode, at 390px and 1280px wide, with `?demo=off`, for a human to review.

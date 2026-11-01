@@ -141,6 +141,7 @@
   --size-icon-md:     1.25rem; /* 20: in buttons, banners, toasts */
   --size-icon-lg:     1.5rem;  /* 24: standalone, empty states (the drawing grid) */
   --size-toast:       28rem;   /* toast max width */
+  --size-thumb:       6rem;    /* 96: photo uploader thumbnails */
   --size-avatar-sm:   1.75rem; /* 28: bid history */
   --size-avatar-md:   2.25rem; /* 36: header */
   --size-avatar-lg:   3rem;    /* 48: profile menu */

@@ -1,0 +1,16 @@
+/* Form field (DESIGN-SYSTEM.md): label, optional help, the control, then a message.
+   Only optional fields are marked, with "(optional)"; there are no asterisks. Errors are
+   added by src/components/forms.ts; a warning is a message that still lets you submit. */
+.field { display: grid; gap: var(--space-2); min-width: 0; margin: 0; padding: 0; border: 0; }
+.field__label { padding: 0; font: var(--type-label); color: var(--color-text); }
+.field__optional { font-weight: var(--weight-regular); color: var(--color-text-muted); }
+.field__help { font: var(--type-caption); color: var(--color-text-muted); }
+.field__message { display: flex; align-items: flex-start; gap: var(--space-1); font: var(--type-caption); font-weight: var(--weight-semibold); }
+.field__message .icon { margin-block: var(--space-1); }
+.field__message--error { color: var(--color-danger); }
+.field__message--warning { color: var(--color-warning); }
+/* Labels keep full contrast when their control is disabled; the control shows the state. */
+
+/* A row of short fields (price and quantity) that wraps on small screens. */
+.field-row { display: flex; flex-wrap: wrap; gap: var(--space-4); }
+.field-row > .field { flex: 1 1 calc(var(--space-16) * 2.5); }

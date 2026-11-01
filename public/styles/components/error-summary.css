@@ -1,0 +1,4 @@
+/* Error summary (DESIGN-SYSTEM.md): a danger banner at the top of a form after a submit
+   with problems. It takes focus and links to each field. Built by src/components/forms.ts. */
+.error-summary:focus { outline: var(--focus-width) solid var(--color-focus); outline-offset: var(--focus-offset); }
+.error-summary__list { margin: 0; padding-left: var(--space-5); display: grid; gap: var(--space-1); }

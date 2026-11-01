@@ -26,10 +26,15 @@ Every component, its variants and states, and how to use it. Required by SPEC §
 |---|---|
 | `.btn` with `--primary` (none), `--secondary`, `--quiet`, `--danger` | Button · Variant = Primary / Secondary / Quiet / Danger |
 | `--sm` | Size = Small (default Medium) |
-| `--icon`, `--block` | Layout = Icon only / Block (default Inline) |
 | state | State = Default / Hover / Active / Focus / Disabled / Loading |
+| `--icon` | a separate component, *Icon button* (Variant × Size) |
+| `--block` | no variant: the *Button* instance is set to Fill width |
 
 The same pattern applies to every component below. Each entry's **Figma** line gives the component name and its properties.
+
+- **Keep each variant matrix under about 30 combinations.** When a component would need more, split it into separate components and say so in its Figma line (as *Icon button* is split from *Button*).
+- **Layout-only modifiers aren't variants** when Figma can do the same with instance settings (Fill width for `--block`).
+- **Icons are instance-swapped**, not variants (see Icon).
 
 ---
 
@@ -52,7 +57,7 @@ The same pattern applies to every component below. Each entry's **Figma** line g
 - **States:** default only. Hover, focus, active, disabled, loading and error are N/A: an icon isn't interactive and takes its color from its parent (a button's disabled color, a banner's tone). Empty: N/A.
 - **Accessibility:** decorative icons (next to text that says the same thing) get `aria-hidden="true"`. An icon that stands alone gets `label` → `role="img"` and `aria-label`. Icon-only **buttons** put the label on the button instead (`aria-label="Close"`) and keep the icon hidden.
 - **Do:** pair icons with words wherever there's room. **Don't:** use an icon as the only signal of status; don't add drawings outside `icons.ts`.
-- **Figma:** *Icon* · Name = menu … trash · Size = Small / Medium / Large.
+- **Figma:** each icon is its own component, *Icon / menu* … *Icon / trash* (14). Components that contain an icon expose an **instance-swap** property for it. Sizes aren't variants: the instance is resized to 16, 20 or 24 (sm, md, lg) and the stroke stays 2 on the 24-unit grid.
 
 ## Button
 
@@ -68,7 +73,7 @@ The same pattern applies to every component below. Each entry's **Figma** line g
   - Empty: N/A.
 - **Accessibility:** a real `<button type="button|submit">`. Minimum target `--size-target` (44px); `--sm` is 36px, for dense tables and toasts only. Icon-only buttons need `aria-label`.
 - **Do:** start labels with a verb ("Place bid", "Add photos"). **Don't:** put two primary buttons side by side; don't use a button to navigate.
-- **Figma:** *Button* · Variant = Primary / Secondary / Quiet / Danger · Size = Medium / Small · Layout = Inline / Icon only / Block · State = Default / Hover / Active / Focus / Disabled / Loading.
+- **Figma:** *Button* · Variant = Primary / Secondary / Quiet / Danger × Size = Medium / Small × State = Default / Hover / Active / Focus / Disabled / Loading, with an optional leading icon (instance swap). **Split:** *Icon button* (`--icon`) · Variant × Size, with the icon as an instance swap. **Block** (`--block`) isn't a variant: set the *Button* instance to Fill width.
 
 ## Link
 
@@ -78,7 +83,7 @@ The same pattern applies to every component below. Each entry's **Figma** line g
 - **States:** default (underlined); hover (thicker underline); active (text color); focus (ring). Disabled: N/A (a link that goes nowhere should be plain text). Loading, error, empty: N/A.
 - **Accessibility:** always underlined, so it never relies on color alone. Link text says where it goes; avoid "click here".
 - **Do:** use links for navigation, even when they look like buttons elsewhere. **Don't:** open internal pages in new tabs.
-- **Figma:** *Link* · Variant = Default / Quiet / External · State = Default / Hover / Active / Focus.
+- **Figma:** *Link* · Variant = Default / Quiet / External × State = Default / Hover / Active / Focus (12).
 
 ## Status pill
 
@@ -88,7 +93,7 @@ The same pattern applies to every component below. Each entry's **Figma** line g
 - **States:** default only. Hover, focus, active and disabled are N/A: it isn't interactive. Loading and empty are N/A. Error: use `--danger`.
 - **Accessibility:** the word carries the meaning; color and icon only support it. Icons inside are decorative.
 - **Do:** keep it to one or two words. **Don't:** make pills clickable; use a button or link.
-- **Figma:** *Pill* · Tone = Neutral / Success / Warning / Danger · Icon = On / Off.
+- **Figma:** *Pill* · Tone = Neutral / Success / Warning / Danger × Icon = On / Off (8), with the icon as an instance swap.
 
 ## Banner
 
@@ -98,7 +103,7 @@ The same pattern applies to every component below. Each entry's **Figma** line g
 - **States:** default. Hover, focus, active, disabled and loading are N/A on the banner itself; its action button has its own states. **Error** is `--danger`. Empty: N/A (no banner is shown).
 - **Accessibility:** the phase banner and banners that appear after page load use `role="status"`. A danger banner that appears after a failed submit uses `role="alert"`, or focus moves to it, and it links to the field to fix. Icons are decorative.
 - **Do:** say what happened and what to do next. **Don't:** use a banner for a passing confirmation (use a toast); don't stack more than two.
-- **Figma:** *Banner* · Tone = Phase / Success / Warning / Danger / Info · Action = On / Off.
+- **Figma:** *Banner* · Tone = Phase / Info / Success / Warning / Danger × Action = On / Off (10), with the icon as an instance swap and the action as a nested *Button* (Size = Small).
 
 ## Toast
 
@@ -109,7 +114,7 @@ The same pattern applies to every component below. Each entry's **Figma** line g
 - **States:** default; it enters with a short rise that is instant under reduced motion. Hover and focus **pause** the timer (6 seconds by default), and it resumes when the pointer and focus leave. The dismiss button has the quiet button's states. Disabled, loading and empty: N/A. Error: `--danger` ("Couldn't save…"), but an error that needs action goes in a banner.
 - **Accessibility:** announced politely without moving focus. Always dismissible. Never the only place important information appears.
 - **Do:** keep it under one line where possible. **Don't:** put the only way to undo something in a toast.
-- **Figma:** *Toast* · Tone = Neutral / Success / Danger.
+- **Figma:** *Toast* · Tone = Neutral / Success / Danger (3). The dismiss control is a nested *Icon button* (Quiet, Small).
 
 ## Card
 
@@ -119,7 +124,7 @@ The same pattern applies to every component below. Each entry's **Figma** line g
 - **States:** default. For `--link`: hover (deeper shadow, stronger border, underlined title); focus (ring around the whole card when its title link is focused); active (shadow settles). Disabled: N/A (don't link to something unavailable; show a status pill instead). Loading: N/A for now; skeletons come with the item tile in stage C. Empty: use the empty state inside the list, not an empty card. Error: N/A.
 - **Accessibility:** the title is a heading at the right level. In `--link` cards the title's `<a>` is the only tab stop, and its `::after` stretches over the card, so other content in the card shouldn't be interactive.
 - **Do:** keep footers to status and one figure. **Don't:** nest cards; don't put buttons inside a linked card.
-- **Figma:** *Card* · Style = Raised / Flat · Link = On / Off · State = Default / Hover / Focus / Active · Media = On / Off.
+- **Figma:** *Card* · Style = Raised / Flat × Media = On / Off (4). **Split:** *Linked card* (`--link`) · Style × Media × State = Default / Hover / Focus / Active (16). One combined matrix would be 32, and states only apply to linked cards.
 
 ## Empty state
 
@@ -129,7 +134,7 @@ The same pattern applies to every component below. Each entry's **Figma** line g
 - **States:** this *is* the empty state of other components. Default only; its action button has its own states. Hover, focus, active, disabled, loading and error: N/A. An error loading the list uses a danger banner instead.
 - **Accessibility:** the title is a heading at the right level for the page. The icon is decorative.
 - **Do:** say what's missing, why, and the next step, with one action if there is one. **Don't:** blame the person ("You haven't…") or leave it blank.
-- **Figma:** *Empty state* · Action = On / Off.
+- **Figma:** *Empty state* · Action = On / Off (2), with the icon as an instance swap and the action as a nested *Button*.
 
 ## Avatar
 
@@ -139,4 +144,113 @@ The same pattern applies to every component below. Each entry's **Figma** line g
 - **States:** default, and *crowned* (top bidder). Hover, focus and active: N/A (avatars sit inside buttons or rows that have their own states, such as the profile menu button in stage C). Disabled, loading, error and empty: N/A; with no name, show no avatar.
 - **Accessibility:** `aria-hidden="true"`, because it always sits next to the person's name. The name carries "(top bidder)" as visually hidden text. The crown edge passes 3:1 against the avatar and the page in both modes (BUILD-LOG, stage A part 1).
 - **Do:** show the crown everywhere that person's avatar appears in the item's bid history. **Don't:** use the crown for anything but the current high bid.
-- **Figma:** *Avatar* · Size = Small / Medium / Large · Crown = On / Off.
+- **Figma:** *Avatar* · Size = Small / Medium / Large × Crown = On / Off (6).
+
+---
+
+## Forms (stage B)
+
+How forms behave, for every component below:
+- **Native controls and built-in checks.** `required`, `maxlength`, `pattern` and `accept` sit on the controls. `src/components/forms.ts` (`enhanceForm`) turns off the browser's bubbles (`novalidate`), reads the browser's own validity, and shows our messages inline.
+- **When messages appear.** Only on submit. After that, a field that's showing a message re-checks as it's edited: the message updates and clears when fixed. New messages never appear on blur, because that shifts the layout under the pointer (the submit button moved mid-click when we tried it).
+- **Error summary.** A submit with problems puts an error summary at the top of the form, moves focus to it, and links each problem to its field.
+- **Messages** are short instructions written from the field's in-sentence name (`data-message-name="a starting bid"` → "Enter a starting bid."). Amounts in messages come from the field's settings (`data-min`), never fixed text (SPEC §7.4).
+- **Money** is whole dollars only, everywhere (SPEC §7.9).
+
+## Form field
+
+**Purpose:** one question: label, optional help, the control, then a message.
+
+- **Markup:** `.field` (a `<div>`, or a `<fieldset>` for a radio group) > `.field__label` (`<label for>` or `<legend>`), `.field__help` (linked with `aria-describedby`), the control, `.field__message`. `.field-row` puts short fields side by side and wraps them on small screens.
+- **Optional fields** say `<span class="field__optional">(optional)</span>` in the label. Required fields aren't marked: there are no asterisks.
+- **Variants:** `.field--error` with `.field__message--error`; `.field--warning` with `.field__message--warning` (something worth knowing that still lets you submit, such as a proof amount below the winning bid).
+- **States:** default; hover and focus are on the control; **disabled**: the control is disabled and the label keeps full contrast; **error**: danger border on the control (`aria-invalid="true"`) and a message with an alert icon, linked with `aria-describedby`; loading: N/A (the submit button shows it); empty: an empty optional field is fine, and an empty required field is an error on submit.
+- **Accessibility:** every control has a visible label. Messages are linked with `aria-describedby`, and the message's icon is decorative.
+- **Do:** write labels as short nouns ("Starting bid") and help as one sentence. **Don't:** use placeholder text as the label; don't mark required fields.
+- **Figma:** *Field* · State = Default / Error / Warning / Disabled × Help = On / Off × Optional = On / Off (16). The control is a nested instance (*Input*, *Money input*, *Select* …).
+
+## Text input and textarea
+
+**Purpose:** free text: title, description, notes.
+
+- **Classes:** `.input` on `<input>` and `<textarea>`. `.input--short` caps the width for short values.
+- **States:** default; hover (darker border); focus (ring and accent border); active: N/A (focus covers it); disabled (muted fill, disabled text); **read-only** (muted fill, normal text) for values that can't change, such as a locked sale type (SPEC §7.3); error (`aria-invalid`, danger border); loading and empty: N/A (an empty input is just empty, and help says what to enter).
+- **Accessibility:** 44px minimum height. Long values scroll inside the box; that's expected and allowed by the reflow check.
+- **Do:** set `maxlength` where a limit exists so the message can name it. **Don't:** turn off resizing on textareas.
+- **Figma:** *Input* · Type = Text / Textarea × State = Default / Hover / Focus / Disabled / Read-only / Error (12). `.input--short` isn't a variant: set a fixed width on the instance.
+
+## Money input
+
+**Purpose:** whole-dollar amounts: starting bid, price, bid, and proof amount (SPEC §7.9).
+
+- **Markup:** `.input-group` > `.input-group__affix` "$" (`aria-hidden`) + `<input class="input input--money" type="text" inputmode="numeric" pattern="[0-9]+" autocomplete="off" data-money data-min="…">`. Never `type="number"`, which allows decimals, "e" notation and scroll-wheel changes.
+- **Rules:** digits only. Cents or symbols (`12.50`, `$20`, `1,000`) show "Whole dollars only." Below `data-min` shows "Enter at least $10." with the amount taken from the attribute, which comes from event settings. Stored as cents with `dollarsToCents()`, always a multiple of 100.
+- **States:** as text input, plus **warning**: amber border and message ("That's less than your $60 winning bid. You can still submit; an admin will review it.").
+- **Accessibility:** the "$" is visual only; the label and help say it's dollars. The numeric keyboard appears on phones.
+- **Do:** put the minimum in the help text, computed from settings. **Don't:** accept or display cents anywhere.
+- **Figma:** *Money input* · State = Default / Hover / Focus / Disabled / Error / Warning (6).
+
+## Select
+
+**Purpose:** choosing one of a known list (time zone, viewing as).
+
+- **Markup:** `.select` > `<select class="input">` + the `chevron-down` icon. It's the native control, so the keyboard and the phone picker work as usual.
+- **States:** default, hover, focus, disabled and error as text input. When nothing is chosen yet, the first option is a prompt ("Choose a time zone") with `value=""`. Loading: N/A. Empty: N/A (a select always has options).
+- **Do:** use radio cards instead when there are two or three options that need explaining. **Don't:** build a custom listbox.
+- **Figma:** *Select* · State = Default / Hover / Focus / Disabled / Error (5), with the chevron as a nested *Icon / chevron-down*.
+
+## Date-time input
+
+**Purpose:** an event date and time, entered in the event's time zone (SPEC §7.1).
+
+- **Markup:** `.input-group` > `<input class="input" type="datetime-local">` + `.input-group__affix` with the zone abbreviation ("ET"). Help names the zone in full. Converting to and from UTC comes with event settings (Milestone 6).
+- **States:** as text input. Error for an incomplete value: "Enter a complete date and time."
+- **Accessibility:** native, so each part (month, day, year, time) works with the keyboard and announces itself.
+- **Do:** always show the zone. **Don't:** show a time without saying which zone it's in.
+- **Figma:** *Date-time input* · State = Default / Focus / Disabled / Error (4), with the zone suffix as a text property.
+
+## Radio card
+
+**Purpose:** a choice between a few big options, each with a title and a line on when to choose it: the submit form's sale type (SPEC §7.2).
+
+- **Markup:** `<fieldset class="field">` + `<legend class="field__label">` > `.radio-cards` > `<label class="radio-card">` with `<input class="radio-card__input" type="radio">`, `.radio-card__title` and `.radio-card__text`.
+- **States:** default; hover (accent border); **checked** (accent border, accent-soft fill); active (deeper fill); focus (ring around the card); disabled (muted, `cursor: not-allowed`); error (danger borders and a message under the group: "Choose a sale type."); loading and empty: N/A.
+- **Gating:** `enableWhenChosen(form, name, fieldset)` keeps the rest of a form in a `<fieldset disabled>` until an option is chosen.
+- **Accessibility:** native radios: Tab reaches the group, arrow keys move and select, and the legend names the group.
+- **Do:** keep to 2–4 options, each with a "when to choose it" line. **Don't:** use radio cards for long lists (use a select).
+- **Figma:** *Radio card* · Checked = On / Off × State = Default / Hover / Active / Focus / Disabled / Error (12). The pair is laid out with auto layout, not as a variant.
+
+## Photo uploader
+
+**Purpose:** add 1–5 photos (JPEG, PNG or WebP, up to 4 MB each), put them in order, and pick the cover (first) (SPEC §7.2, §4).
+
+- **Markup:** `.field` > `.field__label` + `.uploader[data-uploader][data-required][data-max-mb]` with:
+  - `.uploader__add`: a visually hidden `<input type="file" class="uploader__input">`, its `<label class="btn">` as the visible button, `.uploader__count` and help
+  - `.uploader__list` of `.uploader__item`: thumbnail, a "Cover" pill on the first, and move-left, move-right and remove buttons
+  - `.uploader__problems`
+  - a visually hidden `.uploader__status` live region
+  - Behavior: `createUploader(root)` in `src/components/uploader.ts`.
+- **States:**
+  - Default/empty (dashed box, "0 of 5 photos"), and with photos.
+  - Hover, active and focus come from the buttons; the file input's focus shows on its label button.
+  - Disabled: the edge arrows use `aria-disabled` (so focus can stay on them).
+  - **Full** (`.uploader--full`): the add button looks inactive but stays focusable, and pressing it explains why ("Remove one to add another").
+  - **Loading**: `.uploader__item--uploading` dims the thumbnail with "Uploading…". It's wired to storage in Milestone 5.
+  - **Error**: "Add at least one photo." on submit, plus a message per bad file that names it ("“scan.gif” isn't a JPEG, PNG or WebP image.", "“cabin.png” is larger than 4 MB.", "You can add up to 5 photos. 1 photo wasn't added.").
+- **Accessibility:**
+  - No dragging (SPEC §6).
+  - Each thumbnail's alt gives its position: "Photo 1 of 3 (cover): starter.jpg".
+  - After a move, focus stays on the same button of the photo that moved, or on the other arrow at an end. After a remove, focus goes to the next photo's remove button, or to the add button.
+  - Every change is announced ("Moved to photo 2 of 3.", "Photo removed. 2 of 5.").
+- **Do:** say the limits in the help text. **Don't:** hide a problem in a toast; problems stay until the next pick.
+- **Figma:** split in two. *Photo uploader* · State = Empty / With photos / Error / Full (4), with thumbnails as nested instances. *Photo thumbnail* · Position = Cover / Middle / Last / Only × Uploading = On / Off (8). Cover shows the pill and an inactive left arrow, Last an inactive right arrow, and Only (a single photo) both. The arrows and remove are nested *Icon button*s (Secondary, Small).
+
+## Error summary
+
+**Purpose:** after a submit with problems, one place that lists them all and gets you to each.
+
+- **Markup:** `.banner.banner--danger.error-summary` (`role="alert"`, `tabindex="-1"`) with a title ("2 fields need attention") and `.error-summary__list` of links ("Starting bid: Whole dollars only."). Built by `enhanceForm`; it's removed once everything is fixed.
+- **States:** default (it only exists when there are errors); focus (ring, since it takes focus on submit); links have link states. Hover, active, disabled, loading and empty: N/A.
+- **Accessibility:** focus moves to it, so screen readers read it right away. Each link moves focus to its field.
+- **Do:** keep messages identical to the ones under the fields. **Don't:** show it before the first submit.
+- **Figma:** *Error summary* · no variants: a *Banner* (Tone = Danger) with a list of links in place of the text.

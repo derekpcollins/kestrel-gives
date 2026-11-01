@@ -231,7 +231,24 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 - **AI did well:** kept every value on tokens, and mapped the eight SPEC states for each component instead of only the interactive ones.
 - **Checks:** `npm run check` passes all seven.
 
-### 2026-11-01 — Stage A checkpoint: owner review (15:40–15:55 EST)
+### 2026-11-01 — Stage A checkpoint: owner review (15:22–15:24 EST)
 - **Owner stepped in:** approved stage A with fixes. Removed payment language from the samples ("Pay now", "Paid", "Proof of payment due" → "Upload proof", "Approved"/"Proof due", "Proof of donation due"), corrected the demo banner (no nightly reset), made the donor a coworker, made the info banner neutral, and asked for a content rule in DESIGN-SYSTEM.md (#51).
 - **Hard / caught:** the longer "Upload proof" button pushed the success banner 11px past a 320px screen; the reflow check caught it, and banner actions now wrap. "Receipt" was left off the banned-word list because SPEC names the "bid receipt" and "purchase receipt" statuses.
+- **Checks:** `npm run check` passes all seven.
+
+### 2026-11-01 — Stage B (forms) (15:24–15:40 EST)
+- **Owner stepped in:** whole dollars only, everywhere, including the proof amount (my proposal allowed cents there), with digits-only text inputs and the message "Whole dollars only."; added to SPEC §7.9 (v1.5, #52). Confirmed "(optional)" markers with no asterisks. Kept the success and info banner colors.
+- **Built:**
+  - **Rules (no DOM, unit tested):** `src/components/form-rules.ts`: whole-dollar parsing, `dollarsToCents`, field messages, photo checks, reordering. 13 tests.
+  - **Behavior:** `forms.ts` (`enhanceForm`, error summary, `enableWhenChosen`, custom checks) and `uploader.ts`.
+  - **CSS:** `field.css`, `input.css` (text, textarea, money, select, date-time, prefix and suffix), `radio-card.css`, `uploader.css`, `error-summary.css`, and a `--size-thumb` token.
+  - **Gallery:** every state in light and dark, plus a working "Submit an item" demo: the sale type unlocks the form, auction or instant-sale price fields, photos, and the error summary.
+  - **Docs:** DESIGN-SYSTEM.md has form conventions and 8 new entries. SPEC v1.5 covers §7.9 money and §12.3 keyboard tests (#53).
+  - **Keyboard tests:** `tests/e2e/keyboard.spec.ts`: sale-type gating, summary focus and links, whole-dollar and minimum messages that update and clear, photo reorder and remove with focus and announcements, and file problems.
+- **Hard / caught:**
+  - The keyboard test caught a real bug: validating on blur added a message above the submit button during the click, so the button moved and the click missed. Messages now appear only on submit.
+  - axe flagged the gray legend on a disabled radio group and the full uploader's add button. Labels now keep full contrast, and the full button uses muted text, because it stays focusable.
+  - The reflow check flagged a long value inside a text input. Inputs scroll their own text, so the checker now skips form controls; synthetic cases confirm it still catches clipping and an input that widens the page.
+  - The gallery's bid-history list style leaked into the uploader lists, and radio cards spread their text to match a taller neighbor; both were fixed after reviewing the screenshots.
+- **AI did well:** kept the money rule in one tested module that the server can reuse, and treated the test failure as a UX bug instead of loosening the test.
 - **Checks:** `npm run check` passes all seven.

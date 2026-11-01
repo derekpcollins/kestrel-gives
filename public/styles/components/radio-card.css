@@ -1,0 +1,29 @@
+/* Radio card (DESIGN-SYSTEM.md): a choice between a few big options, each with a title
+   and a line on when to choose it. A native radio inside a label, so arrows, Space and
+   screen readers work as usual. Side by side when there's room, stacked when not. */
+.radio-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-16) * 3.5)), 1fr)); gap: var(--space-3); }
+.radio-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: var(--space-3);
+  row-gap: var(--space-1);
+  align-items: start;
+  align-content: start;
+  padding: var(--space-4);
+  border: var(--border-thick) solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard);
+}
+.radio-card__input { grid-row: span 2; width: var(--size-icon-md); height: var(--size-icon-md); margin: 0; accent-color: var(--color-accent); cursor: inherit; }
+.radio-card__title { font: var(--type-label); color: var(--color-text); }
+.radio-card__text { font: var(--type-caption); color: var(--color-text-muted); }
+.radio-card:hover, .radio-card.is-hover { border-color: var(--color-accent); }
+.radio-card:has(:checked) { border-color: var(--color-accent); background: var(--color-accent-soft); }
+.radio-card:active, .radio-card.is-active { background: var(--color-accent-soft-active); }
+.radio-card:has(:focus-visible), .radio-card.is-focus { outline: var(--focus-width) solid var(--color-focus); outline-offset: var(--focus-offset); }
+.radio-card__input:focus-visible { outline: none; }
+.radio-card:has(:disabled) { border-color: var(--color-border); background: var(--color-surface-muted); cursor: not-allowed; }
+.radio-card:has(:disabled) .radio-card__title, .radio-card:has(:disabled) .radio-card__text { color: var(--color-text-disabled); }
+.radio-card:has([aria-invalid="true"]) { border-color: var(--color-danger); }
