@@ -102,7 +102,7 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 ## Milestone 1: Design system
 
 **Started:** 2026-11-01 13:23 EST (clocks changed overnight: EDT → EST)
-**Ended:** —
+**Ended:** 2026-11-01 16:26 EST (C2 approved and pushed) · about 3 hours
 
 ### 2026-11-01 — Stage 1: visual directions
 - **Slip:** while checking which fonts the screenshots would render with, Claude listed macOS's system font folders, which are outside the project. They contained only system fonts, nothing from the original work, but it broke the work-only-in-this-folder rule. Flagged to the owner right away. Font choices use standard cross-platform stacks instead of relying on what's installed.
@@ -302,3 +302,29 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   - **Tests:** Playwright won't click an `aria-disabled` button (it waits for it to be enabled), so the end-of-carousel check presses Enter. Chrome puts a space before visually hidden text in an accessible name ("…a month , Outbid"); speech is the same, so the test allows it.
 - **AI did well / owner to confirm:** the ending-soon (24 hours) and low-stock (3 or fewer) thresholds are provisional (#61).
 - **Checks:** `npm run check` passes all seven.
+
+### 2026-11-01 — C2 checkpoint: owner review (16:20–16:26 EST)
+- **Owner stepped in:** approved C2. Made the status thresholds final (24 hours, 3 or fewer), written into SPEC §10 (v1.7) with the numbers in one module, `src/components/thresholds.ts` (#61). Moved the banner's action button to the full 44px size rather than adding banners to the §6 exception (#66).
+- **Caught along the way:** the Stage A gallery generator in the scratchpad still had the pre-review "Pay now" copy; brought in line with the page.
+- **Checks:** `npm run check` passes all seven; `npm audit` shows only the accepted zod advisory (#27). Pushed as `6b9474c`.
+
+### Milestone 1 retrospective
+- **Time spent:** about 3 hours (13:23–16:26 EST), across visual directions, logo handling, the token sheet and four component stages (A, B, C1, C2): 27 components in the gallery, each in light and dark, with SPEC going from v1.3 to v1.7 and DECISIONS #39–#66.
+- **What went well:**
+  - **Checks found real bugs, not just style slips.** axe caught faded pills on ended tiles; the 320px reflow check caught the collapsed header, a select's widest option and visually hidden text escaping a table's scroll box; the keyboard tests caught focus landing on `<main>` after outside clicks.
+  - **Words computed from data.** Tile amounts and statuses come from one tested module, so the gallery shows what the app will show.
+  - **Checkpoints kept scope tight.** Each stage ended with screenshots and a short list of open questions, and nothing was pushed before approval.
+  - **Figma-ready docs.** Every component has a DESIGN-SYSTEM.md entry with states and a variant matrix under 30.
+- **What was hard:**
+  - **The logo files:** a built-in white background, three slightly different teals, and the rule not to edit them shaped the hero card and dark-mode tiles.
+  - **Reflow at 320px** took several rounds (header, selects, tables).
+  - **Test-tool quirks:** Playwright treating `aria-disabled` as disabled, Chrome's spacing in accessible names, and string-form `evaluate` silently doing nothing.
+  - **Specificity and stacking surprises** in CSS (the empty table cell, absolutely positioned hidden text).
+- **Where the owner stepped in:**
+  - **Direction and brand:** chose direction C, supplied the final logo files and set the logo rule (#39); chose Plus Jakarta Sans and the type-only lockup.
+  - **Content:** no payment language, donors are coworkers, no scheduled demo reset.
+  - **Accessibility rules:** 44px targets as SPEC §6 (#56), 44px thumbnail controls (#54), the banner action at 44px (#66).
+  - **Patterns:** disclosures instead of `role="menu"` (#58), no tabs (#59), final tile thresholds (#61), the C2 component brief.
+  - **Process:** Figma mirroring with matrices under 30 combinations; split components instead of growing them.
+- **Slip to remember:** in Stage 1, Claude listed macOS system font folders outside the project; flagged right away. Nothing outside the folder has been touched since.
+- **Owner sign-off:** C2 approved and pushed on 2026-11-01. Milestone 1 is complete.
