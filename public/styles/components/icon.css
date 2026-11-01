@@ -1,0 +1,15 @@
+/* Icon (DESIGN-SYSTEM.md): original line icons from src/components/icons.ts, drawn on a
+   24-unit grid with one stroke width. They take the text color around them. */
+.icon {
+  flex: none;
+  width: var(--size-icon-md);
+  height: var(--size-icon-md);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vertical-align: middle;
+}
+.icon--sm { width: var(--size-icon-sm); height: var(--size-icon-sm); }
+.icon--lg { width: var(--size-icon-lg); height: var(--size-icon-lg); }

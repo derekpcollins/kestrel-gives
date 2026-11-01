@@ -1,0 +1,32 @@
+/* Toast (DESIGN-SYSTEM.md): a brief confirmation in one polite live region at the bottom
+   of the screen. Created by src/components/toast.ts. */
+.toast-region {
+  position: fixed;
+  inset-inline: 0;
+  bottom: var(--space-4);
+  z-index: var(--layer-toast);
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  padding-inline: var(--space-4);
+  pointer-events: none;
+}
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: min(var(--size-toast), 100%);
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-inverse);
+  color: var(--color-on-inverse);
+  box-shadow: var(--shadow-lg);
+  pointer-events: auto;
+  animation: toast-in var(--duration-base) var(--ease-standard);
+}
+.toast__message { flex: 1; font: var(--type-body); }
+.toast .toast__dismiss { color: inherit; }
+.toast .toast__dismiss:hover, .toast .toast__dismiss.is-hover { background: transparent; box-shadow: inset 0 0 0 var(--border-thin) currentColor; }
+/* In the gallery a toast is shown in place, not fixed. */
+.toast--static { animation: none; }
+@keyframes toast-in { from { opacity: 0; translate: 0 var(--space-4); } }

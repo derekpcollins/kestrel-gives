@@ -216,3 +216,17 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   - **Floating crown:** the first placement floated above the small avatar instead of sitting on its edge. Caught in the 3× screenshots and moved.
   - **Reflow false positive:** the reflow check flagged the visually-hidden text, which clips on purpose. The checker now skips elements of 1px or less, and synthetic cases confirm real clipping is still caught.
   - **Crown contrast:** contrast was checked where the crown meets the avatar as well as the page. Each edge has one part at 3:1 or better: in light mode the fill against the dark-teal avatar (4.9:1) and the outline against the page (7.5:1); in dark mode the outline against the light-teal avatar (3.9:1) and the fill against the page (12.4:1).
+
+### 2026-11-01 — Stage A (components), part 2: the core components (15:09–15:22 EST)
+- **Built:**
+  - **Tokens:** accent and danger hover/active, `--color-on-danger`, `--size-target-sm`, icon sizes sm/md/lg, `--size-toast`, `--duration-spin` (0ms under reduced motion). All contrast-checked on the token sheet.
+  - **Icons:** `src/components/icons.ts`, 14 original line icons with `icon()` and `hydrateIcons()`, plus `icon.css`.
+  - **Components:** `button.css` (4 variants, 2 sizes, icon and block layouts, 6 states including loading), `link.css`, `pill.css`, `banner.css`, `toast.css` with `src/components/toast.ts`, `card.css`, `empty.css`.
+  - **Gallery:** a section per component, each state in light and dark side by side, and a live toast demo (`src/design-system.ts`).
+  - **DESIGN-SYSTEM.md:** conventions, Figma naming, and an entry per component with purpose, classes, all eight SPEC states (N/A with a reason where they don't apply), accessibility, do/don't, and Figma component and property names (#50).
+- **Hard / caught:**
+  - `check:tokens` flagged "24px" in a CSS comment (the comment stripper handles single-line comments only); reworded to "24-unit grid".
+  - `hydrateIcons()` dropped the placeholder's classes, so the empty-state icon lost its muted color; it now carries classes over.
+  - The first card layout nested the pane grid inside each pane, giving one huge card per row; cards now use a compact grid.
+- **AI did well:** kept every value on tokens, and mapped the eight SPEC states for each component instead of only the interactive ones.
+- **Checks:** `npm run check` passes all seven.

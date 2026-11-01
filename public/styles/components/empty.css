@@ -1,0 +1,15 @@
+/* Empty state (DESIGN-SYSTEM.md): what a list or page shows when there's nothing in it
+   yet. Says what's missing, why, and the next step. */
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  padding: var(--space-10) var(--space-6);
+  border: var(--border-thin) dashed var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+.empty__icon { color: var(--color-text-muted); }
+.empty__title { font: var(--type-heading-3); }
+.empty__text { max-width: var(--size-content-narrow); color: var(--color-text-muted); }
+.empty__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-3); padding-top: var(--space-2); }

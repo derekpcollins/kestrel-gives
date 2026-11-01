@@ -20,3 +20,4 @@
 .gallery__bids .amount { font: var(--type-body); font-weight: var(--weight-semibold); color: var(--color-price); font-variant-numeric: var(--figures-amount); }
 .gallery__bids .when { font: var(--type-caption); color: var(--color-text-muted); font-variant-numeric: var(--figures-amount); }
 .gallery footer { padding-top: var(--space-6); font: var(--type-caption); color: var(--color-text-muted); }
+.gallery__cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, calc(var(--space-16) * 3)), 1fr)); gap: var(--space-4); }

@@ -39,7 +39,9 @@
   /* ---------- Color: accent (teal) ---------- */
   --color-accent:          light-dark(#036765, #5CC8C0); /* primary button, avatar, current nav */
   --color-accent-hover:    light-dark(#024E4D, #84DAD3);
+  --color-accent-active:   light-dark(#013B3A, #A5E4DF); /* primary button pressed */
   --color-accent-soft:     light-dark(#E1F1EF, #173A39); /* secondary hover, selected radio card */
+  --color-accent-soft-active: light-dark(#C9E6E2, #1F4A48); /* secondary and quiet buttons pressed */
   --color-on-accent:       light-dark(#FFFFFF, #0F1F1F);
   --color-link:            light-dark(#036765, #5CC8C0);
   --color-focus:           light-dark(#036765, #5CC8C0);
@@ -51,6 +53,9 @@
   --color-warning-soft:    light-dark(#FFF0C2, #3A3112);
   --color-danger:          light-dark(#9E2A30, #FFB3B0); /* outbid, rejected, cancelled, errors */
   --color-danger-soft:     light-dark(#FBDDDD, #46201F);
+  --color-danger-hover:    light-dark(#7F1F25, #FFC9C6); /* danger button hover */
+  --color-danger-active:   light-dark(#651419, #FFDCDA); /* danger button pressed */
+  --color-on-danger:       light-dark(#FFFFFF, #0F1F1F); /* text on a danger button */
 
   /* ---------- Color: special surfaces ---------- */
   --color-banner:          light-dark(#FFE08A, #FFE08A); /* phase banner: butter in both modes */
@@ -131,6 +136,11 @@
   /* ---------- Sizes ---------- */
   --size-px:          1px;     /* one CSS pixel: the visually-hidden pattern */
   --size-target:      2.75rem; /* 44: minimum height for buttons and inputs */
+  --size-target-sm:   2.25rem; /* 36: small buttons in dense rows (tables); still above WCAG's 24 */
+  --size-icon-sm:     1rem;    /* 16: in pills and small buttons */
+  --size-icon-md:     1.25rem; /* 20: in buttons, banners, toasts */
+  --size-icon-lg:     1.5rem;  /* 24: standalone, empty states (the drawing grid) */
+  --size-toast:       28rem;   /* toast max width */
   --size-avatar-sm:   1.75rem; /* 28: bid history */
   --size-avatar-md:   2.25rem; /* 36: header */
   --size-avatar-lg:   3rem;    /* 48: profile menu */
@@ -166,6 +176,7 @@
   --duration-fast: 120ms; /* hover, press */
   --duration-base: 200ms; /* toasts, tabs */
   --duration-slow: 320ms; /* dialogs, carousel */
+  --duration-spin: 900ms; /* one turn of the loading spinner */
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-exit:     cubic-bezier(0.4, 0, 1, 1);
 
@@ -192,5 +203,6 @@
     --duration-fast: 0ms;
     --duration-base: 0ms;
     --duration-slow: 0ms;
+    --duration-spin: 0ms; /* the spinner stays still; the label still says it's working */
   }
 }

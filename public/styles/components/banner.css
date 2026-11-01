@@ -1,0 +1,27 @@
+/* Banner (DESIGN-SYSTEM.md): a message about the whole page or event that stays until
+   the situation changes. Phase (butter) says where the event is; the others report
+   outcomes. Icon, then a title and text, then an optional action. */
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: var(--border-thin) solid transparent;
+  background: var(--color-accent-soft);
+  color: var(--color-text);
+}
+.banner > .icon { margin-block: var(--space-1); }
+.banner__body { flex: 1; display: grid; gap: var(--space-1); min-width: 0; }
+.banner__title { font: var(--type-label); }
+.banner__text { font: var(--type-body); }
+.banner__action { flex: none; align-self: center; }
+
+.banner--phase   { background: var(--color-banner); color: var(--color-on-banner); }
+.banner--success { background: var(--color-success-soft); }
+.banner--success > .icon { color: var(--color-success); }
+.banner--warning { background: var(--color-warning-soft); }
+.banner--warning > .icon { color: var(--color-warning); }
+.banner--danger  { background: var(--color-danger-soft); }
+.banner--danger > .icon { color: var(--color-danger); }
+.banner--info > .icon { color: var(--color-link); }

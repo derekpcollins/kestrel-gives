@@ -1,0 +1,9 @@
+/* Link (DESIGN-SYSTEM.md): text that goes somewhere. Always underlined, so it never relies
+   on color alone. Variants: default, quiet (inherits text color), external (new tab, with
+   the external icon and hidden "opens in a new tab" text). */
+.link { color: var(--color-link); text-decoration: underline; text-decoration-thickness: var(--border-thin); text-underline-offset: var(--space-1); border-radius: var(--radius-sm); }
+.link:hover, .link.is-hover { text-decoration-thickness: var(--border-thick); }
+.link:active, .link.is-active { color: var(--color-text); }
+.link.is-focus { outline: var(--focus-width) solid var(--color-focus); outline-offset: var(--focus-offset); }
+.link--quiet { color: inherit; }
+.link--external { display: inline-flex; align-items: center; gap: var(--space-1); }

@@ -1,0 +1,17 @@
+/* Pill (DESIGN-SYSTEM.md): a short, non-interactive status label ("Paid", "Ending soon").
+   The words carry the meaning; color and the optional icon only support them. */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
+  font: var(--type-badge);
+  white-space: nowrap;
+}
+.pill .icon { width: var(--size-icon-sm); height: var(--size-icon-sm); }
+.pill--success { background: var(--color-success-soft); color: var(--color-success); }
+.pill--warning { background: var(--color-warning-soft); color: var(--color-warning); }
+.pill--danger  { background: var(--color-danger-soft);  color: var(--color-danger); }

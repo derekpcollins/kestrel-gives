@@ -1,0 +1,64 @@
+/* Button (DESIGN-SYSTEM.md): one per action. Variants primary, secondary, quiet, danger;
+   sizes default and sm; icon-only and block layouts. The .is-* classes force a state for
+   the gallery and Figma only; the app relies on the real pseudo-classes. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--size-target);
+  padding: var(--space-2) var(--space-5);
+  border: var(--border-thin) solid transparent;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font: var(--type-button);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
+}
+.btn:hover, .btn.is-hover { background: var(--color-accent-hover); }
+.btn:active, .btn.is-active { background: var(--color-accent-active); }
+.btn.is-focus { outline: var(--focus-width) solid var(--color-focus); outline-offset: var(--focus-offset); }
+
+.btn--secondary { background: var(--color-surface); color: var(--color-link); border-color: var(--color-border-strong); }
+.btn--secondary:hover, .btn--secondary.is-hover { background: var(--color-accent-soft); }
+.btn--secondary:active, .btn--secondary.is-active { background: var(--color-accent-soft-active); }
+
+.btn--quiet { background: transparent; color: var(--color-text); }
+.btn--quiet:hover, .btn--quiet.is-hover { background: var(--color-surface-muted); }
+.btn--quiet:active, .btn--quiet.is-active { background: var(--color-accent-soft-active); }
+
+.btn--danger { background: var(--color-danger); color: var(--color-on-danger); }
+.btn--danger:hover, .btn--danger.is-hover { background: var(--color-danger-hover); }
+.btn--danger:active, .btn--danger.is-active { background: var(--color-danger-active); }
+
+.btn--sm { min-height: var(--size-target-sm); padding: var(--space-1) var(--space-4); font: var(--type-label); }
+.btn--icon { padding: 0; width: var(--size-target); }
+.btn--icon.btn--sm { width: var(--size-target-sm); }
+.btn--block { display: flex; width: 100%; }
+
+/* Disabled: still readable, clearly inactive. Prefer aria-disabled so the button stays
+   focusable and can explain why; the native disabled attribute is styled the same. */
+.btn:disabled, .btn[aria-disabled="true"]:not([aria-busy="true"]) {
+  background: var(--color-surface-muted);
+  border-color: var(--color-border);
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+
+/* Loading: aria-busy="true" plus aria-disabled="true" while the request runs. The label
+   stays (it can change to say what's happening); a spinner appears before it. */
+.btn[aria-busy="true"] { cursor: progress; }
+.btn[aria-busy="true"]::before {
+  content: "";
+  flex: none;
+  width: var(--size-icon-sm);
+  height: var(--size-icon-sm);
+  border: var(--border-thick) solid currentColor;
+  border-right-color: transparent;
+  border-radius: var(--radius-pill);
+  animation: btn-spin var(--duration-spin) linear infinite;
+}
+@keyframes btn-spin { to { rotate: 1turn; } }
