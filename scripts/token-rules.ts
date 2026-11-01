@@ -13,16 +13,52 @@ const PATTERNS = [
   /(?<![\w.-])(?:\d*\.)?\d+(?:px|rem|em)\b/gi,
 ];
 
-export function findRawValues(text: string): RawValue[] {
+// Breakpoint values (from tokens.css --breakpoint-*) are allowed only inside an @media or
+// @container condition, which may span lines up to its opening brace. Everything else
+// still counts as a raw value.
+export function findRawValues(text: string, breakpoints: ReadonlySet<string> = new Set()): RawValue[] {
   const found: RawValue[] = [];
+  let inCondition = false;
   text.split("\n").forEach((content, index) => {
     // CSS and TS comments, and HTML comments on one line, don't style anything.
     const code = content.replace(/\/\*.*?\*\/|<!--.*?-->|\/\/.*$/g, "");
-    for (const pattern of PATTERNS) {
-      for (const match of code.matchAll(pattern)) {
-        if (!/^(?:0*\.?0+)(?:px|rem|em)$/i.test(match[0])) found.push({ line: index + 1, value: match[0] });
+    // Split the line into the part inside a condition and the part outside it.
+    let condition = "";
+    let rest = code;
+    const at = code.search(/@(?:media|container)\b/);
+    if (inCondition || at >= 0) {
+      const from = inCondition ? 0 : at;
+      const brace = code.indexOf("{", from);
+      condition = brace >= 0 ? code.slice(from, brace) : code.slice(from);
+      rest = code.slice(0, from) + (brace >= 0 ? code.slice(brace) : "");
+      inCondition = brace < 0;
+    }
+    for (const [part, allowBreakpoints] of [[condition, true], [rest, false]] as const) {
+      for (const pattern of PATTERNS) {
+        for (const match of part.matchAll(pattern)) {
+          const value = match[0];
+          if (/^(?:0*\.?0+)(?:px|rem|em)$/i.test(value)) continue;
+          if (allowBreakpoints && breakpoints.has(value.toLowerCase())) continue;
+          found.push({ line: index + 1, value });
+        }
       }
     }
+  });
+  return found.sort((a, b) => a.line - b.line);
+}
+
+// The allowed breakpoint values, read from tokens.css (--breakpoint-*: <length>;).
+export function readBreakpoints(tokensCss: string): Set<string> {
+  const code = tokensCss.replace(/\/\*[\s\S]*?\*\//g, "");
+  return new Set([...code.matchAll(/--breakpoint-[\w-]+\s*:\s*([^;]+);/g)].map((m) => m[1]!.trim().toLowerCase()));
+}
+
+// SPEC §5: components set type with the --type-* roles, not the --text-* scale steps.
+export function findScaleUse(text: string): RawValue[] {
+  const found: RawValue[] = [];
+  text.split("\n").forEach((content, index) => {
+    const code = content.replace(/\/\*.*?\*\/|<!--.*?-->|\/\/.*$/g, "");
+    for (const match of code.matchAll(/var\(--text-[\w-]+\)/g)) found.push({ line: index + 1, value: match[0] });
   });
   return found;
 }

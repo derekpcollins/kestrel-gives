@@ -141,3 +141,29 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   - **Screenshot slicing:** `sips` slices of the tall screenshot silently came out identical (it crops around the center), so a small zlib-only cropper replaced it for review.
   - **First-pass layout:** the color tables' columns didn't line up and the spacing bars were unreadable; both were fixed before showing the owner.
 - **Checks:** `npm run check` passes all six.
+
+### 2026-11-01 — Stage 2b: token review changes
+- **Owner stepped in:** approved the token sheet with six changes:
+  - keep the color-pairing rule
+  - add type roles over the scale, with fluid display sizes
+  - allow named breakpoints in conditions only
+  - add a responsive requirement (360px up, nav collapses to a menu, checks at 390 and 1280)
+  - add a Figma-name column (Figma mirrors the tokens, synced by hand on Pro)
+  - use one self-hosted Google Font, picked from three candidates
+- **Built:**
+  - **Type roles:** 12 `--type-*` roles. `--text-3xl` and `--text-4xl` are now fluid. `check:tokens` flags `var(--text-*)` outside `tokens.css` (#41).
+  - **Breakpoints:** `--breakpoint-sm` (40rem) and `--breakpoint-lg` (64rem) are documented in `tokens.css`. `check:tokens` reads them from there and allows exactly those values, only inside `@media`/`@container` conditions, including conditions that span lines. There are 6 new unit tests, so 31 now pass (#42).
+  - **Playwright:** four projects (light and dark, each at 390px and 1280px). axe passes in all four.
+  - **Token sheet:** rewritten to be responsive at 390px (color rows stack; the contrast table scrolls in a labeled region) and to use the type roles itself. It adds:
+    - a Figma-name column and a mapping rule (#43)
+    - a section showing the three fonts side by side, each with a mini preview
+    - a breakpoints section
+    - a preview whose nav collapses to a menu below 40rem
+  - **Screenshots:** the full sheet, the preview, and the font comparison at 1280px and 390px are in `design/screenshots/`.
+  - **SPEC v1.4:** §5 (type roles, breakpoints, font, Figma), a new §8 Responsive section, and §12 (the token check, and checks at both widths).
+- **Fonts:** Nunito, Figtree, and Plus Jakarta Sans were downloaded once, at build time, as Latin-subset variable WOFF2 files through Google Fonts' CSS API. Each file was checked for the `wOF2` signature. Licenses were confirmed from each family's `OFL.txt` and `METADATA.pb` in the google/fonts repo: all are SIL OFL 1.1. The files sit in a gitignored `design/font-candidates/` until the owner picks.
+- **Hard / caught:**
+  - **NaN in the type-role table:** the browser returns custom properties with their `var()`s already resolved, so the parser was reading the wrong thing. It now parses the resolved value and maps it back to token names.
+  - **Mini previews:** their nav wrapped inside the narrow font columns. It now collapses with a container query at the same 40rem. The real header will use `@media`.
+  - **Overflow:** none at 390px or 360px. At 320px (the WCAG reflow width) the preview overflows by 13px. That was raised with the owner rather than fixed silently.
+- **Checks:** `npm run check` passes all six.

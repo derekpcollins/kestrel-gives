@@ -1,5 +1,5 @@
 // Conformance check 6 (SPEC §12): full-page screenshots of every screen, light and
-// dark, with demo controls hidden, saved to visual-review/ for a person to review.
+// dark at 390px and 1280px, with demo controls hidden, saved to visual-review/ for a person to review.
 // Nothing is compared automatically.
 import { test } from "@playwright/test";
 import { SCREENS } from "./screens.ts";

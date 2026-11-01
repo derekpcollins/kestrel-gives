@@ -1,6 +1,6 @@
 import { strict as assert } from "node:assert";
 import { describe, test } from "node:test";
-import { findRawValues, findUnpairedColors } from "../../scripts/token-rules.ts";
+import { findRawValues, findScaleUse, findUnpairedColors, readBreakpoints } from "../../scripts/token-rules.ts";
 
 const values = (text: string) => findRawValues(text).map((found) => found.value);
 
@@ -33,5 +33,36 @@ describe("color tokens have light and dark values", () => {
   });
   test("ignores commented-out declarations", () => {
     assert.deepEqual(findUnpairedColors("/* --color-x: #fff; */ :root {}"), []);
+  });
+});
+
+describe("breakpoints", () => {
+  const bps = readBreakpoints(":root {\n  /* --breakpoint-x: 99rem; */\n  --breakpoint-sm: 40rem;\n  --breakpoint-lg: 64rem;\n}");
+  const vals = (text: string) => findRawValues(text, bps).map((f) => f.value);
+
+  test("reads the allowed values from tokens.css", () => {
+    assert.deepEqual([...bps], ["40rem", "64rem"]);
+  });
+  test("allows breakpoint values inside @media and @container conditions", () => {
+    assert.deepEqual(vals("@media (width < 40rem) { .nav { display: none; } }"), []);
+    assert.deepEqual(vals("@container card (width >= 64rem) {"), []);
+    assert.deepEqual(vals("@media (prefers-reduced-motion: no-preference) and\n  (width >= 40rem) {"), []);
+  });
+  test("flags other values in conditions", () => {
+    assert.deepEqual(vals("@media (width < 48rem) {"), ["48rem"]);
+    assert.deepEqual(vals("@media (min-width: 640px) {"), ["640px"]);
+  });
+  test("flags breakpoint values outside conditions, even on the same line", () => {
+    assert.deepEqual(vals(".wrap { max-width: 40rem; }"), ["40rem"]);
+    assert.deepEqual(vals("@media (width < 40rem) { .a { padding: 64rem; } }"), ["64rem"]);
+  });
+});
+
+describe("type roles", () => {
+  test("flags --text-* scale steps used outside tokens.css", () => {
+    assert.deepEqual(findScaleUse(".a { font-size: var(--text-lg); }\n.b { font: var(--type-body); }"), [{ line: 1, value: "var(--text-lg)" }]);
+  });
+  test("allows type roles and other tokens", () => {
+    assert.deepEqual(findScaleUse(".a { font: var(--type-heading-2); color: var(--color-text); }"), []);
   });
 });

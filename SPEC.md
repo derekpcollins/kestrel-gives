@@ -119,12 +119,16 @@ The latest two versions of Chrome, Safari, Firefox, and Edge.
 
 There is no inherited design system, so this project defines its own, from scratch. The design system is itself a spec: the agent builds only from it.
 
-- All visual values MUST come from design tokens (CSS custom properties) in `public/styles/tokens.css` (served as `/styles/tokens.css`): color, type scale, spacing, radius, shadow, motion.
+- All visual values MUST come from design tokens (CSS custom properties) in `public/styles/tokens.css` (served as `/styles/tokens.css`): color, type (scale and roles), spacing, sizes, radius, shadow, motion, breakpoints.
 - Every color token MUST have a light and a dark value (section 6).
 - Components MUST NOT hard-code colors, font sizes, or spacing. Raw hex values or `px` numbers outside `public/styles/tokens.css` are a conformance failure.
 - Every component MUST be documented in `DESIGN-SYSTEM.md`: purpose, variants, states (default, hover, focus, active, disabled, loading, error, empty), and do/don't usage.
 - New components MUST be added to the design system before they're used in a screen.
 - The look is decided in Milestone 1: the owner reviews a token sheet before any screen is built.
+- **Type roles:** type is set with semantic role tokens (`--type-display`, `--type-heading-1` to `-3`, `--type-amount`, `--type-body-lg`, `--type-body`, `--type-label`, `--type-button`, `--type-caption`, `--type-badge`, `--type-overline`), each setting size, weight, leading, and family through the `font` shorthand. Components MUST use the roles, never the `--text-*` scale steps directly. The largest steps (`--text-3xl`, `--text-4xl`) are fluid with `clamp()` so they shrink on phones.
+- **Breakpoints:** layouts are intrinsic by default (grids wrap at `--size-tile-min`). Things that need a condition, such as the nav collapsing to a menu, MAY use only the named breakpoint values documented in `tokens.css` (`--breakpoint-sm` 40rem, `--breakpoint-lg` 64rem). They're written out only inside `@media` or `@container` conditions, in range syntax, because CSS can't read custom properties there.
+- **Font:** one Google Font, self-hosted: the variable WOFF2 with the Latin subset, committed under `public/fonts/` with its license, loaded with `@font-face` and `font-display: swap`. The site MUST NOT request anything from Google's servers. The system font stack is the fallback. The font's license (SIL OFL) is recorded in `CREDITS.md`. The font is chosen at the Milestone 1 token review.
+- **Figma:** `tokens.css` is the source of truth. Figma variables and styles mirror it with matching names: drop the `--` and turn the first hyphen into a slash (`--color-accent` ↔ `color/accent`). The token sheet lists each Figma name. On Figma Pro there's no Variables REST API or Code Connect, so the sync is a manual push plus a drift check at each milestone checkpoint, not CI. The Figma work happens outside this repo.
 - Starter component list: button, text input, textarea, select, date-time input, form field (label + help + error), radio card, card, item tile, badge/status pill, table, tabs, dialog, toast, banner, empty state, page header, site header and nav, profile menu, avatar (with top-bidder crown), photo uploader (with reorder), photo carousel, demo bar.
 - **Logos:**
   - **Marks:** the Kestrel org mark (the teal bird) and the Kestrel Gives event mark (the bird holding a heart) are the owner's own raster artwork, kept in `design/source/logos/`. They MUST be used unmodified: no redrawing, recoloring, or tracing. The only allowed changes are cropping whitespace and resizing or exporting (PNG at 1x and 2x, in `public/brand/`).
@@ -223,7 +227,10 @@ Money MUST be stored as whole cents (integers), never floating point.
 ## 8. Screens
 
 ### Navigation
-Site header with the Kestrel wordmark and: **Home**, **Silent Auction**, **Instant Sale**, **Your Items**, and **Submit an Item** (shown only during the submission window). In the upper right is the user's avatar. For admins, it has a chevron and opens a menu with a link to the **Admin Dashboard**. Admin links are never shown to employees.
+Site header with the Kestrel wordmark and: **Home**, **Silent Auction**, **Instant Sale**, **Your Items**, and **Submit an Item** (shown only during the submission window). In the upper right is the user's avatar. For admins, it has a chevron and opens a menu with a link to the **Admin Dashboard**. Admin links are never shown to employees. On small screens the nav collapses to a menu button.
+
+### Responsive
+One responsive, mobile-first site, not a separate app. Every screen MUST work from 360px wide up. Layouts start from the phone and add columns as space allows (section 5, Breakpoints). The browser checks run at 390px and 1280px (section 12).
 
 ### Phase banners
 A banner just below the header shows the current phase message, for example "Submissions are open until Nov 14," "Bidding opens Nov 17 at 9:00 AM," "Bidding ends in 2 days," "Bidding has ended. Winners, please upload proof by Dec 1." One banner at a time.
@@ -275,11 +282,11 @@ The agent proposes the final schema in Milestone 2. Expected tables: `events`, `
 These run before any change counts as done. Each is a script in `package.json`.
 
 1. **Dependency allowlist:** `package.json` contains only the packages in section 4.
-2. **Token check:** a short Node script (no dependencies) finds raw color, size, or spacing values outside `public/styles/tokens.css`, and confirms every color token in that file has a light and a dark value, written `light-dark(<light>, <dark>)`.
-3. **Accessibility:** axe checks via Playwright on every screen, in light and dark mode, with zero violations.
+2. **Token check:** a short Node script (no dependencies) finds raw color, size, or spacing values outside `public/styles/tokens.css`. The only exceptions are the named breakpoint values, and only inside `@media` or `@container` conditions. It also flags `--text-*` scale steps used outside `tokens.css` (use a `--type-*` role), and confirms every color token in that file has a light and a dark value, written `light-dark(<light>, <dark>)`.
+3. **Accessibility:** axe checks via Playwright on every screen, in light and dark mode, at 390px and 1280px wide, with zero violations.
 4. **Type check:** `tsc --noEmit` passes.
 5. **Business rules:** `node:test` tests cover section 7: bid minimums and increments, no self-outbidding, time windows for every phase, the inventory floor, simultaneous bids and purchases (against real Postgres on the `dev` branch), edit locks, delete and cancel rules, the reset lock, and template variable validation.
-6. **Visual review:** Playwright screenshots of every screen in every seeded state, in light and dark mode, with `?demo=off`, for a human to review.
+6. **Visual review:** Playwright screenshots of every screen in every seeded state, in light and dark mode, at 390px and 1280px wide, with `?demo=off`, for a human to review.
 
 ## 13. How the agent works
 

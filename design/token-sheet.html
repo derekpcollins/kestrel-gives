@@ -8,76 +8,118 @@
 <link rel="icon" href="../public/favicon-16.png" sizes="16x16">
 <link rel="stylesheet" href="../public/styles/tokens.css">
 <!-- Milestone 1 review page. Every value on this page comes from public/styles/tokens.css:
-     the page's own CSS uses only var(--…), and the values and contrast ratios shown are
-     read from the browser at load, so the sheet can't drift from the token file. -->
+     the page's own CSS uses only var(--…) (plus the two breakpoint values in conditions),
+     and the values and contrast ratios shown are read from the browser at load, so the
+     sheet can't drift from the token file. Add ?font=nunito|figtree|jakarta to render the
+     whole sheet in a candidate font. -->
 <style>
-* { box-sizing: border-box; }
-body { margin: 0; background: var(--color-bg); color: var(--color-text); font: var(--weight-regular) var(--text-md)/var(--leading-normal) var(--font-sans); }
-.page { max-width: var(--size-content); margin: 0 auto; padding: var(--space-8) var(--space-6) var(--space-12); }
-.meta { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-4); flex-wrap: wrap; border-bottom: var(--border-thin) solid var(--color-border); padding-bottom: var(--space-3); }
-.meta h1 { margin: 0; font: var(--weight-heavy) var(--text-2xl)/var(--leading-tight) var(--font-display); letter-spacing: var(--tracking-tight); }
-.meta p, .lede { margin: 0; color: var(--color-text-muted); }
-h2 { font: var(--weight-bold) var(--text-sm)/1 var(--font-sans); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--color-text-muted); margin: var(--space-12) 0 var(--space-4); }
-h3 { font: var(--weight-bold) var(--text-md)/var(--leading-snug) var(--font-sans); margin: var(--space-6) 0 var(--space-3); }
-p.note { color: var(--color-text-muted); font-size: var(--text-sm); margin: var(--space-2) 0 0; max-width: var(--size-content-narrow); }
-code { font-size: var(--text-sm); }
+/* Font candidates (review only; the chosen one moves to public/fonts/ and tokens.css). */
+@font-face { font-family: "Nunito"; src: url("font-candidates/nunito-latin-var.woff2") format("woff2"); font-weight: 200 1000; font-display: swap; }
+@font-face { font-family: "Figtree"; src: url("font-candidates/figtree-latin-var.woff2") format("woff2"); font-weight: 300 900; font-display: swap; }
+@font-face { font-family: "Plus Jakarta Sans"; src: url("font-candidates/plus-jakarta-sans-latin-var.woff2") format("woff2"); font-weight: 200 800; font-display: swap; }
+/* The --type-* roles resolve their family at :root, so a candidate is applied by
+   overriding font-family on everything inside it (review page only). */
+.font-nunito, .font-nunito * { font-family: "Nunito", var(--font-sans) !important; }
+.font-figtree, .font-figtree * { font-family: "Figtree", var(--font-sans) !important; }
+.font-jakarta, .font-jakarta * { font-family: "Plus Jakarta Sans", var(--font-sans) !important; }
+code, code * { font-family: ui-monospace, SFMono-Regular, Menlo, monospace !important; }
 
-/* Two live columns: light-dark() resolves per element, so these always show both modes. */
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--color-bg); color: var(--color-text); font: var(--type-body); }
+.page { max-width: var(--size-content); margin: 0 auto; padding: var(--space-8) var(--space-4) var(--space-12); }
+@media (width >= 40rem) { .page { padding-inline: var(--space-6); } }
+.meta { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2) var(--space-4); flex-wrap: wrap; border-bottom: var(--border-thin) solid var(--color-border); padding-bottom: var(--space-3); }
+.meta h1 { margin: 0; font: var(--type-heading-1); letter-spacing: var(--tracking-tight); }
+.meta p, .lede { margin: 0; color: var(--color-text-muted); }
+h2 { font: var(--type-overline); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--color-text-muted); margin: var(--space-12) 0 var(--space-3); }
+h3 { font: var(--type-heading-3); margin: var(--space-6) 0 var(--space-3); }
+p.note { font: var(--type-caption); color: var(--color-text-muted); margin: var(--space-2) 0 0; max-width: var(--size-content-narrow); }
+code { font-size: 0.92em; overflow-wrap: anywhere; }
+.figma { color: var(--color-text-muted); }
+.figma code { color: var(--color-text); }
+.kind { display: block; font: var(--type-caption); color: var(--color-text-muted); }
+
 .scheme-light { color-scheme: light; }
 .scheme-dark { color-scheme: dark; }
-.duo { display: grid; grid-template-columns: repeat(auto-fit, minmax(var(--size-tile-min), 1fr)); gap: var(--space-4); }
-.pane { background: var(--color-bg); color: var(--color-text); border-radius: var(--radius-lg); padding: var(--space-5); box-shadow: var(--shadow-sm); }
-.pane-label { font: var(--weight-bold) var(--text-xs)/1 var(--font-sans); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--color-text-muted); margin: 0 0 var(--space-4); }
-[data-previews] { margin-top: var(--space-6); }
+.duo { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--size-tile-min)), 1fr)); gap: var(--space-4); }
+.pane { background: var(--color-bg); color: var(--color-text); border-radius: var(--radius-lg); padding: var(--space-4); box-shadow: var(--shadow-sm); }
+.pane-label { font: var(--type-overline); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--color-text-muted); margin: 0 0 var(--space-3); }
 
 /* Brand */
-.brand-row { display: flex; gap: var(--space-6); align-items: center; flex-wrap: wrap; }
+.brand-row { display: flex; gap: var(--space-4); align-items: center; flex-wrap: wrap; }
 .mark-tile { display: inline-grid; place-items: center; background: var(--color-mark-tile); border-radius: var(--radius-md); padding: var(--space-2); }
-.hero-card { background: var(--color-mark-tile); border-radius: var(--radius-xl); padding: var(--space-6) var(--space-8); display: flex; align-items: center; justify-content: center; gap: var(--space-6); box-shadow: var(--shadow-md); }
-.hero-card img { height: calc(var(--space-16) * 3); width: auto; }
-.hero-card svg { width: calc(var(--space-16) * 4.5); height: auto; }
+.hero-card { margin-top: var(--space-4); background: var(--color-mark-tile); border-radius: var(--radius-xl); padding: var(--space-6); display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--space-4) var(--space-6); box-shadow: var(--shadow-md); }
+.hero-card img { height: calc(var(--space-16) * 2.25); width: auto; }
+.hero-card svg { width: min(100%, calc(var(--space-16) * 4.5)); height: auto; }
+@media (width >= 40rem) { .hero-card img { height: calc(var(--space-16) * 3); } }
 .hw-swash { fill: none; stroke: var(--color-brand-butter); }
 .hw-kestrel { fill: var(--color-brand-teal); font-family: var(--font-display); font-weight: var(--weight-heavy); }
 .hw-gives { fill: none; stroke: var(--color-brand-coral); }
 .hw-heart { fill: var(--color-brand-coral); }
 
-/* Color table */
-.colors { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0 var(--space-2); }
-.colors col.c-tok { width: 26%; } .colors col.c-mode { width: 22%; } .colors col.c-use { width: 30%; }
-.colors th { text-align: left; font: var(--weight-semibold) var(--text-xs)/1 var(--font-sans); color: var(--color-text-muted); letter-spacing: var(--tracking-label); text-transform: uppercase; padding: 0 var(--space-3); }
-.colors td { vertical-align: middle; padding: 0 var(--space-3); font-size: var(--text-sm); }
-.colors td.tok code { font-weight: var(--weight-semibold); font-size: var(--text-sm); }
-.colors td.use { color: var(--color-text-muted); }
-.chip { display: flex; align-items: center; gap: var(--space-3); background: var(--color-bg); color: var(--color-text); border-radius: var(--radius-md); padding: var(--space-2); box-shadow: var(--shadow-sm); }
-.chip i { width: var(--size-target); height: var(--space-8); border-radius: var(--radius-sm); flex: none; box-shadow: inset 0 0 0 var(--border-thin) var(--color-border); }
-.chip span { font: var(--weight-medium) var(--text-xs)/var(--leading-snug) var(--font-sans); font-variant-numeric: tabular-nums; }
+/* Color rows: five columns when wide, stacked when narrow */
+.crow { display: grid; gap: var(--space-2) var(--space-3); align-items: center; padding: var(--space-3) 0; border-bottom: var(--border-thin) solid var(--color-border);
+  grid-template-columns: 1fr 1fr; grid-template-areas: "tok tok" "light dark" "figma figma" "use use"; }
+.crow.head { display: none; }
+@media (width >= 64rem) {
+  .crow { grid-template-columns: 1.3fr 1fr 1fr 1fr 1.3fr; grid-template-areas: "tok light dark figma use"; padding: var(--space-2) 0; }
+  .crow.head { display: grid; font: var(--type-overline); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--color-text-muted); border-bottom: 0; }
+}
+.crow .tok { grid-area: tok; font-weight: var(--weight-semibold); }
+.crow .light { grid-area: light; } .crow .dark { grid-area: dark; }
+.crow .figma { grid-area: figma; font: var(--type-caption); }
+.crow .use { grid-area: use; font: var(--type-caption); color: var(--color-text-muted); }
+.chip { display: flex; align-items: center; gap: var(--space-2); background: var(--color-bg); color: var(--color-text); border-radius: var(--radius-md); padding: var(--space-2); box-shadow: var(--shadow-sm); min-width: 0; }
+.chip i { width: var(--space-8); height: var(--space-8); border-radius: var(--radius-sm); flex: none; box-shadow: inset 0 0 0 var(--border-thin) var(--color-border); }
+.chip span { font: var(--type-badge); font-weight: var(--weight-medium); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 
 /* Contrast */
-.contrast { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+.scroll { overflow-x: auto; }
+.scroll:focus-visible { outline: var(--focus-width) solid var(--color-focus); outline-offset: var(--focus-offset); }
+.contrast { width: 100%; min-width: calc(var(--space-16) * 10); border-collapse: collapse; font: var(--type-caption); }
 .contrast th, .contrast td { text-align: left; padding: var(--space-2) var(--space-3); border-bottom: var(--border-thin) solid var(--color-border); }
-.contrast th { font-weight: var(--weight-semibold); color: var(--color-text-muted); }
-.contrast td.num { font-variant-numeric: tabular-nums; }
-.sample-pair { display: inline-block; padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm); font-weight: var(--weight-semibold); }
+.contrast th { font: var(--type-label); color: var(--color-text-muted); }
+.contrast td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.sample-pair { display: inline-block; padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm); font-weight: var(--weight-semibold); white-space: nowrap; }
 .pass { color: var(--color-success); font-weight: var(--weight-bold); }
 .fail { color: var(--color-danger); font-weight: var(--weight-bold); }
 .summary { font-weight: var(--weight-semibold); margin: var(--space-3) 0 0; }
 
 /* Type */
-.type-row { display: grid; grid-template-columns: calc(var(--space-16) * 4.5) 1fr; gap: var(--space-4); align-items: baseline; padding: var(--space-2) 0; border-bottom: var(--border-thin) solid var(--color-border); }
-.type-row code { color: var(--color-text-muted); }
-.weights { display: flex; gap: var(--space-6); flex-wrap: wrap; font-size: var(--text-xl); }
+.trow { display: grid; gap: var(--space-1) var(--space-4); padding: var(--space-3) 0; border-bottom: var(--border-thin) solid var(--color-border); grid-template-columns: 1fr; }
+@media (width >= 64rem) { .trow { grid-template-columns: 1.2fr 2.6fr 1fr; align-items: baseline; } }
+.trow .spec { font: var(--type-caption); color: var(--color-text-muted); }
+.trow .spec code { color: var(--color-text); font-weight: var(--weight-semibold); }
+.weights { display: flex; gap: var(--space-2) var(--space-6); flex-wrap: wrap; font: var(--type-heading-2); }
+
+/* Font candidates */
+.fonts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--size-tile-min) * 1.15)), 1fr)); gap: var(--space-4); }
+.font-col { background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: var(--space-5); display: grid; gap: var(--space-3); align-content: start; min-width: 0; }
+.font-col header { border-bottom: var(--border-thin) solid var(--color-border); padding-bottom: var(--space-3); }
+.font-col header strong { font: var(--type-heading-2); display: block; }
+.font-col header span { font: var(--type-caption); color: var(--color-text-muted); }
+.font-col .s-display { font: var(--type-display); letter-spacing: var(--tracking-tight); margin: 0; }
+.font-col .s-h1 { font: var(--type-heading-1); letter-spacing: var(--tracking-tight); margin: 0; }
+.font-col .s-h2 { font: var(--type-heading-2); margin: 0; }
+.font-col .s-body { font: var(--type-body); margin: 0; }
+.font-col .s-caption { font: var(--type-caption); color: var(--color-text-muted); margin: 0; }
+.font-col .s-amount { font: var(--type-amount); color: var(--color-price); margin: 0; font-variant-numeric: tabular-nums; }
+.font-col .s-digits { font: var(--type-body); font-variant-numeric: tabular-nums; margin: 0; color: var(--color-text-muted); }
 
 /* Spacing, radius, shadow */
-.space-row { display: grid; grid-template-columns: calc(var(--space-16) * 4.5) 1fr; gap: var(--space-4); align-items: center; padding: var(--space-1) 0; }
-.space-row code { color: var(--color-text-muted); }
+.space-row { display: grid; grid-template-columns: minmax(0, 1.4fr) 1fr; gap: var(--space-3); align-items: center; padding: var(--space-1) 0; font: var(--type-caption); }
+@media (width >= 64rem) { .space-row { grid-template-columns: 1.2fr 1fr 2.6fr; } }
+.space-row .figma { display: none; }
+@media (width >= 64rem) { .space-row .figma { display: block; } }
 .space-bar { background: var(--color-accent); }
-.boxes { display: flex; gap: var(--space-4); flex-wrap: wrap; }
-.box { width: calc(var(--space-16) * 2); height: calc(var(--space-16) * 1.25); background: var(--color-surface); display: grid; place-items: center; text-align: center; font-size: var(--text-xs); color: var(--color-text-muted); }
+.boxes { display: flex; gap: var(--space-3); flex-wrap: wrap; }
+.box { width: calc(var(--space-16) * 2.1); min-height: calc(var(--space-16) * 1.4); padding: var(--space-2); background: var(--color-surface); display: grid; place-items: center; text-align: center; font: var(--type-caption); color: var(--color-text-muted); }
 .box.r { background: var(--color-accent-soft); color: var(--color-text); }
 
 /* Motion */
-.motion-demo { display: flex; gap: var(--space-4); flex-wrap: wrap; }
-.mover { width: calc(var(--space-16) * 3); padding: var(--space-4); border-radius: var(--radius-lg); background: var(--color-surface); box-shadow: var(--shadow-sm); font-size: var(--text-sm); }
+.motion-demo { display: flex; gap: var(--space-3); flex-wrap: wrap; border-radius: var(--radius-lg); }
+.motion-demo:focus-visible { outline: var(--focus-width) solid var(--color-focus); outline-offset: var(--focus-offset); }
+.mover { flex: 1 1 calc(var(--space-16) * 2.5); padding: var(--space-4); border-radius: var(--radius-lg); background: var(--color-surface); box-shadow: var(--shadow-sm); font: var(--type-caption); }
 .mover b { display: block; width: var(--space-8); height: var(--space-8); border-radius: var(--radius-pill); background: var(--color-accent); margin-bottom: var(--space-3); transition-property: transform; transition-timing-function: var(--ease-standard); }
 .motion-demo:hover .mover b, .motion-demo:focus-within .mover b { transform: translateX(calc(var(--space-16) * 1.5)); }
 .m-fast b { transition-duration: var(--duration-fast); }
@@ -85,57 +127,60 @@ code { font-size: var(--text-sm); }
 .m-slow b { transition-duration: var(--duration-slow); }
 
 /* Tokens in use (a preview, not the components) */
-.preview { background: var(--color-bg); color: var(--color-text); border-radius: var(--radius-xl); overflow: hidden; box-shadow: var(--shadow-sm); }
-.p-header { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-3) var(--space-5); background: var(--color-surface); box-shadow: 0 var(--border-thin) 0 var(--color-border); flex-wrap: wrap; }
-.p-brand { display: flex; align-items: center; gap: var(--space-2); font: var(--weight-heavy) var(--text-lg)/1 var(--font-display); }
-.p-brand-tile { display: grid; place-items: center; width: var(--space-10); height: var(--space-10); border-radius: var(--radius-md); }
+.preview { container-type: inline-size; background: var(--color-bg); color: var(--color-text); border-radius: var(--radius-xl); overflow: hidden; box-shadow: var(--shadow-sm); }
+.p-header { display: flex; align-items: center; gap: var(--space-3) var(--space-4); padding: var(--space-3) var(--space-4); background: var(--color-surface); box-shadow: 0 var(--border-thin) 0 var(--color-border); }
+.p-brand { display: flex; align-items: center; gap: var(--space-2); font: var(--type-heading-3); font-weight: var(--weight-heavy); }
+.p-brand-tile { display: grid; place-items: center; width: var(--space-10); height: var(--space-10); border-radius: var(--radius-md); flex: none; }
 .scheme-dark .p-brand-tile { background: var(--color-mark-tile); }
 .p-brand img { height: var(--size-mark-header); width: auto; }
-.p-nav { display: flex; gap: var(--space-4); flex: 1; font-weight: var(--weight-medium); font-size: var(--text-sm); }
+.p-nav { display: flex; gap: var(--space-4); flex: 1; font: var(--type-label); font-weight: var(--weight-medium); }
 .p-nav span[aria-current] { box-shadow: inset 0 calc(var(--border-thick) * -1.5) 0 var(--color-accent); padding-bottom: var(--space-1); }
-.avatar { width: var(--size-avatar-md); height: var(--size-avatar-md); border-radius: var(--radius-pill); display: grid; place-items: center; background: var(--color-accent); color: var(--color-on-accent); font: var(--weight-bold) var(--text-sm)/1 var(--font-sans); flex: none; }
-.p-banner { background: var(--color-banner); color: var(--color-on-banner); padding: var(--space-2) var(--space-5); font-weight: var(--weight-semibold); font-size: var(--text-sm); }
-.p-body { padding: var(--space-5); display: grid; gap: var(--space-5); }
+.p-menu { display: none; margin-left: auto; font: var(--type-label); background: transparent; color: var(--color-text); border: 0; border-radius: var(--radius-pill); box-shadow: inset 0 0 0 var(--border-thick) var(--color-accent); min-height: var(--size-target); padding: 0 var(--space-4); }
+/* The real header uses @media; this preview uses @container so it also collapses inside the narrow font columns. */
+@container (width < 40rem) { .p-nav { display: none; } .p-menu { display: inline-flex; align-items: center; gap: var(--space-2); } }
+.avatar { width: var(--size-avatar-md); height: var(--size-avatar-md); border-radius: var(--radius-pill); display: grid; place-items: center; background: var(--color-accent); color: var(--color-on-accent); font: var(--type-label); font-weight: var(--weight-bold); flex: none; }
+.p-banner { background: var(--color-banner); color: var(--color-on-banner); padding: var(--space-2) var(--space-4); font: var(--type-label); }
+.p-body { padding: var(--space-4); display: grid; gap: var(--space-4); }
 .p-tile { max-width: calc(var(--size-tile-min) * 1.25); background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); overflow: hidden; }
-.p-photo { aspect-ratio: 16 / 9; background: var(--color-surface-muted); display: grid; place-items: center; color: var(--color-text-muted); font-size: var(--text-sm); }
+.p-photo { aspect-ratio: 16 / 9; background: var(--color-surface-muted); display: grid; place-items: center; color: var(--color-text-muted); font: var(--type-caption); }
 .p-tile .c { padding: var(--space-3) var(--space-4) var(--space-4); }
-.p-tile h4 { margin: 0; font: var(--weight-bold) var(--text-lg)/var(--leading-snug) var(--font-display); }
-.p-price { display: flex; justify-content: space-between; align-items: baseline; margin: var(--space-2) 0 var(--space-3); }
-.p-price strong { font-size: var(--text-xl); color: var(--color-price); font-variant-numeric: tabular-nums; }
-.p-price span { color: var(--color-text-muted); font-size: var(--text-sm); }
+.p-tile h4 { margin: 0; font: var(--type-heading-3); }
+.p-price { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); margin: var(--space-2) 0 var(--space-3); }
+.p-price strong { font: var(--type-heading-2); font-weight: var(--weight-heavy); color: var(--color-price); font-variant-numeric: tabular-nums; }
+.p-price span { font: var(--type-caption); color: var(--color-text-muted); }
 .row { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; }
-.btn { font: var(--weight-semibold) var(--text-md)/1 var(--font-sans); min-height: var(--size-target); padding: 0 var(--space-5); border-radius: var(--radius-pill); border: 0; cursor: pointer; transition: background-color var(--duration-fast) var(--ease-standard); }
+.btn { font: var(--type-button); min-height: var(--size-target); padding: 0 var(--space-5); border-radius: var(--radius-pill); border: 0; cursor: pointer; transition: background-color var(--duration-fast) var(--ease-standard); }
 .btn-primary { background: var(--color-accent); color: var(--color-on-accent); }
 .btn-primary:hover, .btn-primary.is-hover { background: var(--color-accent-hover); }
 .btn-secondary { background: transparent; color: var(--color-text); box-shadow: inset 0 0 0 var(--border-thick) var(--color-accent); }
 .btn-secondary:hover, .btn-secondary.is-hover { background: var(--color-accent-soft); }
 .btn:disabled { background: var(--color-surface-muted); color: var(--color-text-disabled); box-shadow: none; cursor: not-allowed; }
 .btn:focus-visible, .is-focus { outline: var(--focus-width) solid var(--color-focus); outline-offset: var(--focus-offset); }
-.pill { display: inline-block; font: var(--weight-bold) var(--text-xs)/1 var(--font-sans); padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill); line-height: var(--leading-normal); }
+.pill { display: inline-block; font: var(--type-badge); padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill); }
 .ok { background: var(--color-success-soft); color: var(--color-success); }
 .warn { background: var(--color-warning-soft); color: var(--color-warning); }
 .bad { background: var(--color-danger-soft); color: var(--color-danger); }
 .neutral { background: var(--color-surface-muted); color: var(--color-text); }
-.field { display: grid; gap: var(--space-1); }
-.field label { font-weight: var(--weight-semibold); font-size: var(--text-sm); }
-.field input { font: inherit; min-height: var(--size-target); padding: 0 var(--space-3); border-radius: var(--radius-md); border: var(--border-thick) solid var(--color-border-strong); background: var(--color-surface); color: var(--color-text); }
+.field { display: grid; gap: var(--space-1); max-width: var(--size-content-narrow); }
+.field label { font: var(--type-label); }
+.field input { font: var(--type-body); min-height: var(--size-target); padding: 0 var(--space-3); border-radius: var(--radius-md); border: var(--border-thick) solid var(--color-border-strong); background: var(--color-surface); color: var(--color-text); min-width: 0; }
 .field input:focus-visible { outline: var(--focus-width) solid var(--color-focus); outline-offset: var(--focus-offset); }
-.field .help { font-size: var(--text-sm); color: var(--color-text-muted); }
+.field .help { font: var(--type-caption); color: var(--color-text-muted); }
 .field.err input { border-color: var(--color-danger); }
 .field.err .help { color: var(--color-danger); font-weight: var(--weight-semibold); }
-.p-toast { background: var(--color-inverse); color: var(--color-on-inverse); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); box-shadow: var(--shadow-lg); font-size: var(--text-sm); font-weight: var(--weight-medium); }
-.p-link { color: var(--color-link); font-weight: var(--weight-semibold); text-underline-offset: var(--space-1); }
-.p-demo { background: var(--color-inverse); color: var(--color-on-inverse); padding: var(--space-2) var(--space-5); font-size: var(--text-sm); display: flex; gap: var(--space-4); align-items: center; }
+.p-toast { background: var(--color-inverse); color: var(--color-on-inverse); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); box-shadow: var(--shadow-lg); font: var(--type-label); font-weight: var(--weight-medium); }
+.p-link { color: var(--color-link); font: var(--type-body); font-weight: var(--weight-semibold); text-underline-offset: var(--space-1); }
+.p-demo { background: var(--color-inverse); color: var(--color-on-inverse); padding: var(--space-2) var(--space-4); font: var(--type-caption); display: flex; gap: var(--space-3); align-items: center; }
 .p-demo b { font-weight: var(--weight-bold); }
 
-footer { margin-top: var(--space-12); padding-top: var(--space-4); border-top: var(--border-thin) solid var(--color-border); color: var(--color-text-muted); font-size: var(--text-sm); }
+footer { margin-top: var(--space-12); padding-top: var(--space-4); border-top: var(--border-thin) solid var(--color-border); color: var(--color-text-muted); font: var(--type-caption); }
 </style>
 </head>
 <body>
 <div class="page">
   <header class="meta">
     <h1>Token sheet</h1>
-    <p>Every value comes from <code>public/styles/tokens.css</code>. Light and dark are shown side by side.</p>
+    <p>Every value comes from <code>public/styles/tokens.css</code>, the source of truth. Light and dark are shown side by side.</p>
   </header>
 
   <h2>Brand</h2>
@@ -143,7 +188,7 @@ footer { margin-top: var(--space-12); padding-top: var(--space-4); border-top: v
     <div class="pane scheme-light"><p class="pane-label">Light</p><div class="brand-row" data-brand></div></div>
     <div class="pane scheme-dark"><p class="pane-label">Dark</p><div class="brand-row" data-brand></div></div>
   </div>
-  <div class="hero-card" style="margin-top: var(--space-4)">
+  <div class="hero-card">
     <img src="../public/brand/kestrel-gives-event-mark-280.png" srcset="../public/brand/kestrel-gives-event-mark-280.png 1x, ../public/brand/kestrel-gives-event-mark-560.png 2x" alt="">
     <svg viewBox="0 0 400 260" role="img" aria-label="Kestrel Gives">
       <path class="hw-swash" d="M10 232 C 100 210, 248 250, 360 220" stroke-width="24" stroke-linecap="round"/>
@@ -160,22 +205,32 @@ footer { margin-top: var(--space-12); padding-top: var(--space-4); border-top: v
   </div>
   <p class="note">The marks are the owner's files, unmodified, on the art's own white (<code>--color-mark-tile</code>). In the header, the tile only shows in dark mode. The hero card is light in both modes. Brand teal, coral, and butter are fixed and used only on that white.</p>
 
+  <h2>Figma mapping</h2>
+  <p class="lede"><code>tokens.css</code> is the source of truth. Figma mirrors it with matching names: drop the <code>--</code> and turn the first hyphen into a slash, so <code>--color-accent</code> ↔ <code>color/accent</code> and <code>--type-heading-1</code> ↔ <code>type/heading-1</code>.</p>
+  <p class="note">Colors are color variables with Light and Dark modes. Sizes, spacing, radius, lines, weights, and breakpoints are number variables. The two fluid sizes get Phone (390) and Desktop (1280) modes. Type roles are text styles and shadows are effect styles. Easing and layers have no Figma equivalent and aren't mirrored. On Figma Pro the sync is manual: push changes from this sheet, then check for drift at each milestone.</p>
+
   <h2>Color</h2>
-  <p class="lede">Each token has a light and a dark value, written <code>light-dark(light, dark)</code>.</p>
+  <p class="lede">Each token has a light and a dark value, written <code>light-dark(light, dark)</code>; <code>check:tokens</code> fails any that doesn't.</p>
   <div data-colors></div>
 
   <h2>Contrast (computed live, WCAG 2.2 AA)</h2>
   <p class="lede">Text needs 4.5:1. Input edges, focus rings, and the crown need 3:1. Disabled text is exempt.</p>
   <div data-contrast></div>
 
-  <h2>Type</h2>
-  <p class="lede">The system font stack, with no font files. Headings get their character from weight (heavy, slightly tight), not a second family.</p>
-  <div data-type></div>
+  <h2>Type roles</h2>
+  <p class="lede">Components set type with a role (<code>font: var(--type-body)</code>), never a scale step; <code>check:tokens</code> enforces it. Display and amount use fluid sizes that shrink on phones.</p>
+  <div data-roles></div>
+  <h3>Scale (building blocks for the roles)</h3>
+  <div data-scale></div>
   <h3>Weights</h3>
   <div class="weights" data-weights></div>
 
+  <h2>Font candidates</h2>
+  <p class="lede">One font, self-hosted (a variable WOFF2 with the Latin subset, from <code>public/fonts/</code>), with the system stack as the fallback. All three are SIL Open Font License 1.1.</p>
+  <div class="fonts" data-fonts></div>
+
   <h2>Spacing</h2>
-  <p class="lede">4px steps. Layouts wrap with <code>--size-tile-min</code> instead of breakpoints.</p>
+  <p class="lede">4px steps.</p>
   <div data-space></div>
 
   <h2>Radius</h2>
@@ -197,9 +252,13 @@ footer { margin-top: var(--space-12); padding-top: var(--space-4); border-top: v
   </div>
   <p class="note">Easing: <code>--ease-standard</code> <span data-val="--ease-standard"></span>, and <code>--ease-exit</code> <span data-val="--ease-exit"></span>.</p>
 
+  <h2>Breakpoints</h2>
+  <p class="lede">Layouts are intrinsic by default: grids wrap at <code>--size-tile-min</code> (<span data-val="--size-tile-min"></span>). Two named values exist for things that need a condition. They're used only inside <code>@media</code> or <code>@container</code> conditions, in range syntax.</p>
+  <div data-breakpoints></div>
+
   <h2>Tokens in use</h2>
-  <p class="lede">A preview of how the tokens combine. These aren't the components; those come next, each documented in DESIGN-SYSTEM.md.</p>
-  <div class="duo" data-previews></div>
+  <p class="lede">A preview of how the tokens combine, not the components (those come next, each documented in DESIGN-SYSTEM.md). Below 40rem the nav becomes a Menu button: the 390px screenshots show the menu; the 1280px ones show the full nav.</p>
+  <div data-previews style="display: grid; gap: var(--space-6); margin-top: var(--space-4)"></div>
 
   <footer>Kestrel is a fictional organization. Demo only.</footer>
 </div>
@@ -209,6 +268,7 @@ footer { margin-top: var(--space-12); padding-top: var(--space-4); border-top: v
     <div class="p-header">
       <span class="p-brand"><span class="p-brand-tile"><img src="../public/brand/kestrel-org-mark-64.png" srcset="../public/brand/kestrel-org-mark-64.png 1x, ../public/brand/kestrel-org-mark-128.png 2x" alt=""></span>Kestrel</span>
       <span class="p-nav"><span>Home</span><span aria-current="page">Silent Auction</span><span>Instant Sale</span></span>
+      <button class="p-menu" type="button">☰ Menu</button>
       <span class="avatar">MO</span>
     </div>
     <div class="p-banner">Bidding ends in 2 days · Friday at 5:00 PM EST</div>
@@ -221,7 +281,7 @@ footer { margin-top: var(--space-12); padding-top: var(--space-4); border-top: v
           <span class="pill ok">You're winning</span>
         </div>
       </div>
-      <div class="row">
+      <div class="row" data-full>
         <button class="btn btn-primary" type="button">Place a bid</button>
         <button class="btn btn-primary is-hover" type="button">Hover</button>
         <button class="btn btn-secondary" type="button">View details</button>
@@ -229,14 +289,14 @@ footer { margin-top: var(--space-12); padding-top: var(--space-4); border-top: v
         <button class="btn btn-primary" type="button" disabled>Disabled</button>
       </div>
       <div class="row">
-        <span class="pill ok">Approved</span><span class="pill bad">Outbid</span><span class="pill warn">Ending soon</span><span class="pill neutral">Sold out</span><span class="pill bad">Rejected</span><span class="pill warn">Proof due in 3 days</span>
+        <span class="pill ok">Approved</span><span class="pill bad">Outbid</span><span class="pill warn">Ending soon</span><span class="pill neutral">Sold out</span><span class="pill bad" data-full>Rejected</span><span class="pill warn" data-full>Proof due in 3 days</span>
       </div>
-      <div class="field"><label>Your bid</label><input value="$50"><span class="help">At least $46. Bids go up by $1.</span></div>
-      <div class="field err"><label>Donation amount</label><input value="$30"><span class="help">This is less than the $45 you owe. You can still submit.</span></div>
-      <p style="margin: 0"><a class="p-link" href="#">Upload donation proof</a></p>
-      <div class="p-toast">Bid placed. You're the top bidder.</div>
+      <div class="field"><label>Your bid</label><input value="$50" aria-label="Your bid"><span class="help">At least $46. Bids go up by $1.</span></div>
+      <div class="field err" data-full><label>Donation amount</label><input value="$30" aria-label="Donation amount"><span class="help">This is less than the $45 you owe. You can still submit.</span></div>
+      <p style="margin: 0" data-full><a class="p-link" href="#">Upload donation proof</a></p>
+      <div class="p-toast" data-full>Bid placed. You're the top bidder.</div>
     </div>
-    <div class="p-demo"><b>Demo</b><span>Viewing as Maya Okafor</span></div>
+    <div class="p-demo" data-full><b>Demo</b><span>Viewing as Maya Okafor</span></div>
   </div>
 </template>
 
@@ -316,24 +376,41 @@ const PAIRS = [
   ["Crown edge on surface (light: outline, dark: fill)", ["--color-crown-stroke", "--color-crown"], "--color-surface", 3],
 ];
 
-const TYPE = [
-  ["--text-4xl", "Home headline", "Kestrel Gives 2026"],
-  ["--text-3xl", "Item price on detail page", "$1,250"],
-  ["--text-2xl", "Page titles", "Silent Auction"],
-  ["--text-xl", "Section headings, tile prices", "Your items"],
-  ["--text-lg", "Tile titles, lead text", "Sourdough starter + a loaf lesson"],
-  ["--text-md", "Body, inputs, buttons", "Bids go up by at least $1. The top bid when bidding closes wins."],
-  ["--text-sm", "Meta, help, tables", "6 bids · ends Friday at 5:00 PM EST"],
-  ["--text-xs", "Pills, fine print", "YOU'RE WINNING"],
+const ROLES = [
+  ["--type-display", "Home headline", "Kestrel Gives 2026", true],
+  ["--type-heading-1", "Page titles", "Silent Auction", true],
+  ["--type-heading-2", "Section headings", "Your items"],
+  ["--type-heading-3", "Tile titles, card headings", "Sourdough starter + a loaf lesson"],
+  ["--type-amount", "Item price on the detail page", "$1,250"],
+  ["--type-body-lg", "Lead paragraphs", "Bid on things your coworkers made, found, or offered."],
+  ["--type-body", "Body, inputs", "Bids go up by at least $1. The top bid when bidding closes wins."],
+  ["--type-label", "Form labels, nav, table headers", "Your bid"],
+  ["--type-button", "Buttons", "Place a bid"],
+  ["--type-caption", "Help text, meta", "6 bids · ends Friday at 5:00 PM EST"],
+  ["--type-badge", "Status pills", "You're winning"],
+  ["--type-overline", "Uppercase eyebrows (with --tracking-label)", "SILENT AUCTION"],
 ];
+const SCALE = ["--text-xs", "--text-sm", "--text-md", "--text-lg", "--text-xl", "--text-2xl", "--text-3xl", "--text-4xl"];
+const FONTS = [
+  ["font-nunito", "Nunito", "Rounded terminals; the softest match for the pill buttons and the logo's curves.", "nunito"],
+  ["font-figtree", "Figtree", "Clean geometric, friendly but neutral; the smallest file.", "figtree"],
+  ["font-jakarta", "Plus Jakarta Sans", "Geometric with a little more personality; tighter and more modern.", "plus-jakarta-sans"],
+];
+const FONT_META = { nunito: ["Vernon Adams, Cyreal, Jacques Le Bailly", "39 KB"], figtree: ["Erik Kennedy", "20 KB"], "plus-jakarta-sans": ["Tokotype", "27 KB"] };
+
+// Whole-sheet font override for review: ?font=nunito|figtree|jakarta
+const pick = new URLSearchParams(location.search).get("font");
+if (pick) document.documentElement.classList.add(`font-${pick}`);
 
 const root = getComputedStyle(document.documentElement);
 const raw = (name) => root.getPropertyValue(name).trim();
 const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
+const code = (t) => el("code", { textContent: t });
+const figmaName = (token) => token.replace(/^--/, "").replace("-", "/");
 
-// Split "light-dark(a, b)" into [a, b] at the top-level comma.
 function modes(value) {
-  const inner = value.replace(/^light-dark\(/, "").replace(/\)$/, "");
+  if (!value.startsWith("light-dark(")) return [value, value];
+  const inner = value.slice(11, -1);
   let depth = 0;
   for (let i = 0; i < inner.length; i++) {
     const c = inner[i];
@@ -342,21 +419,26 @@ function modes(value) {
   }
   return [value, value];
 }
+// px value of a length (rem or clamp(rem, rem + vw, rem)) at a given viewport width.
+function pxAt(value, vw) {
+  const m = value.match(/^clamp\(([\d.]+)rem,\s*([\d.]+)rem\s*\+\s*([\d.]+)vw,\s*([\d.]+)rem\)$/);
+  if (m) { const [lo, a, b, hi] = m.slice(1).map(Number); return Math.min(hi * 16, Math.max(lo * 16, a * 16 + (b * vw) / 100)); }
+  return parseFloat(value) * (value.endsWith("rem") ? 16 : 1);
+}
+const fmt = (n) => `${Math.round(n * 10) / 10}px`;
 
-// Resolve a token to sRGB in a given scheme using a probe element.
 const probes = { light: el("div", { className: "scheme-light", hidden: true }), dark: el("div", { className: "scheme-dark", hidden: true }) };
 document.body.append(probes.light, probes.dark);
 function rgb(token, scheme) {
   const p = probes[scheme]; p.style.color = `var(${token})`;
-  const m = getComputedStyle(p).color.match(/[\d.]+/g).map(Number);
-  return m.slice(0, 3);
+  return getComputedStyle(p).color.match(/[\d.]+/g).map(Number).slice(0, 3);
 }
 const lum = ([r, g, b]) => [r, g, b].map((v) => v / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)).reduce((s, v, i) => s + v * [0.2126, 0.7152, 0.0722][i], 0);
 const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
 
 // Brand rows
 for (const row of document.querySelectorAll("[data-brand]")) {
-  const tile = (src1, src2, h) => el("span", { className: "mark-tile" }, el("img", { src: src1, srcset: `${src1} 1x, ${src2} 2x`, alt: "", style: `height: calc(var(--space-4) * ${h / 16})` }));
+  const tile = (base, big, h) => el("span", { className: "mark-tile" }, el("img", { src: base, srcset: `${base} 1x, ${big} 2x`, alt: "", style: `height: calc(var(--space-4) * ${h / 16})` }));
   row.append(
     tile("../public/brand/kestrel-org-mark-64.png", "../public/brand/kestrel-org-mark-128.png", 64),
     tile("../public/brand/kestrel-org-mark-64.png", "../public/brand/kestrel-org-mark-128.png", 32),
@@ -369,16 +451,16 @@ for (const row of document.querySelectorAll("[data-brand]")) {
 const colorHost = document.querySelector("[data-colors]");
 for (const [group, tokens] of COLORS) {
   colorHost.append(el("h3", { textContent: group }));
-  const table = el("table", { className: "colors" });
-  table.append(el("colgroup", {}, el("col", { className: "c-tok" }), el("col", { className: "c-mode" }), el("col", { className: "c-mode" }), el("col", { className: "c-use" })));
-  table.append(el("thead", {}, el("tr", {}, el("th", { textContent: "Token" }), el("th", { textContent: "Light" }), el("th", { textContent: "Dark" }), el("th", { textContent: "Use" }))));
-  const body = el("tbody");
+  colorHost.append(el("div", { className: "crow head", ariaHidden: "true" }, ...["Token", "Light", "Dark", "Figma", "Use"].map((t) => el("span", { textContent: t }))));
   for (const [name, use] of tokens) {
     const [light, dark] = modes(raw(name));
-    const chip = (scheme, value) => el("div", { className: `chip scheme-${scheme}` }, el("i", { style: `background: var(${name})` }), el("span", { textContent: value }));
-    body.append(el("tr", {}, el("td", { className: "tok" }, el("code", { textContent: name })), el("td", {}, chip("light", light)), el("td", {}, chip("dark", dark)), el("td", { className: "use", textContent: use })));
+    const chip = (scheme, value) => el("div", { className: `chip scheme-${scheme} ${scheme}` }, el("i", { style: `background: var(${name})` }), el("span", { textContent: value }));
+    colorHost.append(el("div", { className: "crow" },
+      el("div", { className: "tok" }, code(name)),
+      chip("light", light), chip("dark", dark),
+      el("div", { className: "figma" }, code(figmaName(name)), el("span", { className: "kind", textContent: "Color variable · Light / Dark" })),
+      el("div", { className: "use", textContent: use })));
   }
-  table.append(body); colorHost.append(table);
 }
 
 // Contrast
@@ -388,7 +470,7 @@ ct.append(el("thead", {}, el("tr", {}, ...["Pair", "Sample (light)", "Light", "S
 const cb = el("tbody"); let fails = 0, checks = 0;
 for (const [label, fg, bg, min] of PAIRS) {
   const fgs = Array.isArray(fg) ? fg : [fg, fg];
-  const cells = [el("td", {}, label, el("br"), el("code", { textContent: `${Array.isArray(fg) ? fg.join(" / ") : fg} on ${bg}` }))];
+  const cells = [el("td", {}, label, el("br"), code(`${Array.isArray(fg) ? fg.join(" / ") : fg} on ${bg}`))];
   for (const [i, scheme] of ["light", "dark"].entries()) {
     const f = fgs[i];
     const r = ratio(rgb(f, scheme), rgb(bg, scheme)); const ok = r >= min; checks++; if (!ok) fails++;
@@ -398,37 +480,99 @@ for (const [label, fg, bg, min] of PAIRS) {
   cells.push(el("td", { className: "num", textContent: `${min}:1` }));
   cb.append(el("tr", {}, ...cells));
 }
-ct.append(cb); cHost.append(ct);
+ct.append(cb);
+cHost.append(el("div", { className: "scroll", tabIndex: 0, role: "region", ariaLabel: "Contrast results (scrolls sideways on small screens)" }, ct));
 cHost.append(el("p", { className: `summary ${fails ? "fail" : "pass"}`, textContent: fails ? `${fails} of ${checks} checks fail` : `All ${checks} checks pass (${PAIRS.length} pairs × light and dark)` }));
 
-// Type
-const tHost = document.querySelector("[data-type]");
-for (const [name, use, sample] of TYPE) {
-  const size = raw(name); const px = parseFloat(size) * 16;
-  const weight = ["--text-4xl", "--text-3xl", "--text-2xl"].includes(name) ? "var(--weight-heavy)" : ["--text-xl", "--text-lg"].includes(name) ? "var(--weight-bold)" : "var(--weight-regular)";
-  tHost.append(el("div", { className: "type-row" },
-    el("div", {}, el("code", { textContent: name }), el("br"), el("small", { textContent: `${size} · ${px}px · ${use}`, style: "color: var(--color-text-muted)" })),
-    el("div", { textContent: sample, style: `font-size: var(${name}); font-weight: ${weight}; line-height: var(--leading-tight); letter-spacing: ${px >= 28 ? "var(--tracking-tight)" : "normal"}` })));
+// Type roles: the browser returns each role with its var()s already resolved,
+// "800 clamp(…)/1.15 system-ui, …", so split it and map values back to token names.
+const byValue = (prefix, names) => Object.fromEntries(names.map((n) => [raw(`--${prefix}-${n}`), `--${prefix}-${n}`]));
+const SIZE_NAMES = byValue("text", ["xs", "sm", "md", "lg", "xl", "2xl", "3xl", "4xl"]);
+const WEIGHT_NAMES = byValue("weight", ["regular", "medium", "semibold", "bold", "heavy"]);
+function roleParts(role) {
+  const v = raw(role);
+  const slash = v.indexOf("/"); // clamp() has no slash, so the first one splits size from leading
+  const w = v.slice(0, v.indexOf(" "));
+  const size = v.slice(w.length + 1, slash).trim();
+  const lead = v.slice(slash + 1).trim().split(/\s+/)[0];
+  return { w, size, lead };
+}
+const roleHost = document.querySelector("[data-roles]");
+for (const [role, use, sample, tight] of ROLES) {
+  const { w, size, lead } = roleParts(role);
+  const sizeTok = SIZE_NAMES[size] || size, wTok = WEIGHT_NAMES[w] || w;
+  const sizeVal = size;
+  const px = sizeVal.startsWith("clamp") ? `${fmt(pxAt(sizeVal, 390))} at 390 → ${fmt(pxAt(sizeVal, 1280))} at 1280` : fmt(pxAt(sizeVal, 1280));
+  const leadVal = lead;
+  roleHost.append(el("div", { className: "trow" },
+    el("div", { className: "spec" }, code(role), el("br"), `${use}`),
+    el("div", { textContent: sample, style: `font: var(${role}); ${tight ? "letter-spacing: var(--tracking-tight);" : ""} ${role === "--type-overline" ? "letter-spacing: var(--tracking-label);" : ""} ${role === "--type-amount" ? "color: var(--color-price);" : ""}` }),
+    el("div", { className: "spec" }, `${sizeTok.replace("--", "")} · ${px}`, el("br"), `${wTok.replace("--weight-", "")} ${w} · leading ${leadVal}`, el("br"), "Figma: ", code(figmaName(role)), " text style")));
+}
+const scaleHost = document.querySelector("[data-scale]");
+for (const t of SCALE) {
+  const v = raw(t);
+  const px = v.startsWith("clamp") ? `${fmt(pxAt(v, 390))} at 390 → ${fmt(pxAt(v, 1280))} at 1280` : fmt(pxAt(v, 1280));
+  scaleHost.append(el("div", { className: "space-row" },
+    el("span", {}, code(t), ` · ${px}`),
+    el("span", { className: "figma" }, code(figmaName(t)), v.startsWith("clamp") ? " · Phone / Desktop modes" : ""),
+    el("span", { textContent: "Aa", style: `font-size: var(${t}); font-weight: var(--weight-bold); line-height: 1` })));
 }
 const wHost = document.querySelector("[data-weights]");
 for (const w of ["regular", "medium", "semibold", "bold", "heavy"]) wHost.append(el("span", { textContent: `${w} ${raw(`--weight-${w}`)}`, style: `font-weight: var(--weight-${w})` }));
 
+// Font candidates
+const fHost = document.querySelector("[data-fonts]");
+for (const [cls, name, note, slug] of FONTS) {
+  const [designer, size] = FONT_META[slug];
+  const col = el("section", { className: `font-col ${cls}`, ariaLabel: name });
+  col.append(
+    el("header", {}, el("strong", { textContent: name }), el("span", { textContent: `${designer} · ${size} · SIL OFL 1.1` }), el("br"), el("span", { textContent: note })),
+    el("p", { className: "s-display", textContent: "Kestrel Gives" }),
+    el("p", { className: "s-h1", textContent: "Silent Auction" }),
+    el("p", { className: "s-h2", textContent: "Sourdough starter + a loaf lesson" }),
+    el("p", { className: "s-body", textContent: "Bids go up by at least $1. The top bid when bidding closes wins, and every dollar goes to this year's three charities." }),
+    el("p", { className: "s-amount", textContent: "$1,250" }),
+    el("p", { className: "s-digits", textContent: "0123456789 · $45 · 6 bids · 5:00 PM" }),
+    el("p", { className: "s-caption", textContent: "Ends Friday at 5:00 PM EST · Maya Okafor · Jules Ferreira" }),
+  );
+  const mini = document.getElementById("preview").content.cloneNode(true);
+  for (const n of mini.querySelectorAll("[data-full]")) n.remove();
+  col.append(mini);
+  fHost.append(col);
+}
+
 // Spacing
 const sHost = document.querySelector("[data-space]");
 for (const n of [1, 2, 3, 4, 5, 6, 8, 10, 12, 16]) {
-  const v = raw(`--space-${n}`);
-  sHost.append(el("div", { className: "space-row" }, el("code", { textContent: `--space-${n} · ${v} · ${parseFloat(v) * 16}px` }), el("div", { className: "space-bar", style: `width: var(--space-${n}); height: var(--space-${n})` })));
+  const t = `--space-${n}`, v = raw(t);
+  sHost.append(el("div", { className: "space-row" },
+    el("span", {}, code(t), ` · ${v} · ${fmt(pxAt(v, 1280))}`),
+    el("span", { className: "figma" }, code(figmaName(t))),
+    el("div", { className: "space-bar", style: `width: var(${t}); height: var(${t})` })));
 }
 
 // Radius
 const rHost = document.querySelector("[data-radius]");
-for (const r of ["sm", "md", "lg", "xl", "pill"]) rHost.append(el("div", { className: "box r", style: `border-radius: var(--radius-${r})` }, el("span", {}, el("code", { textContent: `--radius-${r}` }), el("br"), raw(`--radius-${r}`))));
+for (const r of ["sm", "md", "lg", "xl", "pill"]) {
+  const t = `--radius-${r}`;
+  rHost.append(el("div", { className: "box r", style: `border-radius: var(${t})` }, el("span", {}, code(t), el("br"), raw(t), el("br"), code(figmaName(t)))));
+}
 
 // Shadow
 for (const host of document.querySelectorAll("[data-shadow]"))
-  for (const s of ["sm", "md", "lg"]) host.append(el("div", { className: "box", style: `border-radius: var(--radius-lg); box-shadow: var(--shadow-${s})` }, el("code", { textContent: `--shadow-${s}` })));
+  for (const s of ["sm", "md", "lg"]) host.append(el("div", { className: "box", style: `border-radius: var(--radius-lg); box-shadow: var(--shadow-${s})` }, el("span", {}, code(`--shadow-${s}`), el("br"), "effect style ", code(`shadow/${s}`))));
 
-// Values in text
+// Breakpoints
+const bHost = document.querySelector("[data-breakpoints]");
+for (const [t, use, example] of [
+  ["--breakpoint-sm", "Below this: phone layout; the nav becomes a menu.", "@media (width < 40rem)"],
+  ["--breakpoint-lg", "At or above this: wide layout, such as the side-by-side item detail page.", "@media (width >= 64rem)"],
+]) {
+  const v = raw(t);
+  bHost.append(el("div", { className: "space-row" }, el("span", {}, code(t), ` · ${v} · ${fmt(pxAt(v, 1280))}`), el("span", { className: "figma" }, code(figmaName(t))), el("span", {}, use, el("br"), code(example))));
+}
+
 for (const s of document.querySelectorAll("[data-val]")) s.textContent = raw(s.dataset.val);
 
 // Previews

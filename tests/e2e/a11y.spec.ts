@@ -1,4 +1,4 @@
-// Conformance check 3 (SPEC §12): zero axe violations on every screen, light and dark.
+// Conformance check 3 (SPEC §12): zero axe violations on every screen, light and dark, at 390px and 1280px.
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import { SCREENS } from "./screens.ts";

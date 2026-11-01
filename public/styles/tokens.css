@@ -53,18 +53,21 @@
   --color-brand-butter:    light-dark(#FFD86B, #FFD86B); /* hero swash */
   --color-mark-tile:       light-dark(#FEFEFE, #FEFEFE); /* the art's own white */
 
-  /* ---------- Type ---------- */
+  /* ---------- Type: families ---------- */
+  /* The self-hosted brand font is chosen in Milestone 1 (SPEC §5); the system stack is
+     the fallback while it loads and if it fails. */
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-display: var(--font-sans); /* headings use weight, not a second family */
+  --font-display: var(--font-sans);
 
-  --text-xs:   0.75rem;  /* 12: pill labels, fine print */
-  --text-sm:   0.875rem; /* 14: meta, help, table */
-  --text-md:   1rem;     /* 16: body, inputs, buttons */
-  --text-lg:   1.125rem; /* 18: tile titles, lead */
-  --text-xl:   1.375rem; /* 22: section headings, prices on tiles */
-  --text-2xl:  1.75rem;  /* 28: page titles */
-  --text-3xl:  2.25rem;  /* 36: item price on detail page */
-  --text-4xl:  3rem;     /* 48: Home headline */
+  /* ---------- Type: scale (building blocks; components use the roles below) ---------- */
+  --text-xs:   0.75rem;  /* 12 */
+  --text-sm:   0.875rem; /* 14 */
+  --text-md:   1rem;     /* 16 */
+  --text-lg:   1.125rem; /* 18 */
+  --text-xl:   1.375rem; /* 22 */
+  --text-2xl:  1.75rem;  /* 28 */
+  --text-3xl:  clamp(1.75rem, 1.4rem + 1.5vw, 2.25rem); /* fluid 28 → 36, max from ~900px */
+  --text-4xl:  clamp(2.25rem, 1.6rem + 2.8vw, 3rem);    /* fluid 36 → 48, max from ~800px */
 
   --weight-regular:  400;
   --weight-medium:   500;
@@ -72,12 +75,26 @@
   --weight-bold:     700;
   --weight-heavy:    800;
 
-  --leading-tight:  1.2;
-  --leading-snug:   1.35;
+  --leading-tight:  1.15;
+  --leading-snug:   1.3;
   --leading-normal: 1.5;
 
-  --tracking-tight: -0.01em; /* large headings */
-  --tracking-label: 0.08em;  /* uppercase eyebrow labels */
+  --tracking-tight: -0.015em; /* display and heading-1 */
+  --tracking-label: 0.08em;   /* uppercase eyebrow labels */
+
+  /* ---------- Type: roles (use with the font shorthand: font: var(--type-body)) ---------- */
+  --type-display:   var(--weight-heavy) var(--text-4xl)/var(--leading-tight) var(--font-display);   /* Home headline */
+  --type-heading-1: var(--weight-heavy) var(--text-2xl)/var(--leading-tight) var(--font-display);   /* page titles */
+  --type-heading-2: var(--weight-bold) var(--text-xl)/var(--leading-snug) var(--font-display);      /* section headings */
+  --type-heading-3: var(--weight-bold) var(--text-lg)/var(--leading-snug) var(--font-display);      /* tile titles, card headings */
+  --type-amount:    var(--weight-heavy) var(--text-3xl)/var(--leading-tight) var(--font-display);   /* item price on detail page */
+  --type-body-lg:   var(--weight-regular) var(--text-lg)/var(--leading-normal) var(--font-sans);    /* lead paragraphs */
+  --type-body:      var(--weight-regular) var(--text-md)/var(--leading-normal) var(--font-sans);    /* body, inputs */
+  --type-label:     var(--weight-semibold) var(--text-sm)/var(--leading-snug) var(--font-sans);     /* form labels, nav, table headers */
+  --type-button:    var(--weight-semibold) var(--text-md)/1 var(--font-sans);                       /* buttons */
+  --type-caption:   var(--weight-regular) var(--text-sm)/var(--leading-normal) var(--font-sans);    /* help text, meta */
+  --type-badge:     var(--weight-bold) var(--text-xs)/var(--leading-normal) var(--font-sans);       /* status pills */
+  --type-overline:  var(--weight-bold) var(--text-xs)/1 var(--font-sans);                           /* uppercase eyebrows; add --tracking-label */
 
   /* ---------- Spacing (4px steps) ---------- */
   --space-1:  0.25rem; /*  4 */
@@ -130,6 +147,16 @@
   --duration-slow: 320ms; /* dialogs, carousel */
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-exit:     cubic-bezier(0.4, 0, 1, 1);
+
+  /* ---------- Breakpoints ----------
+     Layouts are intrinsic by default (grids wrap at --size-tile-min). When something
+     needs a condition (the nav collapsing to a menu), use one of these two values, and
+     only inside an @media or @container condition, in range syntax:
+       @media (width < 40rem) { … }   @media (width >= 64rem) { … }
+     CSS can't read custom properties in media queries, so the values are written out
+     there; check:tokens allows exactly these two, and only in conditions. */
+  --breakpoint-sm: 40rem; /* 640: below this, phone layout (nav becomes a menu) */
+  --breakpoint-lg: 64rem; /* 1024: at or above this, wide layout (side-by-side detail page) */
 
   /* ---------- Layers ---------- */
   --layer-header: 10;
