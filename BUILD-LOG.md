@@ -184,3 +184,19 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   - **Clipped, not scrolling:** the header couldn't fit in 248px and was clipped by `overflow: hidden`, so the page never scrolled sideways and a page-scroll check alone would have missed it. Fixed by letting the header wrap.
   - **DOM types:** the reflow helper declares its own minimal browser types, so the server tsconfig stays free of DOM types (#26).
 - **Checks:** `npm run check` passes all seven.
+
+### 2026-11-01 — Stage 2d: Plus Jakarta Sans and the type-only lockup
+- **Owner stepped in:**
+  - Picked Plus Jakarta Sans for headings (#44).
+  - Simplified the hero lockup: "gives" set in Jakarta in coral under the teal "Kestrel", with no hand-drawn lettering, no heart over the i, and no swash, and one accessible name (#47).
+- **Built:**
+  - **Font:** `public/fonts/plus-jakarta-sans-latin-var.woff2` plus its `OFL.txt`. `@font-face` is in `tokens.css`, with a URL relative to the stylesheet so it works served and on the `file://` design pages. `--font-heading` is now `"Plus Jakarta Sans", <system stack>`.
+  - **Lockup tokens:** `--text-5xl` (fluid 40→72px), `--leading-lockup`, `--tracking-lockup`, and the `--type-hero` role.
+  - **Lockup:** an HTML lockup (`role="img"`, `aria-label="Kestrel Gives"`, mark `alt=""`) replaces the SVG lettering on the token sheet.
+  - **Base styles:** `public/styles/base.css` sets page defaults from tokens; it's the first piece of the component work. The placeholder page loads it and preloads the font.
+  - **Cleanup:** the candidate fonts folder was deleted, along with its `.gitignore` line.
+- **Verified:**
+  - **On the served page:** one font request (the preload is reused), the `h1` computes to Plus Jakarta Sans, there are no console warnings, and the file is served as `font/woff2`.
+  - **On the sheet:** at 1280, 390, and 320px there are no reflow problems and the lockup has a single name.
+  - **Preload on design pages:** a preload can't work on a `file://` page (the browser blocks it as cross-origin), so the design page doesn't preload. The font still loads there through `@font-face`.
+- **Checks:** `npm run check` passes all seven.

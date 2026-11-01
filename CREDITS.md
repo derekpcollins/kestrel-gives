@@ -9,7 +9,13 @@ The Kestrel org mark and the Kestrel Gives event mark were designed by me with a
 
 ## Fonts
 
-Body and UI use system fonts. The one heading font is chosen at the Milestone 1 token review; its name, source, and license (SIL Open Font License 1.1) are recorded here once picked.
+Body, UI, and numbers use the system font stack.
+
+**Plus Jakarta Sans** (headings and the hero lockup)
+- Designer: Tokotype. Copyright 2020 The Plus Jakarta Sans Project Authors
+- Source: https://github.com/tokotype/PlusJakartaSans, via Google Fonts (https://fonts.google.com/specimen/Plus+Jakarta+Sans). Downloaded once at build time as the variable WOFF2, Latin subset; self-hosted, so the site makes no requests to Google
+- License: SIL Open Font License 1.1, checked against `OFL.txt` and `METADATA.pb` in the google/fonts repo. The license travels with the font: `public/fonts/plus-jakarta-sans-OFL.txt`
+- File: `public/fonts/plus-jakarta-sans-latin-var.woff2` (unmodified)
 
 ## Photos
 

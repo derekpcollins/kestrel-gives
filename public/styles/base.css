@@ -1,0 +1,25 @@
+/* Base element styles: the page defaults every component builds on. Tokens only
+   (SPEC §5); documented in DESIGN-SYSTEM.md. */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: var(--type-body);
+}
+
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+h1 { font: var(--type-heading-1); letter-spacing: var(--tracking-tight); }
+h2 { font: var(--type-heading-2); }
+h3 { font: var(--type-heading-3); }
+
+p { margin: 0; }
+
+a { color: var(--color-link); text-underline-offset: var(--space-1); }
+
+:focus-visible { outline: var(--focus-width) solid var(--color-focus); outline-offset: var(--focus-offset); }
+
+img { max-width: 100%; height: auto; }

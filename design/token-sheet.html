@@ -10,20 +10,8 @@
 <!-- Milestone 1 review page. Every value on this page comes from public/styles/tokens.css:
      the page's own CSS uses only var(--…) (plus the two breakpoint values in conditions),
      and the values and contrast ratios shown are read from the browser at load, so the
-     sheet can't drift from the token file. Add ?font=nunito|figtree|jakarta to render the
-     whole sheet in a candidate font. -->
+     sheet can't drift from the token file. -->
 <style>
-/* Heading-font candidates (review only; the chosen one moves to public/fonts/ and
-   tokens.css --font-heading). Body and UI stay on the system stack. */
-@font-face { font-family: "Plus Jakarta Sans"; src: url("font-candidates/plus-jakarta-sans-latin-var.woff2") format("woff2"); font-weight: 200 800; font-display: swap; }
-@font-face { font-family: "Manrope"; src: url("font-candidates/manrope-latin-var.woff2") format("woff2"); font-weight: 200 800; font-display: swap; }
-@font-face { font-family: "Outfit"; src: url("font-candidates/outfit-latin-var.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
-.cand-jakarta { --cand: "Plus Jakarta Sans"; }
-.cand-manrope { --cand: "Manrope"; }
-.cand-outfit { --cand: "Outfit"; }
-/* The --type-* roles resolve their family at :root, so a candidate is applied by
-   overriding font-family on heading-role elements only (review page only). */
-:is(.cand-jakarta, .cand-manrope, .cand-outfit) :is(.s-heading, .hw-kestrel, .p-tile h4, .p-brand, .meta h1, h3) { font-family: var(--cand), var(--font-sans) !important; }
 code, code * { font-family: ui-monospace, SFMono-Regular, Menlo, monospace !important; }
 
 * { box-sizing: border-box; }
@@ -50,14 +38,14 @@ code { font-size: 0.92em; overflow-wrap: anywhere; }
 /* Brand */
 .brand-row { display: flex; gap: var(--space-4); align-items: center; flex-wrap: wrap; }
 .mark-tile { display: inline-grid; place-items: center; background: var(--color-mark-tile); border-radius: var(--radius-md); padding: var(--space-2); }
-.hero-card { margin-top: var(--space-4); background: var(--color-mark-tile); border-radius: var(--radius-xl); padding: var(--space-6); display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--space-4) var(--space-6); box-shadow: var(--shadow-md); }
-.hero-card img { height: calc(var(--space-16) * 2.25); width: auto; }
-.hero-card svg { width: min(100%, calc(var(--space-16) * 4.5)); height: auto; }
-@media (width >= 40rem) { .hero-card img { height: calc(var(--space-16) * 3); } }
-.hw-swash { fill: none; stroke: var(--color-brand-butter); }
-.hw-kestrel { fill: var(--color-brand-teal); font-family: var(--font-display); font-weight: var(--weight-heavy); }
-.hw-gives { fill: none; stroke: var(--color-brand-coral); }
-.hw-heart { fill: var(--color-brand-coral); }
+/* Hero lockup: the event mark + "Kestrel" (teal) over "gives" (coral), live text in the
+   heading font, one accessible name. Light card in both modes (the mark's file is white). */
+.hero-card { margin-top: var(--space-4); background: var(--color-mark-tile); border-radius: var(--radius-xl); padding: var(--space-6); display: flex; justify-content: center; box-shadow: var(--shadow-md); }
+.lockup { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--space-2) var(--space-4); }
+.lockup img { height: calc(var(--text-5xl) * 2.6); width: auto; }
+.lockup-words { display: flex; flex-direction: column; font: var(--type-hero); letter-spacing: var(--tracking-lockup); }
+.lockup-kestrel { color: var(--color-brand-teal); }
+.lockup-gives { color: var(--color-brand-coral); }
 
 /* Color rows: five columns when wide, stacked when narrow */
 .crow { display: grid; gap: var(--space-2) var(--space-3); align-items: center; padding: var(--space-3) 0; border-bottom: var(--border-thin) solid var(--color-border);
@@ -94,23 +82,6 @@ code { font-size: 0.92em; overflow-wrap: anywhere; }
 .trow .spec code { color: var(--color-text); font-weight: var(--weight-semibold); }
 .weights { display: flex; gap: var(--space-2) var(--space-6); flex-wrap: wrap; font: var(--type-heading-2); }
 
-/* Heading-font candidates */
-.fonts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--size-tile-min) * 1.15)), 1fr)); gap: var(--space-4); }
-.font-col { background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: var(--space-5); display: grid; gap: var(--space-3); align-content: start; min-width: 0; }
-.font-col header { border-bottom: var(--border-thin) solid var(--color-border); padding-bottom: var(--space-3); }
-.font-col header strong { font: var(--type-heading-2); display: block; }
-.font-col header span { font: var(--type-caption); color: var(--color-text-muted); }
-.font-col .s-display { font: var(--type-display); letter-spacing: var(--tracking-tight); margin: 0; }
-.font-col .s-h1 { font: var(--type-heading-1); letter-spacing: var(--tracking-tight); margin: 0; }
-.font-col .s-h2 { font: var(--type-heading-2); margin: 0; }
-.font-col .s-h3 { font: var(--type-heading-3); margin: 0; }
-.font-col .hero-card { margin: 0; padding: var(--space-4); gap: var(--space-3); box-shadow: inset 0 0 0 var(--border-thin) var(--color-border); }
-.font-col .hero-card img { height: calc(var(--space-16) * 1.6); }
-.font-col .hero-card svg { width: min(100%, calc(var(--space-16) * 3)); }
-.font-col .tag { font: var(--type-overline); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--color-text-muted); margin: var(--space-2) 0 0; }
-.font-col .s-body { font: var(--type-body); margin: 0; }
-.font-col .s-caption { font: var(--type-caption); color: var(--color-text-muted); margin: 0; }
-.font-col .s-amount { font: var(--type-amount); color: var(--color-price); margin: 0; font-variant-numeric: var(--figures-amount); }
 
 /* Spacing, radius, shadow */
 .space-row { display: grid; grid-template-columns: minmax(0, 1.4fr) 1fr; gap: var(--space-3); align-items: center; padding: var(--space-1) 0; font: var(--type-caption); }
@@ -195,19 +166,10 @@ footer { margin-top: var(--space-12); padding-top: var(--space-4); border-top: v
     <div class="pane scheme-dark"><p class="pane-label">Dark</p><div class="brand-row" data-brand></div></div>
   </div>
   <div class="hero-card">
-    <img src="../public/brand/kestrel-gives-event-mark-280.png" srcset="../public/brand/kestrel-gives-event-mark-280.png 1x, ../public/brand/kestrel-gives-event-mark-560.png 2x" alt="">
-    <svg viewBox="0 0 400 260" role="img" aria-label="Kestrel Gives">
-      <path class="hw-swash" d="M10 232 C 100 210, 248 250, 360 220" stroke-width="24" stroke-linecap="round"/>
-      <text class="hw-kestrel" x="8" y="72" font-size="62" letter-spacing="-1">Kestrel</text>
-      <g class="hw-gives" transform="translate(6 100) scale(1.85)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M36 20 A16 16 0 1 0 4 20 A16 16 0 1 0 36 20 M36 4 V44 A16 16 0 0 1 6 50"/>
-        <path d="M54 4 V36"/>
-        <path d="M68 4 L84 36 L100 4"/>
-        <path d="M112 20 H144 A16 16 0 1 0 139 31.5"/>
-        <path d="M176 8 C 171 2, 155 2, 155 11 C 155 21, 177 18, 177 28 C 177 38, 159 39, 153 32"/>
-      </g>
-      <path class="hw-heart" transform="translate(77 73) scale(.17)" d="M160 174 C 140 159, 116 143, 116 118 C 116 102, 128 93, 141 93 C 150 93, 157 99, 160 106 C 163 99, 170 93, 179 93 C 192 93, 200 102, 200 118 C 200 143, 180 159, 160 174 Z"/>
-    </svg>
+    <div class="lockup" role="img" aria-label="Kestrel Gives">
+      <img src="../public/brand/kestrel-gives-event-mark-280.png" srcset="../public/brand/kestrel-gives-event-mark-280.png 1x, ../public/brand/kestrel-gives-event-mark-560.png 2x" alt="">
+      <span class="lockup-words"><span class="lockup-kestrel">Kestrel</span><span class="lockup-gives">gives</span></span>
+    </div>
   </div>
   <p class="note">The marks are the owner's files, unmodified, on the art's own white (<code>--color-mark-tile</code>). In the header, the tile only shows in dark mode. The hero card is light in both modes. Brand teal, coral, and butter are fixed and used only on that white.</p>
 
@@ -231,9 +193,8 @@ footer { margin-top: var(--space-12); padding-top: var(--space-4); border-top: v
   <h3>Weights</h3>
   <div class="weights" data-weights></div>
 
-  <h2>Heading font candidates</h2>
-  <p class="lede">System fonts for body, UI, and numbers. One self-hosted font (a variable WOFF2 with the Latin subset, in <code>public/fonts/</code>) only for the display and heading roles and the hero "Kestrel", with the system stack as its fallback. All three are SIL Open Font License 1.1. Add <code>?heading=jakarta</code>, <code>manrope</code>, or <code>outfit</code> to the URL to set the whole sheet's headings in one.</p>
-  <div class="fonts" data-fonts></div>
+  <h2>Fonts</h2>
+  <p class="lede">Headings and the hero lockup use <strong class="s-heading" style="font: var(--type-heading-3)">Plus Jakarta Sans</strong> (Tokotype, SIL OFL 1.1), self-hosted from <code>public/fonts/</code> as a 27 KB variable WOFF2 with the Latin subset, and preloaded on the site's pages. Body, UI, and numbers use the system font stack, which is also the heading font's fallback.</p>
 
   <h2>Spacing</h2>
   <p class="lede">4px steps.</p>
@@ -383,6 +344,7 @@ const PAIRS = [
 ];
 
 const ROLES = [
+  ["--type-hero", "Hero lockup words (with --tracking-lockup)", "Kestrel", false],
   ["--type-display", "Home headline", "Kestrel Gives 2026", true],
   ["--type-heading-1", "Page titles", "Silent Auction", true],
   ["--type-heading-2", "Section headings", "Your items"],
@@ -396,18 +358,7 @@ const ROLES = [
   ["--type-badge", "Status pills", "You're winning"],
   ["--type-overline", "Uppercase eyebrows (with --tracking-label)", "SILENT AUCTION"],
 ];
-const SCALE = ["--text-xs", "--text-sm", "--text-md", "--text-lg", "--text-xl", "--text-2xl", "--text-3xl", "--text-4xl"];
-const FONTS = [
-  ["cand-jakarta", "Plus Jakarta Sans", "Geometric with a slightly condensed, crisp build; modern and confident at heavy weights.", "plus-jakarta-sans"],
-  ["cand-manrope", "Manrope", "Semi-condensed grotesque, very even; the most product-UI and businesslike.", "manrope"],
-  ["cand-outfit", "Outfit", "Pure geometric with round bowls; the friendliest of the three, closest to the logo's curves.", "outfit"],
-];
-const FONT_META = { "plus-jakarta-sans": ["Tokotype", "27 KB"], manrope: ["Mikhail Sharanda", "24 KB"], outfit: ["Smartsheet, Rodrigo Fuenzalida", "32 KB"] };
-
-// Whole-sheet heading override for review: ?heading=jakarta|manrope|outfit
-const pick = new URLSearchParams(location.search).get("heading");
-if (pick) document.documentElement.classList.add(`cand-${pick}`);
-
+const SCALE = ["--text-xs", "--text-sm", "--text-md", "--text-lg", "--text-xl", "--text-2xl", "--text-3xl", "--text-4xl", "--text-5xl"];
 const root = getComputedStyle(document.documentElement);
 const raw = (name) => root.getPropertyValue(name).trim();
 const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
@@ -493,7 +444,7 @@ cHost.append(el("p", { className: `summary ${fails ? "fail" : "pass"}`, textCont
 // Type roles: the browser returns each role with its var()s already resolved,
 // "800 clamp(…)/1.15 system-ui, …", so split it and map values back to token names.
 const byValue = (prefix, names) => Object.fromEntries(names.map((n) => [raw(`--${prefix}-${n}`), `--${prefix}-${n}`]));
-const SIZE_NAMES = byValue("text", ["xs", "sm", "md", "lg", "xl", "2xl", "3xl", "4xl"]);
+const SIZE_NAMES = byValue("text", ["xs", "sm", "md", "lg", "xl", "2xl", "3xl", "4xl", "5xl"]);
 const WEIGHT_NAMES = byValue("weight", ["regular", "medium", "semibold", "bold", "heavy"]);
 function roleParts(role) {
   const v = raw(role);
@@ -512,7 +463,7 @@ for (const [role, use, sample, tight] of ROLES) {
   const leadVal = lead;
   roleHost.append(el("div", { className: "trow" },
     el("div", { className: "spec" }, code(role), el("br"), `${use}`),
-    el("div", { textContent: sample, className: /display|heading/.test(role) ? "s-heading" : "", style: `font: var(${role}); ${tight ? "letter-spacing: var(--tracking-tight);" : ""} ${role === "--type-overline" ? "letter-spacing: var(--tracking-label);" : ""} ${role === "--type-amount" ? "color: var(--color-price);" : ""}` }),
+    el("div", { textContent: sample, className: /hero|display|heading/.test(role) ? "s-heading" : "", style: `font: var(${role}); ${tight ? "letter-spacing: var(--tracking-tight);" : ""} ${role === "--type-overline" ? "letter-spacing: var(--tracking-label);" : ""} ${role === "--type-amount" ? "color: var(--color-price); font-variant-numeric: var(--figures-amount);" : ""} ${role === "--type-hero" ? "letter-spacing: var(--tracking-lockup); color: var(--color-brand-teal);" : ""}` }),
     el("div", { className: "spec" }, `${sizeTok.replace("--", "")} · ${px}`, el("br"), `${wTok.replace("--weight-", "")} ${w} · leading ${leadVal}`, el("br"), "Figma: ", code(figmaName(role)), " text style")));
 }
 const scaleHost = document.querySelector("[data-scale]");
@@ -526,32 +477,6 @@ for (const t of SCALE) {
 }
 const wHost = document.querySelector("[data-weights]");
 for (const w of ["regular", "medium", "semibold", "bold", "heavy"]) wHost.append(el("span", { textContent: `${w} ${raw(`--weight-${w}`)}`, style: `font-weight: var(--weight-${w})` }));
-
-// Font candidates
-const fHost = document.querySelector("[data-fonts]");
-for (const [cls, name, note, slug] of FONTS) {
-  const [designer, size] = FONT_META[slug];
-  const col = el("section", { className: `font-col ${cls}`, ariaLabel: name });
-  const lockup = document.querySelector(".hero-card").cloneNode(true);
-  col.append(
-    el("header", {}, el("strong", { className: "s-heading", textContent: name }), el("span", { textContent: `${designer} · ${size} · SIL OFL 1.1` }), el("br"), el("span", { textContent: note })),
-    el("p", { className: "tag", textContent: "Hero lockup" }),
-    lockup,
-    el("p", { className: "tag", textContent: "Headings (this font)" }),
-    el("p", { className: "s-display s-heading", textContent: "Kestrel Gives 2026" }),
-    el("p", { className: "s-h1 s-heading", textContent: "Silent Auction" }),
-    el("p", { className: "s-h2 s-heading", textContent: "Your items" }),
-    el("p", { className: "s-h3 s-heading", textContent: "Sourdough starter + a loaf lesson" }),
-    el("p", { className: "tag", textContent: "Body, UI, numbers (system)" }),
-    el("p", { className: "s-body", textContent: "Bids go up by at least $5. The top bid when bidding closes wins, and every dollar goes to this year's three charities." }),
-    el("p", { className: "s-amount", textContent: "$1,250" }),
-    el("p", { className: "s-caption", textContent: "Ends Friday at 5:00 PM EST · 6 bids · Maya Okafor" }),
-  );
-  const mini = document.getElementById("preview").content.cloneNode(true);
-  for (const n of mini.querySelectorAll("[data-full]")) n.remove();
-  col.append(mini);
-  fHost.append(col);
-}
 
 // Spacing
 const sHost = document.querySelector("[data-space]");
