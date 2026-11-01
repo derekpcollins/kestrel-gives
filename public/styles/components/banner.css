@@ -18,6 +18,8 @@
 .banner__title { font: var(--type-label); }
 .banner__text { font: var(--type-body); }
 .banner__action { flex: none; align-self: center; }
+/* The action is a full-size button: 44px (SPEC §6). Banners aren't dense rows, so never --sm. */
+.banner__action .btn { min-height: var(--size-target); }
 
 .banner--phase   { background: var(--color-banner); color: var(--color-on-banner); }
 .banner--success { background: var(--color-success-soft); }

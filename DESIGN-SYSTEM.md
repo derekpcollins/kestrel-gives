@@ -103,7 +103,7 @@ The same pattern applies to every component below. Each entry's **Figma** line g
 - **States:** default. Hover, focus, active, disabled and loading are N/A on the banner itself; its action button has its own states. **Error** is `--danger`. Empty: N/A (no banner is shown).
 - **Accessibility:** the phase banner and banners that appear after page load use `role="status"`. A danger banner that appears after a failed submit uses `role="alert"`, or focus moves to it, and it links to the field to fix. Icons are decorative.
 - **Do:** say what happened and what to do next. **Don't:** use a banner for a passing confirmation (use a toast); don't stack more than two.
-- **Figma:** *Banner* · Tone = Phase / Info / Success / Warning / Danger × Action = On / Off (10), with the icon as an instance swap and the action as a nested *Button* (Size = Small).
+- **Figma:** *Banner* · Tone = Phase / Info / Success / Warning / Danger × Action = On / Off (10), with the icon as an instance swap and the action as a nested *Button* (Size = Medium: 44px, SPEC §6).
 
 ## Toast
 
@@ -373,7 +373,7 @@ How forms behave, for every component below:
 - **Words come from data:** `tileText()` in `src/components/item-tile-rules.ts` computes the amount line and the one status from the item, the viewer and the phase; nothing on a tile is typed in. Unit tests: `tests/unit/item-tile-rules.test.ts`.
   - Silent auction: "Starts at $40 / No bids yet", "Top bid $240 / 6 bids"; after close "Winning bid $310 / 9 bids" or "Starting bid $40 / No bids".
   - Instant sale: "$20 / 2 left"; "12 available" during submissions; "None left".
-- **Status (one, most important first):** Cancelled (danger) › after close: You won (success), Ended, Sold out › during submissions: "Opens Nov 17" › live silent auction: You're winning (success), Outbid (danger) › live instant sale: Sold out, "2 left" (warning, at 3 or fewer) › Ending soon (warning, within 24 hours of close). No status if none applies. The low-stock and ending-soon thresholds are provisional (DECISIONS #61).
+- **Status (one, most important first):** Cancelled (danger) › after close: You won (success), Ended, Sold out › during submissions: "Opens Nov 17" › live silent auction: You're winning (success), Outbid (danger) › live instant sale: Sold out, "2 left" (warning, at 3 or fewer) › Ending soon (warning, within 24 hours of close). No status if none applies. Both thresholds live in `src/components/thresholds.ts` (SPEC §10, DECISIONS #61).
 - **States:** the card link's default, hover (lift), active and focus (ring). **Muted** (`.item-tile--muted`, ended and cancelled): the photo fades and the amount turns muted; the pill keeps full contrast. **Cancelled** appears only in Your Items, never in browse grids. Disabled: N/A (a tile always opens its item). Loading: Milestone 3 decides whether grids need skeletons. Empty: the grid's *Empty state*, not the tile. Error: N/A.
 - **Accessibility:** the whole tile is one link, named by the title with the status appended as visually hidden text ("Sourdough starter and a loaf a month, Outbid"); the pill itself is `aria-hidden` so it isn't read twice. Status isn't shown by color alone: the pill has words.
 - **Do:** keep titles to two lines in the design; long ones wrap. **Don't:** show more than one status, or put buttons inside the tile.

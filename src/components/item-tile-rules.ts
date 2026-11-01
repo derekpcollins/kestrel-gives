@@ -2,6 +2,7 @@
 // viewer and the event phase, never hard-coded (SPEC §7.4). No DOM here, so the server
 // and node:test can load it. Amounts are whole dollars (SPEC §7.9).
 import { formatDollars } from "./form-rules.ts";
+import { ENDING_SOON_HOURS, LOW_STOCK } from "./thresholds.ts";
 
 export type Phase = "submission" | "live" | "ended";
 export type Tone = "neutral" | "success" | "warning" | "danger";
@@ -32,11 +33,6 @@ export interface TileText {
   detail: string; // "6 bids"
   status?: { label: string; tone: Tone };
 }
-
-/** "Ending soon" within this many hours of the close; "N left" at or below this stock.
-    Provisional values (DECISIONS #61), kept here so every screen agrees. */
-export const ENDING_SOON_HOURS = 24;
-export const LOW_STOCK = 3;
 
 export function tileText(item: TileItem, ctx: TileContext): TileText {
   return { ...amountLine(item, ctx.phase), status: tileStatus(item, ctx) };

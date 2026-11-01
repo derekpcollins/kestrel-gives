@@ -1,6 +1,6 @@
 # Kestrel Gives — Build Spec & Conformance Rules
 
-**Status:** v1.6 · Owner: Derek Collins · Last updated: Nov 1, 2026
+**Status:** v1.7 · Owner: Derek Collins · Last updated: Nov 1, 2026
 
 This document describes what to build and the rules every contribution must follow, whether a person or an AI agent writes it. Read it in full before writing any code. If something here conflicts with a request, stop and ask.
 
@@ -269,7 +269,7 @@ The agent proposes the final schema in Milestone 2. Expected tables: `events`, `
 
 - **7 users:** 2 admins and 5 employees, with invented names.
 - **16 items:** 10 silent auction and 6 instant sale, the kind of thing coworkers actually donate (a pottery class for two, a sourdough starter, a custom pet portrait, a weekend at a lake cabin, guitar lessons…). All invented; no real businesses.
-- **States covered**, so every screen state appears in the visual review: no bids yet, the current viewer outbid, the current viewer winning, ending soon, won, sold out, low stock, cancelled, and proofs pending, approved, and rejected.
+- **States covered**, so every screen state appears in the visual review: no bids yet, the current viewer outbid, the current viewer winning, ending soon, won, sold out, low stock, cancelled, and proofs pending, approved, and rejected. "Ending soon" means bidding closes within 24 hours; "low stock" means an instant-sale item has 3 or fewer left. Both numbers live in one module, `src/components/thresholds.ts` (DECISIONS #61). (Added v1.7.)
 - **Photos** (committed as static files; see section 4): real free-license stock photos (for example Unsplash or Pexels) with no visible brands, logos, or identifiable faces. Most items get one photo, three get three, and one gets five. Every photo is logged in `CREDITS.md` with its source link, photographer, and license, checked when downloaded. The owner approves the photos in Milestone 2.
 - No past events.
 
