@@ -1,6 +1,6 @@
 # Kestrel Gives — Build Spec & Conformance Rules
 
-**Status:** v1.7 · Owner: Derek Collins · Last updated: Nov 1, 2026
+**Status:** v1.8 · Owner: Derek Collins · Last updated: Nov 1, 2026
 
 This document describes what to build and the rules every contribution must follow, whether a person or an AI agent writes it. Read it in full before writing any code. If something here conflicts with a request, stop and ask.
 
@@ -39,7 +39,7 @@ This is a **from-memory recreation** of a tool I designed and built at a previou
 ### 3.1 Demo controls
 A slim bar pinned to the top of every page, in the normal page flow (it never overlays content), visually distinct from the app (its own background treatment and a "Demo" label). It is a design-system component like any other.
 - **Viewing as:** a select listing every seeded user with their role. The choice is stored in a cookie; the API reads it to know who is acting. Changes are announced ("Now viewing as …, admin").
-- **Jump to:** submission window / live / ended / 30+ days after. Moves the stored event dates relative to now. It MUST NOT fake the clock; the real time-window rules are what get exercised.
+- **Jump to:** submission window / live / ending soon / ended / 30+ days after. Moves the stored event dates relative to now. "Ending soon" is live with bidding closing in under 24 hours (the threshold in section 10). (Ending soon added v1.8.) It MUST NOT fake the clock; the real time-window rules are what get exercised.
 - **Restore demo data:** resets everything to the seeded state (including email templates), behind a confirmation dialog.
 - Collapsible to a thin strip using `<details>`; collapsed state is remembered.
 - Exposed to assistive tech as a region labeled "Demo controls."
@@ -100,6 +100,7 @@ The Vercel CLI is installed globally, not as a project dependency. Node's built-
 - Plain SQL with parameters. No ORM.
 - Schema changes MUST be numbered SQL files in `migrations/`, applied by a small migration script (no dependencies) that records which have run.
 - Seed data MUST come from a script that can be re-run safely.
+- **Production migrations run in the Vercel production build** (`scripts/deploy-db.ts`, the build's last step, after compiling and the unit tests). Before touching the database it MUST confirm both that `VERCEL_ENV` is `production` and that `DATABASE_URL` is the `main` branch, and refuse otherwise; every other build skips it. Migrating and seed-if-empty (seeding only a database that has never been seeded) run under one Postgres advisory lock over a direct, unpooled connection, so two builds can't race. A failure fails the build, so the deployment doesn't go live. Applied migrations are recorded with a checksum of the file (line endings normalized) and MUST NOT be edited; schema changes are additive, so the previous deployment keeps working if it's rolled back. (Added v1.8.)
 - Two branches: **`main`** for the deployed demo, **`dev`** for local work and tests. Tests reseed `dev` before each run and MUST NOT touch `main`.
 
 ### File storage
@@ -173,7 +174,7 @@ Three fictional charities, seeded and read-only in v1:
 | **Lunchbox Brigade** | Packs weekend and summer meals for kids who rely on school lunch |
 | **Saplingworks** | Plants and cares for street trees in neighborhoods with the least shade |
 
-Each has a name, a one-sentence description, and an original logo. There is **one donation destination**: people donate once on the giving platform, and the funds are **split equally among the three charities**. Donors don't choose a charity.
+Each has a name, a one-sentence description, and an original logo. The owner supplies the logos; until then all three use one neutral image clearly marked as a placeholder, and each charity keeps its own logo path so the real files drop in later (v1.8). There is **one donation destination**: people donate once on the giving platform, and the funds are **split equally among the three charities**. Donors don't choose a charity.
 
 ### 7.3 Items
 - **Submitting** (employees during the submission window; admins any time). The form's first question is the sale type, shown as two side-by-side radio cards: **Silent auction** and **Instant sale**, each with a label and a one-line description of when to choose it. The rest of the form is disabled until one is chosen.
@@ -204,14 +205,17 @@ Each has a name, a one-sentence description, and an original logo. There is **on
 
 ### 7.6 Donation proof and statuses
 - Auction winners and instant-sale buyers donate on the outside giving platform, then upload proof: the amount and a screenshot. (No charity choice; see 7.2.)
+- **One combined proof per person per event**, covering their total, since every donation is split across all three charities. The **donation total** is the sum of the person's winning bids plus their non-cancelled purchases. It is computed, never stored; each proof records the total as it was at upload.
+- If a person's total changes after they uploaded proof (for example, an admin removes a winning bid after close), their latest proof goes back to pending and a banner asks them to check it ("Your donation total changed…"). (Combined proof added v1.8.)
 - Proof is due **7 days after the event closes** (event setting). The dashboard shows days remaining.
-- If the amount entered is less than what's owed, the form warns but allows submission. The admin decides.
+- If the amount entered is less than the donation total, the form warns but allows submission. The admin decides.
 - Admins **approve** or **reject** each proof. A rejection requires a reason, shown to the person, who MAY upload again.
 - Instead of emails, statuses appear in the app: outbid (on the item and dashboard), won (with an upload-proof link), purchase receipt, proof rejected (with reason), item cancelled.
 
 ### 7.7 Email templates (admin)
 - Six templates: bid receipt, outbid, winner, purchase receipt, proof rejected, item cancelled.
 - Each has a subject and a plain-text body. No rich-text editor.
+- Copy that asks for proof uses the person's donation total ("Upload proof of your $345 donation"), never an item name (v1.8).
 - An **Insert variable** menu inserts tokens such as `{{first_name}}`, `{{item_name}}`, `{{amount}}`, `{{proof_deadline}}`, `{{rejection_reason}}` at the cursor. Each template offers only the variables that apply to it.
 - Unknown or misspelled tokens show an inline error and block saving.
 - A live preview beside the editor fills the template with sample seed data.
@@ -220,7 +224,7 @@ Each has a name, a one-sentence description, and an original logo. There is **on
 
 ### 7.8 Yearly reset (admin)
 - **Reset for next year** wipes items, photos (including their uploaded files), bids, purchases, and proofs.
-- It keeps users, roles, charities, email templates, and event settings. Settings carry over as the starting point for next year, with the dates cleared.
+- It keeps users, roles, charities, email templates, and event settings. It creates the next year's event as a new event record with the settings copied and the dates cleared (v1.8); the previous event record stays.
 - Locked until **30 days after bidding closes**. Requires a confirmation dialog where the admin types the event name.
 
 ### 7.9 Money
@@ -263,14 +267,14 @@ A banner just below the header shows the current phase message, for example "Sub
 
 ## 9. Data model (starting point)
 
-The agent proposes the final schema in Milestone 2. Expected tables: `events`, `users` (name, role), `charities`, `items` (type, status, prices in cents, quantity, submitter), `item_photos` (position), `bids`, `purchases`, `proofs` (amount, image, status, rejection reason), `email_templates`.
+The agent proposes the final schema in Milestone 2. Expected tables: `events`, `users` (name, role), `charities`, `items` (type, status, prices in cents, quantity, submitter), `item_photos` (position), `bids`, `purchases`, `proofs` (one per person per event: amount, the donation total at upload, image, status, rejection reason; v1.8), `email_templates`.
 
 ## 10. Seed data
 
 - **7 users:** 2 admins and 5 employees, with invented names.
 - **16 items:** 10 silent auction and 6 instant sale, the kind of thing coworkers actually donate (a pottery class for two, a sourdough starter, a custom pet portrait, a weekend at a lake cabin, guitar lessons…). All invented; no real businesses.
 - **States covered**, so every screen state appears in the visual review: no bids yet, the current viewer outbid, the current viewer winning, ending soon, won, sold out, low stock, cancelled, and proofs pending, approved, and rejected. "Ending soon" means bidding closes within 24 hours; "low stock" means an instant-sale item has 3 or fewer left. Both numbers live in one module, `src/components/thresholds.ts` (DECISIONS #61). (Added v1.7.)
-- **Photos** (committed as static files; see section 4): real free-license stock photos (for example Unsplash or Pexels) with no visible brands, logos, or identifiable faces. Most items get one photo, three get three, and one gets five. Every photo is logged in `CREDITS.md` with its source link, photographer, and license, checked when downloaded. The owner approves the photos in Milestone 2.
+- **Photos** (committed as static files; see section 4): real free, royalty-free stock photos (the Unsplash and Pexels licenses qualify) with no recognizable faces, brands, logos, or real places. The owner approves a contact sheet of candidates, with links and licenses, before anything is downloaded. Every photo is credited, even when its license doesn't require it (v1.8). Most items get one photo, three get three, and one gets five. Every photo is logged in `CREDITS.md` with its source link, photographer, and license, checked when downloaded. The owner approves the photos in Milestone 2.
 - No past events.
 
 ## 11. Code conventions

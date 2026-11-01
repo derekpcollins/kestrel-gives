@@ -1,17 +1,14 @@
-// Placeholder until Milestone 2 writes the real seed data. Proves the seed path end
-// to end and, like the real one must be, is safe to re-run (SPEC §4).
+// `npm run db:seed`: replaces the data with the demo seed (dev branch unless --allow-main).
 import { Pool } from "@neondatabase/serverless";
 import { databaseUrl, endpointOf } from "./db-target.ts";
+import { seed } from "./seed-lib.ts";
+import { directUrl, withSchemaLock } from "./migrate-lib.ts";
 
 const url = databaseUrl();
-const pool = new Pool({ connectionString: url });
-
+const pool = new Pool({ connectionString: directUrl(url) });
 try {
-  await pool.query(`
-    INSERT INTO app_meta (key, value) VALUES ('seeded_at', now()::text)
-    ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()`);
-  const { rows } = await pool.query("SELECT count(*)::int AS count FROM app_meta");
-  console.log(`Seeded ${endpointOf(url)}: app_meta has ${rows[0]?.count} row(s).`);
+  const summary = await withSchemaLock(pool, () => seed(pool));
+  console.log(`Seeded ${endpointOf(url)}: ${summary}.`);
 } finally {
   await pool.end();
 }

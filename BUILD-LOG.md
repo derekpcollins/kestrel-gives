@@ -328,3 +328,31 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   - **Process:** Figma mirroring with matrices under 30 combinations; split components instead of growing them.
 - **Slip to remember:** in Stage 1, Claude listed macOS system font folders outside the project; flagged right away. Nothing outside the folder has been touched since.
 - **Owner sign-off:** C2 approved and pushed on 2026-11-01. Milestone 1 is complete.
+
+---
+
+## Milestone 2: Data
+
+**Started:** 2026-11-01 16:37 EST (first 2A file; the owner's go on the plan came a few minutes earlier)
+**Ended:** —
+
+### 2026-11-01 — Plan review
+- **Owner stepped in:**
+  - **Migrations in the production build, with conditions:** run last, after compiling and the tests; require `VERCEL_ENV=production` and a confirmed `main` connection; an advisory lock around migrate and seed-if-empty; normalized line endings in checksums; log the free plan's restore window (#67, #68).
+  - **One combined proof per person per event** instead of one per item, because every donation is split across all three charities. The total is computed; a changed total sends the latest proof back to pending (#69).
+  - **"Ending soon" added to Jump to** (#70); the yearly reset creates a new event record (#71); a placeholder charity logo until the owner's files arrive (#72); photo rules and a contact sheet before any download (#73).
+  - **Schema notes for 2B:** say which side of the `items.winning_bid_id` ↔ `bids.item_id` cycle is nullable or deferrable; `timestamptz` everywhere; index bids on (item_id, amount desc); a check on the six template keys.
+
+### 2026-11-01 — Stage 2A: production migrations (16:37–16:47 EST)
+- **Built:**
+  - `scripts/migrate-lib.ts`: checksums (CRLF/CR → LF, SHA-256), `verifyApplied`, `decideDeploy`, `directUrl`, `withSchemaLock` (`pg_try_advisory_lock`, 2-minute wait), `runMigrations`.
+  - `scripts/deploy-db.ts`, run last by `npm run build:vercel` (build, type-check, unit tests with `DATABASE_URL` and the Blob token removed, then deploy-db). `vercel.json` points at it.
+  - `scripts/seed-lib.ts` (`isEmpty`, `seed`; still the placeholder until 2C). `migrate.ts` and `seed.ts` use the lock and a direct connection.
+  - `/api/health` adds `"schema"` (the latest migration number).
+  - **Tests:** 10 unit tests (checksums, edits, every deploy decision) and a new `test:db` suite of 5 tests against `dev` (order and checksums, rollback of a failing file, an edited file stops the run, checksum backfill, two concurrent runs). `npm run check` now runs eight checks.
+  - **SPEC v1.8** (§3.1, §4, §7.2, §7.6–§7.8, §9, §10) and DECISIONS #67–#73. The gallery's demo bar has "Ending soon"; banners use the donation total and add "Your donation total changed"; the Proofs table shows proof amount and donation total.
+- **Hard / caught:**
+  - **The pooler breaks advisory locks.** The first concurrency test failed with a deadlock and a duplicate-type error: Neon's `-pooler` host is PgBouncer in transaction mode, so the lock was taken on one backend and the unlock ran on another. One idle pooled session kept holding the test lock, which made the next run wait until it timed out. Found it in `pg_locks`, ended that session (dev only, the test's own key), and moved migrations and seeding to the direct host. Had deploy-db used the pooled URL, a stuck lock could have blocked every later production build.
+  - **`vercel dev` runs the build command too**, so local startup now type-checks and runs the unit tests; deploy-db skips there (`VERCEL_ENV=development`).
+- **Not testable locally, by design:** the production + `main` path. It first runs on the push after this checkpoint: it will record a checksum for `001_init.sql`, apply nothing new, and seed-if-empty will stamp the placeholder `app_meta` row on `main`.
+- **Checks:** `npm run check` passes all eight; `npm audit` unchanged (#27).

@@ -163,7 +163,7 @@ How forms behave, for every component below:
 
 - **Markup:** `.field` (a `<div>`, or a `<fieldset>` for a radio group) > `.field__label` (`<label for>` or `<legend>`), `.field__help` (linked with `aria-describedby`), the control, `.field__message`. `.field-row` puts short fields side by side and wraps them on small screens.
 - **Optional fields** say `<span class="field__optional">(optional)</span>` in the label. Required fields aren't marked: there are no asterisks.
-- **Variants:** `.field--error` with `.field__message--error`; `.field--warning` with `.field__message--warning` (something worth knowing that still lets you submit, such as a proof amount below the winning bid).
+- **Variants:** `.field--error` with `.field__message--error`; `.field--warning` with `.field__message--warning` (something worth knowing that still lets you submit, such as a proof amount below the person's donation total).
 - **States:** default; hover and focus are on the control; **disabled**: the control is disabled and the label keeps full contrast; **error**: danger border on the control (`aria-invalid="true"`) and a message with an alert icon, linked with `aria-describedby`; loading: N/A (the submit button shows it); empty: an empty optional field is fine, and an empty required field is an error on submit.
 - **Accessibility:** every control has a visible label. Messages are linked with `aria-describedby`, and the message's icon is decorative.
 - **Do:** write labels as short nouns ("Starting bid") and help as one sentence. **Don't:** use placeholder text as the label; don't mark required fields.
@@ -185,7 +185,7 @@ How forms behave, for every component below:
 
 - **Markup:** `.input-group` > `.input-group__affix` "$" (`aria-hidden`) + `<input class="input input--money" type="text" inputmode="numeric" pattern="[0-9]+" autocomplete="off" data-money data-min="…">`. Never `type="number"`, which allows decimals, "e" notation and scroll-wheel changes.
 - **Rules:** digits only. Cents or symbols (`12.50`, `$20`, `1,000`) show "Whole dollars only." Below `data-min` shows "Enter at least $10." with the amount taken from the attribute, which comes from event settings. Stored as cents with `dollarsToCents()`, always a multiple of 100.
-- **States:** as text input, plus **warning**: amber border and message ("That's less than your $60 winning bid. You can still submit; an admin will review it.").
+- **States:** as text input, plus **warning**: amber border and message ("That's less than your $345 donation total. You can still submit; an admin will review it.").
 - **Accessibility:** the "$" is visual only; the label and help say it's dollars. The numeric keyboard appears on phones.
 - **Do:** put the minimum in the help text, computed from settings. **Don't:** accept or display cents anywhere.
 - **Figma:** *Money input* · State = Default / Hover / Focus / Disabled / Error / Warning (6).
@@ -317,7 +317,7 @@ How forms behave, for every component below:
 
 - **Markup:** `<section class="demo-bar" aria-label="Demo controls" data-demo-bar="page">` > `details.demo-bar__details` > `summary.demo-bar__summary` (a "Demo" tag, `.demo-bar__who` and a chevron) and `.demo-bar__controls`:
   - a *Select* field for Viewing as
-  - a `fieldset.demo-bar__jump` of four buttons with `aria-pressed`
+  - a `fieldset.demo-bar__jump` of five buttons with `aria-pressed`: Submissions open, Bidding live, Ending soon (bidding closes in under 24 hours), Bidding ended, 30+ days after
   - the Restore button (`data-demo-restore`)
   - a visually hidden `role="status"` for announcements
   - Behavior: `enhanceDemoBar()` in `src/components/demo-bar.ts`.
