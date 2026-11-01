@@ -54,10 +54,14 @@
   --color-mark-tile:       light-dark(#FEFEFE, #FEFEFE); /* the art's own white */
 
   /* ---------- Type: families ---------- */
-  /* The self-hosted brand font is chosen in Milestone 1 (SPEC §5); the system stack is
-     the fallback while it loads and if it fails. */
+  /* System fonts for body and UI. One self-hosted heading font (chosen at the Milestone 1
+     review, SPEC §5) for the display and heading roles and the hero "Kestrel"; the system
+     stack is its fallback while it loads and if it fails. */
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-display: var(--font-sans);
+  --font-heading: var(--font-sans);
+
+  /* Prices, bid amounts, and counts line up: font-variant-numeric: var(--figures-amount). */
+  --figures-amount: tabular-nums;
 
   /* ---------- Type: scale (building blocks; components use the roles below) ---------- */
   --text-xs:   0.75rem;  /* 12 */
@@ -83,11 +87,11 @@
   --tracking-label: 0.08em;   /* uppercase eyebrow labels */
 
   /* ---------- Type: roles (use with the font shorthand: font: var(--type-body)) ---------- */
-  --type-display:   var(--weight-heavy) var(--text-4xl)/var(--leading-tight) var(--font-display);   /* Home headline */
-  --type-heading-1: var(--weight-heavy) var(--text-2xl)/var(--leading-tight) var(--font-display);   /* page titles */
-  --type-heading-2: var(--weight-bold) var(--text-xl)/var(--leading-snug) var(--font-display);      /* section headings */
-  --type-heading-3: var(--weight-bold) var(--text-lg)/var(--leading-snug) var(--font-display);      /* tile titles, card headings */
-  --type-amount:    var(--weight-heavy) var(--text-3xl)/var(--leading-tight) var(--font-display);   /* item price on detail page */
+  --type-display:   var(--weight-heavy) var(--text-4xl)/var(--leading-tight) var(--font-heading);   /* Home headline */
+  --type-heading-1: var(--weight-heavy) var(--text-2xl)/var(--leading-tight) var(--font-heading);   /* page titles */
+  --type-heading-2: var(--weight-bold) var(--text-xl)/var(--leading-snug) var(--font-heading);      /* section headings */
+  --type-heading-3: var(--weight-bold) var(--text-lg)/var(--leading-snug) var(--font-heading);      /* tile titles, card headings */
+  --type-amount:    var(--weight-heavy) var(--text-3xl)/var(--leading-tight) var(--font-sans);      /* item price on detail page; with --figures-amount */
   --type-body-lg:   var(--weight-regular) var(--text-lg)/var(--leading-normal) var(--font-sans);    /* lead paragraphs */
   --type-body:      var(--weight-regular) var(--text-md)/var(--leading-normal) var(--font-sans);    /* body, inputs */
   --type-label:     var(--weight-semibold) var(--text-sm)/var(--leading-snug) var(--font-sans);     /* form labels, nav, table headers */

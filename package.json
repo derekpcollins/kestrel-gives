@@ -20,7 +20,8 @@
     "check:tokens": "node scripts/check-tokens.ts",
     "check:a11y": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test tests/e2e/a11y.spec.ts",
     "check:visual": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test tests/e2e/visual.spec.ts",
-    "check": "npm run check:deps && npm run check:tokens && npm run check:types && npm run test:rules && npm run check:a11y && npm run check:visual"
+    "check:reflow": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test tests/e2e/reflow.spec.ts --project=reflow-320",
+    "check": "npm run check:deps && npm run check:tokens && npm run check:types && npm run test:rules && npm run check:a11y && npm run check:reflow && npm run check:visual"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.2.0",

@@ -55,7 +55,7 @@ On the deployed site, uploads go to one public Vercel Blob store under a per-env
 
 ## Checks
 
-Every change must pass the six conformance checks in SPEC.md section 12. `npm run check` runs them all, in this order:
+Every change must pass the seven conformance checks in SPEC.md section 12. `npm run check` runs them all, in this order:
 
 | Script | Check |
 |---|---|
@@ -64,6 +64,7 @@ Every change must pass the six conformance checks in SPEC.md section 12. `npm ru
 | `npm run check:types` | `tsc --noEmit` for server and browser code |
 | `npm run test:rules` | `node:test` unit tests; SPEC §7 rules not yet built are listed as todos |
 | `npm run check:a11y` | axe (WCAG 2.2 AA) on every screen in `tests/e2e/screens.ts`, light and dark, at 390px and 1280px; zero violations allowed |
+| `npm run check:reflow` | Every screen at 320px wide: no sideways scrolling and nothing cut off (WCAG 2.2 reflow); scroll regions and ellipsis truncation allowed |
 | `npm run check:visual` | Full-page screenshots of every screen, light and dark, at 390px and 1280px, with `?demo=off`, saved to `visual-review/` for a person to review |
 
 The browser checks start `npm start` themselves (or reuse one that's running) and reseed the `dev` database first. One-time setup for them:

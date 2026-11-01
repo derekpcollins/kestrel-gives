@@ -125,9 +125,9 @@ There is no inherited design system, so this project defines its own, from scrat
 - Every component MUST be documented in `DESIGN-SYSTEM.md`: purpose, variants, states (default, hover, focus, active, disabled, loading, error, empty), and do/don't usage.
 - New components MUST be added to the design system before they're used in a screen.
 - The look is decided in Milestone 1: the owner reviews a token sheet before any screen is built.
-- **Type roles:** type is set with semantic role tokens (`--type-display`, `--type-heading-1` to `-3`, `--type-amount`, `--type-body-lg`, `--type-body`, `--type-label`, `--type-button`, `--type-caption`, `--type-badge`, `--type-overline`), each setting size, weight, leading, and family through the `font` shorthand. Components MUST use the roles, never the `--text-*` scale steps directly. The largest steps (`--text-3xl`, `--text-4xl`) are fluid with `clamp()` so they shrink on phones.
+- **Type roles:** type is set with semantic role tokens (`--type-display`, `--type-heading-1` to `-3`, `--type-amount`, `--type-body-lg`, `--type-body`, `--type-label`, `--type-button`, `--type-caption`, `--type-badge`, `--type-overline`), each setting size, weight, leading, and family through the `font` shorthand. Components MUST use the roles, never the `--text-*` scale steps directly. Only the display and heading roles use the heading font; every other role, including amount, uses the system stack. The largest steps (`--text-3xl`, `--text-4xl`) are fluid with `clamp()` so they shrink on phones. Prices, bid amounts, and other figures that change or line up MUST use tabular numerals (`font-variant-numeric: var(--figures-amount)`).
 - **Breakpoints:** layouts are intrinsic by default (grids wrap at `--size-tile-min`). Things that need a condition, such as the nav collapsing to a menu, MAY use only the named breakpoint values documented in `tokens.css` (`--breakpoint-sm` 40rem, `--breakpoint-lg` 64rem). They're written out only inside `@media` or `@container` conditions, in range syntax, because CSS can't read custom properties there.
-- **Font:** one Google Font, self-hosted: the variable WOFF2 with the Latin subset, committed under `public/fonts/` with its license, loaded with `@font-face` and `font-display: swap`. The site MUST NOT request anything from Google's servers. The system font stack is the fallback. The font's license (SIL OFL) is recorded in `CREDITS.md`. The font is chosen at the Milestone 1 token review.
+- **Fonts:** body, UI, and numbers use the system font stack. One Google Font, self-hosted, is used only for headings (the display and heading roles) and the live "Kestrel" text in the Home hero. It's the variable WOFF2 with the Latin subset, committed under `public/fonts/` with its license, and loaded with `@font-face` and `font-display: swap`. The system stack is its fallback. The site MUST NOT request anything from Google's servers. The font's license (SIL OFL) is recorded in `CREDITS.md`. The font is chosen at the Milestone 1 token review.
 - **Figma:** `tokens.css` is the source of truth. Figma variables and styles mirror it with matching names: drop the `--` and turn the first hyphen into a slash (`--color-accent` ↔ `color/accent`). The token sheet lists each Figma name. On Figma Pro there's no Variables REST API or Code Connect, so the sync is a manual push plus a drift check at each milestone checkpoint, not CI. The Figma work happens outside this repo.
 - Starter component list: button, text input, textarea, select, date-time input, form field (label + help + error), radio card, card, item tile, badge/status pill, table, tabs, dialog, toast, banner, empty state, page header, site header and nav, profile menu, avatar (with top-bidder crown), photo uploader (with reorder), photo carousel, demo bar.
 - **Logos:**
@@ -186,6 +186,7 @@ Each has a name, a one-sentence description, and an original logo. There is **on
 
 ### 7.4 Bidding (silent auction)
 - A first bid MUST be at least the item's starting bid. Every later bid MUST exceed the current high bid by at least the event's increment.
+- Copy that states a minimum bid or the increment ("At least $50. Bids go up by $5.") MUST be computed from the event settings and the item's current high bid, never hard-coded.
 - Bidding MUST be blocked outside the live phase.
 - The current high bidder MUST NOT bid again on that item ("You're already the high bidder").
 - Placing a bid shows a confirmation dialog with the amount and item.
@@ -230,7 +231,7 @@ Money MUST be stored as whole cents (integers), never floating point.
 Site header with the Kestrel wordmark and: **Home**, **Silent Auction**, **Instant Sale**, **Your Items**, and **Submit an Item** (shown only during the submission window). In the upper right is the user's avatar. For admins, it has a chevron and opens a menu with a link to the **Admin Dashboard**. Admin links are never shown to employees. On small screens the nav collapses to a menu button.
 
 ### Responsive
-One responsive, mobile-first site, not a separate app. Every screen MUST work from 360px wide up. Layouts start from the phone and add columns as space allows (section 5, Breakpoints). The browser checks run at 390px and 1280px (section 12).
+One responsive, mobile-first site, not a separate app. Every screen MUST work from 360px wide up (the design target), and at 320px nothing may scroll or be cut off sideways (WCAG 2.2 reflow, 1.4.10). The only exceptions are regions meant to scroll sideways, such as a wide table. Layouts start from the phone and add columns as space allows (section 5, Breakpoints). The browser checks run at 390px and 1280px, plus a reflow check at 320px (section 12).
 
 ### Phase banners
 A banner just below the header shows the current phase message, for example "Submissions are open until Nov 14," "Bidding opens Nov 17 at 9:00 AM," "Bidding ends in 2 days," "Bidding has ended. Winners, please upload proof by Dec 1." One banner at a time.
@@ -287,6 +288,7 @@ These run before any change counts as done. Each is a script in `package.json`.
 4. **Type check:** `tsc --noEmit` passes.
 5. **Business rules:** `node:test` tests cover section 7: bid minimums and increments, no self-outbidding, time windows for every phase, the inventory floor, simultaneous bids and purchases (against real Postgres on the `dev` branch), edit locks, delete and cancel rules, the reset lock, and template variable validation.
 6. **Visual review:** Playwright screenshots of every screen in every seeded state, in light and dark mode, at 390px and 1280px wide, with `?demo=off`, for a human to review.
+7. **Reflow:** Playwright loads every screen at 320px wide and fails if the page scrolls sideways or any element cuts off content sideways. Regions meant to scroll (overflow auto or scroll) and text truncated with an ellipsis are allowed.
 
 ## 13. How the agent works
 

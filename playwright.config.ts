@@ -1,5 +1,6 @@
 // Browser checks (SPEC §12): axe accessibility and visual-review screenshots, each in
-// light and dark mode at a phone width (390px) and a desktop width (1280px), against
+// light and dark mode at a phone width (390px) and a desktop width (1280px), plus a reflow
+// check at 320px (WCAG 2.2), against
 // `npm start` (vercel dev on the dev database).
 import { defineConfig, devices } from "@playwright/test";
 
@@ -16,12 +17,17 @@ export default defineConfig({
   fullyParallel: true,
   reporter: "list",
   use: { baseURL: "http://localhost:3000" },
-  projects: (["light", "dark"] as const).flatMap((colorScheme) =>
-    WIDTHS.map(({ width, height }) => ({
-      name: `${colorScheme}-${width}`,
-      use: { ...devices["Desktop Chrome"], colorScheme, viewport: { width, height } },
-    })),
-  ),
+  projects: [
+    ...(["light", "dark"] as const).flatMap((colorScheme) =>
+      WIDTHS.map(({ width, height }) => ({
+        name: `${colorScheme}-${width}`,
+        testIgnore: /reflow\.spec\.ts/,
+        use: { ...devices["Desktop Chrome"], colorScheme, viewport: { width, height } },
+      })),
+    ),
+    // WCAG 2.2 reflow floor (SPEC §8): layout doesn't depend on the color scheme.
+    { name: "reflow-320", testMatch: /reflow\.spec\.ts/, use: { ...devices["Desktop Chrome"], viewport: { width: 320, height: 800 } } },
+  ],
   webServer: {
     command: "npm start",
     url: "http://localhost:3000/api/health",

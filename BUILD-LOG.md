@@ -167,3 +167,20 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   - **Mini previews:** their nav wrapped inside the narrow font columns. It now collapses with a container query at the same 40rem. The real header will use `@media`.
   - **Overflow:** none at 390px or 360px. At 320px (the WCAG reflow width) the preview overflows by 13px. That was raised with the owner rather than fixed silently.
 - **Checks:** `npm run check` passes all six.
+
+### 2026-11-01 — Stage 2c: heading font, reflow, bid copy
+- **Owner stepped in:**
+  - Rejected Nunito as too childish and changed the plan: system fonts for body and UI, plus one heading font, with Plus Jakarta Sans, Manrope, and Outfit as the candidates (#44).
+  - Agreed to keep 360px as the design target with a reflow floor at 320px, and asked for an automated check (#45).
+  - Caught a sample-copy bug: "At least $46. Bids go up by $1." contradicts the $5 default increment. Asked for tabular numerals on amounts (#46).
+- **Built:**
+  - **Tokens:** `--font-display` became `--font-heading` and is used only by the display and heading roles and the hero "Kestrel". `--type-amount` moved to the system stack. New token `--figures-amount: tabular-nums`.
+  - **Reflow:** `tests/e2e/reflow.ts` and `reflow.spec.ts`, plus a `reflow-320` Playwright project and `npm run check:reflow` as check 7. It fails on sideways page scroll or content clipped sideways, and allows scroll regions and ellipsis truncation. It was proven on synthetic pages (wide page, clipped card, allowed table and ellipsis) and on the real bug.
+  - **Token sheet:** the bid copy now reads "At least $50. Bids go up by $5.", and tabular figures are used throughout. The font section now compares headings and the hero lockup in the three candidates side by side, with body text on the system stack. `?heading=jakarta|manrope|outfit` sets the whole sheet's headings in one candidate.
+  - **SPEC v1.4:** §5 fonts, type roles, and tabular figures; §7.4 bid copy comes from settings; §8 the 320px reflow floor; §12 check 7. README lists seven checks.
+- **Fonts:** Manrope (24 KB) and Outfit (32 KB) were downloaded the same way as before: a Latin-subset variable WOFF2, the `wOF2` signature checked, and the SIL OFL 1.1 license confirmed from `OFL.txt` and `METADATA.pb` in google/fonts. Nunito and Figtree were removed from the candidates folder.
+- **Hard / caught:**
+  - **Wrong element measured:** the 13px overflow came from the mini previews inside the narrow font columns, not the main preview. My earlier probe had measured the first `.preview` in the page without checking which one it was.
+  - **Clipped, not scrolling:** the header couldn't fit in 248px and was clipped by `overflow: hidden`, so the page never scrolled sideways and a page-scroll check alone would have missed it. Fixed by letting the header wrap.
+  - **DOM types:** the reflow helper declares its own minimal browser types, so the server tsconfig stays free of DOM types (#26).
+- **Checks:** `npm run check` passes all seven.

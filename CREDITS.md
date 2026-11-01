@@ -9,7 +9,7 @@ The Kestrel org mark and the Kestrel Gives event mark were designed by me with a
 
 ## Fonts
 
-Chosen at the Milestone 1 token review; the font, its source, and its license (SIL Open Font License 1.1) are recorded here once picked.
+Body and UI use system fonts. The one heading font is chosen at the Milestone 1 token review; its name, source, and license (SIL Open Font License 1.1) are recorded here once picked.
 
 ## Photos
 

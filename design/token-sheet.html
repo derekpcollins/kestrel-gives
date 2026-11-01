@@ -13,15 +13,17 @@
      sheet can't drift from the token file. Add ?font=nunito|figtree|jakarta to render the
      whole sheet in a candidate font. -->
 <style>
-/* Font candidates (review only; the chosen one moves to public/fonts/ and tokens.css). */
-@font-face { font-family: "Nunito"; src: url("font-candidates/nunito-latin-var.woff2") format("woff2"); font-weight: 200 1000; font-display: swap; }
-@font-face { font-family: "Figtree"; src: url("font-candidates/figtree-latin-var.woff2") format("woff2"); font-weight: 300 900; font-display: swap; }
+/* Heading-font candidates (review only; the chosen one moves to public/fonts/ and
+   tokens.css --font-heading). Body and UI stay on the system stack. */
 @font-face { font-family: "Plus Jakarta Sans"; src: url("font-candidates/plus-jakarta-sans-latin-var.woff2") format("woff2"); font-weight: 200 800; font-display: swap; }
+@font-face { font-family: "Manrope"; src: url("font-candidates/manrope-latin-var.woff2") format("woff2"); font-weight: 200 800; font-display: swap; }
+@font-face { font-family: "Outfit"; src: url("font-candidates/outfit-latin-var.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+.cand-jakarta { --cand: "Plus Jakarta Sans"; }
+.cand-manrope { --cand: "Manrope"; }
+.cand-outfit { --cand: "Outfit"; }
 /* The --type-* roles resolve their family at :root, so a candidate is applied by
-   overriding font-family on everything inside it (review page only). */
-.font-nunito, .font-nunito * { font-family: "Nunito", var(--font-sans) !important; }
-.font-figtree, .font-figtree * { font-family: "Figtree", var(--font-sans) !important; }
-.font-jakarta, .font-jakarta * { font-family: "Plus Jakarta Sans", var(--font-sans) !important; }
+   overriding font-family on heading-role elements only (review page only). */
+:is(.cand-jakarta, .cand-manrope, .cand-outfit) :is(.s-heading, .hw-kestrel, .p-tile h4, .p-brand, .meta h1, h3) { font-family: var(--cand), var(--font-sans) !important; }
 code, code * { font-family: ui-monospace, SFMono-Regular, Menlo, monospace !important; }
 
 * { box-sizing: border-box; }
@@ -71,7 +73,7 @@ code { font-size: 0.92em; overflow-wrap: anywhere; }
 .crow .use { grid-area: use; font: var(--type-caption); color: var(--color-text-muted); }
 .chip { display: flex; align-items: center; gap: var(--space-2); background: var(--color-bg); color: var(--color-text); border-radius: var(--radius-md); padding: var(--space-2); box-shadow: var(--shadow-sm); min-width: 0; }
 .chip i { width: var(--space-8); height: var(--space-8); border-radius: var(--radius-sm); flex: none; box-shadow: inset 0 0 0 var(--border-thin) var(--color-border); }
-.chip span { font: var(--type-badge); font-weight: var(--weight-medium); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.chip span { font: var(--type-badge); font-weight: var(--weight-medium); font-variant-numeric: var(--figures-amount); overflow-wrap: anywhere; }
 
 /* Contrast */
 .scroll { overflow-x: auto; }
@@ -79,7 +81,7 @@ code { font-size: 0.92em; overflow-wrap: anywhere; }
 .contrast { width: 100%; min-width: calc(var(--space-16) * 10); border-collapse: collapse; font: var(--type-caption); }
 .contrast th, .contrast td { text-align: left; padding: var(--space-2) var(--space-3); border-bottom: var(--border-thin) solid var(--color-border); }
 .contrast th { font: var(--type-label); color: var(--color-text-muted); }
-.contrast td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.contrast td.num { font-variant-numeric: var(--figures-amount); white-space: nowrap; }
 .sample-pair { display: inline-block; padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm); font-weight: var(--weight-semibold); white-space: nowrap; }
 .pass { color: var(--color-success); font-weight: var(--weight-bold); }
 .fail { color: var(--color-danger); font-weight: var(--weight-bold); }
@@ -92,7 +94,7 @@ code { font-size: 0.92em; overflow-wrap: anywhere; }
 .trow .spec code { color: var(--color-text); font-weight: var(--weight-semibold); }
 .weights { display: flex; gap: var(--space-2) var(--space-6); flex-wrap: wrap; font: var(--type-heading-2); }
 
-/* Font candidates */
+/* Heading-font candidates */
 .fonts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--size-tile-min) * 1.15)), 1fr)); gap: var(--space-4); }
 .font-col { background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: var(--space-5); display: grid; gap: var(--space-3); align-content: start; min-width: 0; }
 .font-col header { border-bottom: var(--border-thin) solid var(--color-border); padding-bottom: var(--space-3); }
@@ -101,10 +103,14 @@ code { font-size: 0.92em; overflow-wrap: anywhere; }
 .font-col .s-display { font: var(--type-display); letter-spacing: var(--tracking-tight); margin: 0; }
 .font-col .s-h1 { font: var(--type-heading-1); letter-spacing: var(--tracking-tight); margin: 0; }
 .font-col .s-h2 { font: var(--type-heading-2); margin: 0; }
+.font-col .s-h3 { font: var(--type-heading-3); margin: 0; }
+.font-col .hero-card { margin: 0; padding: var(--space-4); gap: var(--space-3); box-shadow: inset 0 0 0 var(--border-thin) var(--color-border); }
+.font-col .hero-card img { height: calc(var(--space-16) * 1.6); }
+.font-col .hero-card svg { width: min(100%, calc(var(--space-16) * 3)); }
+.font-col .tag { font: var(--type-overline); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--color-text-muted); margin: var(--space-2) 0 0; }
 .font-col .s-body { font: var(--type-body); margin: 0; }
 .font-col .s-caption { font: var(--type-caption); color: var(--color-text-muted); margin: 0; }
-.font-col .s-amount { font: var(--type-amount); color: var(--color-price); margin: 0; font-variant-numeric: tabular-nums; }
-.font-col .s-digits { font: var(--type-body); font-variant-numeric: tabular-nums; margin: 0; color: var(--color-text-muted); }
+.font-col .s-amount { font: var(--type-amount); color: var(--color-price); margin: 0; font-variant-numeric: var(--figures-amount); }
 
 /* Spacing, radius, shadow */
 .space-row { display: grid; grid-template-columns: minmax(0, 1.4fr) 1fr; gap: var(--space-3); align-items: center; padding: var(--space-1) 0; font: var(--type-caption); }
@@ -128,7 +134,7 @@ code { font-size: 0.92em; overflow-wrap: anywhere; }
 
 /* Tokens in use (a preview, not the components) */
 .preview { container-type: inline-size; background: var(--color-bg); color: var(--color-text); border-radius: var(--radius-xl); overflow: hidden; box-shadow: var(--shadow-sm); }
-.p-header { display: flex; align-items: center; gap: var(--space-3) var(--space-4); padding: var(--space-3) var(--space-4); background: var(--color-surface); box-shadow: 0 var(--border-thin) 0 var(--color-border); }
+.p-header { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-4); padding: var(--space-3) var(--space-4); background: var(--color-surface); box-shadow: 0 var(--border-thin) 0 var(--color-border); }
 .p-brand { display: flex; align-items: center; gap: var(--space-2); font: var(--type-heading-3); font-weight: var(--weight-heavy); }
 .p-brand-tile { display: grid; place-items: center; width: var(--space-10); height: var(--space-10); border-radius: var(--radius-md); flex: none; }
 .scheme-dark .p-brand-tile { background: var(--color-mark-tile); }
@@ -146,7 +152,7 @@ code { font-size: 0.92em; overflow-wrap: anywhere; }
 .p-tile .c { padding: var(--space-3) var(--space-4) var(--space-4); }
 .p-tile h4 { margin: 0; font: var(--type-heading-3); }
 .p-price { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); margin: var(--space-2) 0 var(--space-3); }
-.p-price strong { font: var(--type-heading-2); font-weight: var(--weight-heavy); color: var(--color-price); font-variant-numeric: tabular-nums; }
+.p-price strong { font: var(--type-heading-2); font-weight: var(--weight-heavy); color: var(--color-price); font-variant-numeric: var(--figures-amount); }
 .p-price span { font: var(--type-caption); color: var(--color-text-muted); }
 .row { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; }
 .btn { font: var(--type-button); min-height: var(--size-target); padding: 0 var(--space-5); border-radius: var(--radius-pill); border: 0; cursor: pointer; transition: background-color var(--duration-fast) var(--ease-standard); }
@@ -163,7 +169,7 @@ code { font-size: 0.92em; overflow-wrap: anywhere; }
 .neutral { background: var(--color-surface-muted); color: var(--color-text); }
 .field { display: grid; gap: var(--space-1); max-width: var(--size-content-narrow); }
 .field label { font: var(--type-label); }
-.field input { font: var(--type-body); min-height: var(--size-target); padding: 0 var(--space-3); border-radius: var(--radius-md); border: var(--border-thick) solid var(--color-border-strong); background: var(--color-surface); color: var(--color-text); min-width: 0; }
+.field input { font: var(--type-body); font-variant-numeric: var(--figures-amount); min-height: var(--size-target); padding: 0 var(--space-3); border-radius: var(--radius-md); border: var(--border-thick) solid var(--color-border-strong); background: var(--color-surface); color: var(--color-text); min-width: 0; }
 .field input:focus-visible { outline: var(--focus-width) solid var(--color-focus); outline-offset: var(--focus-offset); }
 .field .help { font: var(--type-caption); color: var(--color-text-muted); }
 .field.err input { border-color: var(--color-danger); }
@@ -225,8 +231,8 @@ footer { margin-top: var(--space-12); padding-top: var(--space-4); border-top: v
   <h3>Weights</h3>
   <div class="weights" data-weights></div>
 
-  <h2>Font candidates</h2>
-  <p class="lede">One font, self-hosted (a variable WOFF2 with the Latin subset, from <code>public/fonts/</code>), with the system stack as the fallback. All three are SIL Open Font License 1.1.</p>
+  <h2>Heading font candidates</h2>
+  <p class="lede">System fonts for body, UI, and numbers. One self-hosted font (a variable WOFF2 with the Latin subset, in <code>public/fonts/</code>) only for the display and heading roles and the hero "Kestrel", with the system stack as its fallback. All three are SIL Open Font License 1.1. Add <code>?heading=jakarta</code>, <code>manrope</code>, or <code>outfit</code> to the URL to set the whole sheet's headings in one.</p>
   <div class="fonts" data-fonts></div>
 
   <h2>Spacing</h2>
@@ -291,7 +297,7 @@ footer { margin-top: var(--space-12); padding-top: var(--space-4); border-top: v
       <div class="row">
         <span class="pill ok">Approved</span><span class="pill bad">Outbid</span><span class="pill warn">Ending soon</span><span class="pill neutral">Sold out</span><span class="pill bad" data-full>Rejected</span><span class="pill warn" data-full>Proof due in 3 days</span>
       </div>
-      <div class="field"><label>Your bid</label><input value="$50" aria-label="Your bid"><span class="help">At least $46. Bids go up by $1.</span></div>
+      <div class="field"><label>Your bid</label><input value="$50" aria-label="Your bid"><span class="help">At least $50. Bids go up by $5.</span></div>
       <div class="field err" data-full><label>Donation amount</label><input value="$30" aria-label="Donation amount"><span class="help">This is less than the $45 you owe. You can still submit.</span></div>
       <p style="margin: 0" data-full><a class="p-link" href="#">Upload donation proof</a></p>
       <div class="p-toast" data-full>Bid placed. You're the top bidder.</div>
@@ -383,7 +389,7 @@ const ROLES = [
   ["--type-heading-3", "Tile titles, card headings", "Sourdough starter + a loaf lesson"],
   ["--type-amount", "Item price on the detail page", "$1,250"],
   ["--type-body-lg", "Lead paragraphs", "Bid on things your coworkers made, found, or offered."],
-  ["--type-body", "Body, inputs", "Bids go up by at least $1. The top bid when bidding closes wins."],
+  ["--type-body", "Body, inputs", "Bids go up by at least $5. The top bid when bidding closes wins."],
   ["--type-label", "Form labels, nav, table headers", "Your bid"],
   ["--type-button", "Buttons", "Place a bid"],
   ["--type-caption", "Help text, meta", "6 bids · ends Friday at 5:00 PM EST"],
@@ -392,15 +398,15 @@ const ROLES = [
 ];
 const SCALE = ["--text-xs", "--text-sm", "--text-md", "--text-lg", "--text-xl", "--text-2xl", "--text-3xl", "--text-4xl"];
 const FONTS = [
-  ["font-nunito", "Nunito", "Rounded terminals; the softest match for the pill buttons and the logo's curves.", "nunito"],
-  ["font-figtree", "Figtree", "Clean geometric, friendly but neutral; the smallest file.", "figtree"],
-  ["font-jakarta", "Plus Jakarta Sans", "Geometric with a little more personality; tighter and more modern.", "plus-jakarta-sans"],
+  ["cand-jakarta", "Plus Jakarta Sans", "Geometric with a slightly condensed, crisp build; modern and confident at heavy weights.", "plus-jakarta-sans"],
+  ["cand-manrope", "Manrope", "Semi-condensed grotesque, very even; the most product-UI and businesslike.", "manrope"],
+  ["cand-outfit", "Outfit", "Pure geometric with round bowls; the friendliest of the three, closest to the logo's curves.", "outfit"],
 ];
-const FONT_META = { nunito: ["Vernon Adams, Cyreal, Jacques Le Bailly", "39 KB"], figtree: ["Erik Kennedy", "20 KB"], "plus-jakarta-sans": ["Tokotype", "27 KB"] };
+const FONT_META = { "plus-jakarta-sans": ["Tokotype", "27 KB"], manrope: ["Mikhail Sharanda", "24 KB"], outfit: ["Smartsheet, Rodrigo Fuenzalida", "32 KB"] };
 
-// Whole-sheet font override for review: ?font=nunito|figtree|jakarta
-const pick = new URLSearchParams(location.search).get("font");
-if (pick) document.documentElement.classList.add(`font-${pick}`);
+// Whole-sheet heading override for review: ?heading=jakarta|manrope|outfit
+const pick = new URLSearchParams(location.search).get("heading");
+if (pick) document.documentElement.classList.add(`cand-${pick}`);
 
 const root = getComputedStyle(document.documentElement);
 const raw = (name) => root.getPropertyValue(name).trim();
@@ -506,7 +512,7 @@ for (const [role, use, sample, tight] of ROLES) {
   const leadVal = lead;
   roleHost.append(el("div", { className: "trow" },
     el("div", { className: "spec" }, code(role), el("br"), `${use}`),
-    el("div", { textContent: sample, style: `font: var(${role}); ${tight ? "letter-spacing: var(--tracking-tight);" : ""} ${role === "--type-overline" ? "letter-spacing: var(--tracking-label);" : ""} ${role === "--type-amount" ? "color: var(--color-price);" : ""}` }),
+    el("div", { textContent: sample, className: /display|heading/.test(role) ? "s-heading" : "", style: `font: var(${role}); ${tight ? "letter-spacing: var(--tracking-tight);" : ""} ${role === "--type-overline" ? "letter-spacing: var(--tracking-label);" : ""} ${role === "--type-amount" ? "color: var(--color-price);" : ""}` }),
     el("div", { className: "spec" }, `${sizeTok.replace("--", "")} · ${px}`, el("br"), `${wTok.replace("--weight-", "")} ${w} · leading ${leadVal}`, el("br"), "Figma: ", code(figmaName(role)), " text style")));
 }
 const scaleHost = document.querySelector("[data-scale]");
@@ -526,15 +532,20 @@ const fHost = document.querySelector("[data-fonts]");
 for (const [cls, name, note, slug] of FONTS) {
   const [designer, size] = FONT_META[slug];
   const col = el("section", { className: `font-col ${cls}`, ariaLabel: name });
+  const lockup = document.querySelector(".hero-card").cloneNode(true);
   col.append(
-    el("header", {}, el("strong", { textContent: name }), el("span", { textContent: `${designer} · ${size} · SIL OFL 1.1` }), el("br"), el("span", { textContent: note })),
-    el("p", { className: "s-display", textContent: "Kestrel Gives" }),
-    el("p", { className: "s-h1", textContent: "Silent Auction" }),
-    el("p", { className: "s-h2", textContent: "Sourdough starter + a loaf lesson" }),
-    el("p", { className: "s-body", textContent: "Bids go up by at least $1. The top bid when bidding closes wins, and every dollar goes to this year's three charities." }),
+    el("header", {}, el("strong", { className: "s-heading", textContent: name }), el("span", { textContent: `${designer} · ${size} · SIL OFL 1.1` }), el("br"), el("span", { textContent: note })),
+    el("p", { className: "tag", textContent: "Hero lockup" }),
+    lockup,
+    el("p", { className: "tag", textContent: "Headings (this font)" }),
+    el("p", { className: "s-display s-heading", textContent: "Kestrel Gives 2026" }),
+    el("p", { className: "s-h1 s-heading", textContent: "Silent Auction" }),
+    el("p", { className: "s-h2 s-heading", textContent: "Your items" }),
+    el("p", { className: "s-h3 s-heading", textContent: "Sourdough starter + a loaf lesson" }),
+    el("p", { className: "tag", textContent: "Body, UI, numbers (system)" }),
+    el("p", { className: "s-body", textContent: "Bids go up by at least $5. The top bid when bidding closes wins, and every dollar goes to this year's three charities." }),
     el("p", { className: "s-amount", textContent: "$1,250" }),
-    el("p", { className: "s-digits", textContent: "0123456789 · $45 · 6 bids · 5:00 PM" }),
-    el("p", { className: "s-caption", textContent: "Ends Friday at 5:00 PM EST · Maya Okafor · Jules Ferreira" }),
+    el("p", { className: "s-caption", textContent: "Ends Friday at 5:00 PM EST · 6 bids · Maya Okafor" }),
   );
   const mini = document.getElementById("preview").content.cloneNode(true);
   for (const n of mini.querySelectorAll("[data-full]")) n.remove();
