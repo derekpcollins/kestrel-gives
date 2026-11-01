@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Direction A: Field Guide · Kestrel Gives</title>
+<!-- Milestone 1 exploration only. Raw values live in this page's own token block;
+     the chosen direction becomes public/styles/tokens.css. -->
+<style>
+:root { color-scheme: light dark; --bg: #FBF5EA; --surface: #FFFDF8; --text: #2A211C; --muted: #6B5A4E; --line: #E6D8C3; --accent: #A3401B; --on-accent: #FFFDF8; --accent-text: #A3401B; --focus: #3F5A73; --success-bg: #E3EDD9; --success-fg: #2F5A2B; --warning-bg: #F8E7C2; --warning-fg: #7A4E00; --danger-bg: #F6DCD6; --danger-fg: #9A2D25; --banner-bg: #DCE6EF; --banner-fg: #2A3E52; --logo-rust: #C4562A; --logo-slate: #4F6D8A; --logo-cream: #F6EEDF; --logo-ink: #241D18; --logo-gold: #E3A72F; --logo-spot: #241D18; --hero-bg: #F3E7D3; --photo-bg: #EFE3D0; --header-bg: #FFFDF8; --header-text: #2A211C; --header-border: 1px solid #E6D8C3; --nav-underline: #A3401B; --avatar-bg: #3F5A73; --avatar-text: #FFFDF8; --font-display: "Iowan Old Style", "Charter", "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif; --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; --radius: 6px; --radius-lg: 10px; --radius-btn: 6px; --radius-pill: 4px; --card-border: 1px solid #E6D8C3; --card-shadow: 0 1px 2px rgb(42 33 28 / .08), 0 4px 12px rgb(42 33 28 / .06); --btn-border: 0; --btn2-border: 1.5px solid #6B5A4E; --btn-shadow: none; --pill-case: none; --pill-tracking: 0; }
+@media (prefers-color-scheme: dark) { :root { --bg: #1C1815; --surface: #26211D; --text: #F3EAD9; --muted: #BFAE98; --line: #3A322B; --accent: #E8875A; --on-accent: #1C1815; --accent-text: #E8875A; --focus: #9DB6CC; --success-bg: #24331F; --success-fg: #B9D9A8; --warning-bg: #3A2C10; --warning-fg: #F2CD7E; --danger-bg: #3D1F1B; --danger-fg: #F2A99F; --banner-bg: #1F2B36; --banner-fg: #C9DBEA; --logo-rust: #E07A4A; --logo-slate: #8FAAC4; --logo-cream: #F3EAD9; --logo-ink: #120F0D; --logo-gold: #F0BC4C; --logo-spot: #D9C7AE; --hero-bg: #26211D; --photo-bg: #302922; --header-bg: #26211D; --header-text: #F3EAD9; --header-border: 1px solid #3A322B; --nav-underline: #E8875A; --avatar-bg: #9DB6CC; --avatar-text: #1C1815; --card-border: 1px solid #3A322B; --card-shadow: none; --btn2-border: 1.5px solid #BFAE98; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 var(--font-body); }
+.page { max-width: 1040px; margin: 0 auto; padding: 32px 24px 48px; }
+.meta { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 28px; }
+.meta h1 { margin: 0; font: 700 1.5rem/1.2 var(--font-display); }
+.meta p { margin: 0; color: var(--muted); }
+h2 { font: 700 0.8rem/1 var(--font-body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 40px 0 16px; }
+.grid { display: grid; gap: 24px; }
+.marks { grid-template-columns: 1fr 2fr; align-items: center; }
+.org { display: flex; gap: 20px; align-items: end; flex-wrap: wrap; }
+.org figure { margin: 0; text-align: center; color: var(--muted); font-size: .75rem; }
+.org .tile { display: grid; place-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+.hero { background: var(--hero-bg); border-radius: var(--radius-lg); padding: 28px; display: grid; place-items: center; }
+.hero svg { width: 100%; height: auto; max-height: 260px; }
+.swatches { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.swatch { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); font-size: .8rem; }
+.swatch i { display: block; height: 56px; }
+.swatch span { display: block; padding: 8px 10px; }
+.swatch small { color: var(--muted); }
+.type { grid-template-columns: 1fr 1fr; }
+.type .display { font: 800 2.6rem/1.05 var(--font-display); margin: 0 0 8px; }
+.type p { margin: 4px 0; }
+.type code { font-size: .8rem; color: var(--muted); }
+.sample { border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden; background: var(--bg); }
+.site-header { display: flex; align-items: center; gap: 24px; padding: 14px 24px; background: var(--header-bg); border-bottom: var(--header-border); }
+.brand { display: flex; align-items: center; gap: 10px; font: 700 1.15rem/1 var(--font-display); color: var(--header-text); text-decoration: none; }
+.site-header nav { display: flex; gap: 18px; flex: 1; }
+.site-header nav a { color: var(--header-text); text-decoration: none; font-weight: 500; padding: 6px 2px; }
+.site-header nav a[aria-current] { box-shadow: inset 0 -3px 0 var(--nav-underline); }
+.avatar { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--avatar-bg); color: var(--avatar-text); font-weight: 700; font-size: .85rem; }
+.banner { background: var(--banner-bg); color: var(--banner-fg); padding: 10px 24px; font-weight: 600; }
+.sample-body { display: grid; grid-template-columns: 300px 1fr; gap: 32px; padding: 28px 24px; align-items: start; }
+.tile-card { background: var(--surface); border: var(--card-border); border-radius: var(--radius); box-shadow: var(--card-shadow); overflow: hidden; }
+.photo { aspect-ratio: 4 / 3; background: var(--photo-bg); display: grid; place-items: center; color: var(--muted); font-size: .85rem; }
+.tile-card .content { padding: 14px 16px 16px; }
+.tile-card h3 { margin: 0 0 6px; font: 700 1.1rem/1.25 var(--font-display); }
+.price { display: flex; justify-content: space-between; align-items: baseline; margin: 8px 0 12px; }
+.price strong { font-size: 1.4rem; color: var(--accent-text); }
+.price span { color: var(--muted); font-size: .85rem; }
+.controls { display: grid; gap: 20px; }
+.row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.btn { font: 600 1rem/1 var(--font-body); padding: 12px 20px; border-radius: var(--radius-btn); border: var(--btn-border); cursor: pointer; }
+.btn-primary { background: var(--accent); color: var(--on-accent); box-shadow: var(--btn-shadow); }
+.btn-secondary { background: transparent; color: var(--text); border: var(--btn2-border); }
+.btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.focus-demo { outline: 3px solid var(--focus); outline-offset: 3px; }
+.pill { display: inline-block; font: 700 .78rem/1 var(--font-body); padding: 6px 10px; border-radius: var(--radius-pill); text-transform: var(--pill-case); letter-spacing: var(--pill-tracking); }
+.ok { background: var(--success-bg); color: var(--success-fg); }
+.warn { background: var(--warning-bg); color: var(--warning-fg); }
+.bad { background: var(--danger-bg); color: var(--danger-fg); }
+.neutral { background: var(--photo-bg); color: var(--text); }
+.notes { color: var(--muted); font-size: .9rem; }
+.notes li { margin: 4px 0; }
+footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: .85rem; }
+.type .display { font-weight: 700; } h2 { font-family: var(--font-display); text-transform: none; letter-spacing: 0; font-size: 1.1rem; font-style: italic; }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="meta"><h1>Direction A: Field Guide</h1><p>A naturalist's field guide at the company picnic: warm, crafted, true kestrel colors.</p></header>
+
+  <h2>Marks</h2>
+  <div class="grid marks">
+    <div>
+      <div class="org">
+        <figure><div class="tile"><svg width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="Kestrel"><path fill="var(--logo-slate)" d="M12 57 C 6 46, 6 27, 18 16 C 28 7, 45 8, 52 19 L 55 26 C 56 40, 49 52, 37 57 Z"/><path fill="var(--logo-cream)" d="M31 32 C 38 29, 48 29, 55.5 30 C 55 44, 47 54, 36 57 C 31 50, 29 41, 31 32 Z"/><path fill="var(--logo-ink)" d="M41.5 31 C 44 38, 43 46, 38.5 53 C 35.5 47, 35.5 39, 38 32 Z"/><path fill="var(--logo-ink)" d="M53 21 C 58 21, 62 24.5, 62 29.5 C 62 32.5, 60.5 34.5, 58.5 35 C 58.5 32, 56.5 30, 53.5 30 Z"/><path fill="var(--logo-gold)" d="M50.5 19.5 C 52.5 19.5, 54.5 20.5, 54.5 22.5 L 53 29 L 50.5 28 Z"/><circle fill="var(--logo-gold)" cx="44.5" cy="23.5" r="4.4"/><circle fill="var(--logo-ink)" cx="44.8" cy="23.5" r="3.2"/></svg></div><figcaption>Kestrel mark, 64px</figcaption></figure>
+        <figure><div class="tile"><svg width="32" height="32" viewBox="0 0 64 64" role="img" aria-label="Kestrel"><path fill="var(--logo-slate)" d="M12 57 C 6 46, 6 27, 18 16 C 28 7, 45 8, 52 19 L 55 26 C 56 40, 49 52, 37 57 Z"/><path fill="var(--logo-cream)" d="M31 32 C 38 29, 48 29, 55.5 30 C 55 44, 47 54, 36 57 C 31 50, 29 41, 31 32 Z"/><path fill="var(--logo-ink)" d="M41.5 31 C 44 38, 43 46, 38.5 53 C 35.5 47, 35.5 39, 38 32 Z"/><path fill="var(--logo-ink)" d="M53 21 C 58 21, 62 24.5, 62 29.5 C 62 32.5, 60.5 34.5, 58.5 35 C 58.5 32, 56.5 30, 53.5 30 Z"/><path fill="var(--logo-gold)" d="M50.5 19.5 C 52.5 19.5, 54.5 20.5, 54.5 22.5 L 53 29 L 50.5 28 Z"/><circle fill="var(--logo-gold)" cx="44.5" cy="23.5" r="4.4"/><circle fill="var(--logo-ink)" cx="44.8" cy="23.5" r="3.2"/></svg></div><figcaption>32px</figcaption></figure>
+        <figure><div class="tile"><svg width="16" height="16" viewBox="0 0 64 64" role="img" aria-label="Kestrel"><path fill="var(--logo-slate)" d="M12 57 C 6 46, 6 27, 18 16 C 28 7, 45 8, 52 19 L 55 26 C 56 40, 49 52, 37 57 Z"/><path fill="var(--logo-cream)" d="M31 32 C 38 29, 48 29, 55.5 30 C 55 44, 47 54, 36 57 C 31 50, 29 41, 31 32 Z"/><path fill="var(--logo-ink)" d="M41.5 31 C 44 38, 43 46, 38.5 53 C 35.5 47, 35.5 39, 38 32 Z"/><path fill="var(--logo-ink)" d="M53 21 C 58 21, 62 24.5, 62 29.5 C 62 32.5, 60.5 34.5, 58.5 35 C 58.5 32, 56.5 30, 53.5 30 Z"/><path fill="var(--logo-gold)" d="M50.5 19.5 C 52.5 19.5, 54.5 20.5, 54.5 22.5 L 53 29 L 50.5 28 Z"/><circle fill="var(--logo-gold)" cx="44.5" cy="23.5" r="4.4"/><circle fill="var(--logo-ink)" cx="44.8" cy="23.5" r="3.2"/></svg></div><figcaption>16px favicon</figcaption></figure>
+        <figure><div class="tile"><svg viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Kestrel, one color"><path fill="var(--text)" d="M12 57 C 6 46, 6 27, 18 16 C 28 7, 45 8, 52 19 L 55 26 C 56 40, 49 52, 37 57 Z M53 21 C 58 21, 62 24.5, 62 29.5 C 62 32.5, 60.5 34.5, 58.5 35 C 58.5 32, 56.5 30, 53.5 30 Z"/><path fill="var(--surface)" d="M31 32 C 38 29, 48 29, 55.5 30 C 55 44, 47 54, 36 57 C 31 50, 29 41, 31 32 Z"/><path fill="var(--text)" d="M41.5 31 C 44 38, 43 46, 38.5 53 C 35.5 47, 35.5 39, 38 32 Z"/><circle fill="var(--surface)" cx="44.5" cy="23.5" r="4.4"/><circle fill="var(--text)" cx="44.8" cy="23.5" r="2.8"/></svg></div><figcaption>One color</figcaption></figure>
+      </div>
+      <ul class="notes"><li>Kestrel mark: a male kestrel's head in profile. Slate-blue crown, cream cheek, the dark 'moustache' stripe under the eye that sets kestrels apart, and a hooked falcon beak.</li><li>Event wordmark: serif type, with tail-feather barring and plumage spots; a hovering kestrel (they hover in place to hunt).</li></ul>
+    </div>
+    <div class="hero"><svg viewBox="0 0 640 250" role="img" aria-label="Kestrel Gives">
+<defs><pattern id="bars" width="18" height="18" patternUnits="userSpaceOnUse" patternTransform="rotate(-12)"><rect width="18" height="18" fill="var(--logo-rust)"/><rect width="18" height="5" fill="var(--logo-spot)"/></pattern></defs>
+<g transform="translate(560 66) scale(1.15)"><g fill="var(--logo-slate)"><path d="M-4 -6 C -20 -13, -40 -19, -62 -23 C -44 -10, -25 -2, -6 6 Z"/><path d="M4 -6 C 20 -13, 40 -19, 62 -23 C 44 -10, 25 -2, 6 6 Z"/><ellipse cx="0" cy="2" rx="6.5" ry="13"/><path d="M-4 12 L -14 37 Q 0 42, 14 37 L 4 12 Z"/><circle cx="0" cy="-14" r="5"/></g></g>
+<text x="18" y="118" font-family="var(--font-display)" font-weight="800" font-size="124" fill="var(--logo-rust)" letter-spacing="-3">Kestrel</text>
+<text x="168" y="226" font-family="var(--font-display)" font-style="italic" font-weight="700" font-size="120" fill="var(--logo-slate)" letter-spacing="-2">Gives</text>
+<rect x="22" y="150" width="128" height="16" rx="8" fill="url(#bars)"/>
+<g fill="var(--logo-spot)"><path d="M486 150 c4 6 4 12 0 16 c-4 -4 -4 -10 0 -16z"/><path d="M510 176 c4 6 4 12 0 16 c-4 -4 -4 -10 0 -16z"/><path d="M532 146 c4 6 4 12 0 16 c-4 -4 -4 -10 0 -16z"/><path d="M556 172 c4 6 4 12 0 16 c-4 -4 -4 -10 0 -16z"/></g>
+</svg></div>
+  </div>
+
+  <h2>Palette</h2>
+  <div class="grid swatches"><div class="swatch"><i style="background: var(--logo-rust)"></i><span><b>Kestrel rust</b><br><small>Logo; text uses a darker rust</small></span></div><div class="swatch"><i style="background: var(--logo-slate)"></i><span><b>Slate blue</b><br><small>Logo; links and banners</small></span></div><div class="swatch"><i style="background: var(--logo-cream)"></i><span><b>Cream</b><br><small>Backgrounds</small></span></div><div class="swatch"><i style="background: var(--logo-ink)"></i><span><b>Plumage ink</b><br><small>Spots, stripes</small></span></div><div class="swatch"><i style="background: var(--logo-gold)"></i><span><b>Cere gold</b><br><small>Eye and beak only</small></span></div><div class="swatch"><i style="background: var(--accent)"></i><span><b>Rust (text-safe)</b><br><small>Buttons, prices, AA</small></span></div><div class="swatch"><i style="background: var(--success-fg)"></i><span><b>Moss</b><br><small>Winning, approved</small></span></div><div class="swatch"><i style="background: var(--danger-fg)"></i><span><b>Brick</b><br><small>Outbid, rejected</small></span></div></div>
+
+  <h2>Type</h2>
+  <div class="grid type">
+    <div><p class="display">Bid on a lake cabin weekend</p><code>Display: Iowan Old Style → Charter → Cambria → Georgia (system serifs)</code></div>
+    <div><p>Pottery class for two, a sourdough starter with a loaf lesson, or a custom pet portrait. Every dollar goes to three local charities, split equally.</p><code>Body: system-ui</code><p class="notes">Optional upgrade: <b>Fraunces</b> (SIL Open Font License), a soft, slightly quirky serif for display only. It would be self-hosted and proposed as a dependency-style decision first.</p></div>
+  </div>
+
+  <h2>Sample</h2>
+  <div class="sample">
+    <div class="site-header">
+      <a class="brand" href="#"><svg width="30" height="30" viewBox="0 0 64 64" role="img" aria-label="Kestrel"><path fill="var(--logo-slate)" d="M12 57 C 6 46, 6 27, 18 16 C 28 7, 45 8, 52 19 L 55 26 C 56 40, 49 52, 37 57 Z"/><path fill="var(--logo-cream)" d="M31 32 C 38 29, 48 29, 55.5 30 C 55 44, 47 54, 36 57 C 31 50, 29 41, 31 32 Z"/><path fill="var(--logo-ink)" d="M41.5 31 C 44 38, 43 46, 38.5 53 C 35.5 47, 35.5 39, 38 32 Z"/><path fill="var(--logo-ink)" d="M53 21 C 58 21, 62 24.5, 62 29.5 C 62 32.5, 60.5 34.5, 58.5 35 C 58.5 32, 56.5 30, 53.5 30 Z"/><path fill="var(--logo-gold)" d="M50.5 19.5 C 52.5 19.5, 54.5 20.5, 54.5 22.5 L 53 29 L 50.5 28 Z"/><circle fill="var(--logo-gold)" cx="44.5" cy="23.5" r="4.4"/><circle fill="var(--logo-ink)" cx="44.8" cy="23.5" r="3.2"/></svg><span>Kestrel</span></a>
+      <nav aria-label="Main"><a href="#">Home</a><a href="#" aria-current="page">Silent Auction</a><a href="#">Instant Sale</a><a href="#">Your Items</a></nav>
+      <span class="avatar" aria-label="Maya Okafor">MO</span>
+    </div>
+    <div class="banner">Bidding ends in 2 days · Friday at 5:00 PM EST</div>
+    <div class="sample-body">
+      <article class="tile-card">
+        <div class="photo">Item photo</div>
+        <div class="content">
+          <h3>Sourdough starter + a loaf lesson</h3>
+          <div class="price"><strong>$45</strong><span>6 bids · ends Fri</span></div>
+          <span class="pill ok">You're winning</span>
+        </div>
+      </article>
+      <div class="controls">
+        <div class="row"><button class="btn btn-primary">Place a bid</button><button class="btn btn-secondary">View details</button><button class="btn btn-primary focus-demo">Focused</button></div>
+        <div class="row"><span class="pill ok">You're winning</span><span class="pill bad">Outbid</span><span class="pill warn">Ending soon</span><span class="pill neutral">Sold out</span></div>
+        <ul class="notes"><li>Quiet surfaces and thin borders; color comes from the marks and the prices.</li><li>Section titles in italic serif, like captions in a field guide.</li></ul>
+      </div>
+    </div>
+  </div>
+
+  <footer>Kestrel is a fictional organization. Demo only.</footer>
+</div>
+</body>
+</html>

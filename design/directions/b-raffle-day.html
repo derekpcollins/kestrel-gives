@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Direction B: Raffle Day · Kestrel Gives</title>
+<!-- Milestone 1 exploration only. Raw values live in this page's own token block;
+     the chosen direction becomes public/styles/tokens.css. -->
+<style>
+:root { color-scheme: light dark; --bg: #FFFDF7; --surface: #FFFFFF; --text: #1B1B1F; --muted: #5A5A66; --line: #1B1B1F; --accent: #C2321F; --on-accent: #FFFFFF; --accent-text: #C2321F; --focus: #5A3AA3; --success-bg: #D5F2EA; --success-fg: #0B5E4C; --warning-bg: #FFEDB8; --warning-fg: #6B4A00; --danger-bg: #FFE0DA; --danger-fg: #A32615; --banner-bg: #FFC93C; --banner-fg: #1B1B1F; --logo-ink: #1B1B1F; --logo-paper: #FFFDF7; --logo-tomato: #E2412E; --logo-sun: #FFC93C; --logo-mint: #2BB596; --logo-grape: #6C4AB6; --hero-bg: #FFF3D1; --photo-bg: #F1EEE6; --header-bg: #1B1B1F; --header-text: #FFFDF7; --header-border: 0; --nav-underline: #FFC93C; --avatar-bg: #FFC93C; --avatar-text: #1B1B1F; --font-display: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; --radius: 12px; --radius-lg: 16px; --radius-btn: 10px; --radius-pill: 999px; --card-border: 2.5px solid #1B1B1F; --card-shadow: 5px 5px 0 #1B1B1F; --btn-border: 2.5px solid #1B1B1F; --btn2-border: 2.5px solid #1B1B1F; --btn-shadow: 3px 3px 0 #1B1B1F; --pill-case: uppercase; --pill-tracking: .06em; }
+@media (prefers-color-scheme: dark) { :root { --bg: #15151A; --surface: #202028; --text: #F5F3EE; --muted: #B0AFBA; --line: #F5F3EE; --accent: #FF7A63; --on-accent: #15151A; --accent-text: #FF7A63; --focus: #B39BF0; --success-bg: #123A31; --success-fg: #9FEBD6; --warning-bg: #3D3010; --warning-fg: #FFE08F; --danger-bg: #45201A; --danger-fg: #FFB4A6; --banner-bg: #FFD45C; --banner-fg: #15151A; --logo-ink: #F5F3EE; --logo-paper: #202028; --logo-tomato: #FF6B52; --logo-sun: #FFD45C; --logo-mint: #4FD6B4; --logo-grape: #A88BEB; --hero-bg: #202028; --photo-bg: #2A2A33; --header-bg: #0C0C10; --header-text: #F5F3EE; --nav-underline: #FFD45C; --avatar-bg: #FFD45C; --avatar-text: #15151A; --card-border: 2.5px solid #F5F3EE; --card-shadow: 5px 5px 0 #FF7A63; --btn-border: 2.5px solid #F5F3EE; --btn2-border: 2.5px solid #F5F3EE; --btn-shadow: 3px 3px 0 #F5F3EE; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 var(--font-body); }
+.page { max-width: 1040px; margin: 0 auto; padding: 32px 24px 48px; }
+.meta { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 28px; }
+.meta h1 { margin: 0; font: 700 1.5rem/1.2 var(--font-display); }
+.meta p { margin: 0; color: var(--muted); }
+h2 { font: 700 0.8rem/1 var(--font-body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 40px 0 16px; }
+.grid { display: grid; gap: 24px; }
+.marks { grid-template-columns: 1fr 2fr; align-items: center; }
+.org { display: flex; gap: 20px; align-items: end; flex-wrap: wrap; }
+.org figure { margin: 0; text-align: center; color: var(--muted); font-size: .75rem; }
+.org .tile { display: grid; place-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+.hero { background: var(--hero-bg); border-radius: var(--radius-lg); padding: 28px; display: grid; place-items: center; }
+.hero svg { width: 100%; height: auto; max-height: 260px; }
+.swatches { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.swatch { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); font-size: .8rem; }
+.swatch i { display: block; height: 56px; }
+.swatch span { display: block; padding: 8px 10px; }
+.swatch small { color: var(--muted); }
+.type { grid-template-columns: 1fr 1fr; }
+.type .display { font: 800 2.6rem/1.05 var(--font-display); margin: 0 0 8px; }
+.type p { margin: 4px 0; }
+.type code { font-size: .8rem; color: var(--muted); }
+.sample { border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden; background: var(--bg); }
+.site-header { display: flex; align-items: center; gap: 24px; padding: 14px 24px; background: var(--header-bg); border-bottom: var(--header-border); }
+.brand { display: flex; align-items: center; gap: 10px; font: 700 1.15rem/1 var(--font-display); color: var(--header-text); text-decoration: none; }
+.site-header nav { display: flex; gap: 18px; flex: 1; }
+.site-header nav a { color: var(--header-text); text-decoration: none; font-weight: 500; padding: 6px 2px; }
+.site-header nav a[aria-current] { box-shadow: inset 0 -3px 0 var(--nav-underline); }
+.avatar { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--avatar-bg); color: var(--avatar-text); font-weight: 700; font-size: .85rem; }
+.banner { background: var(--banner-bg); color: var(--banner-fg); padding: 10px 24px; font-weight: 600; }
+.sample-body { display: grid; grid-template-columns: 300px 1fr; gap: 32px; padding: 28px 24px; align-items: start; }
+.tile-card { background: var(--surface); border: var(--card-border); border-radius: var(--radius); box-shadow: var(--card-shadow); overflow: hidden; }
+.photo { aspect-ratio: 4 / 3; background: var(--photo-bg); display: grid; place-items: center; color: var(--muted); font-size: .85rem; }
+.tile-card .content { padding: 14px 16px 16px; }
+.tile-card h3 { margin: 0 0 6px; font: 700 1.1rem/1.25 var(--font-display); }
+.price { display: flex; justify-content: space-between; align-items: baseline; margin: 8px 0 12px; }
+.price strong { font-size: 1.4rem; color: var(--accent-text); }
+.price span { color: var(--muted); font-size: .85rem; }
+.controls { display: grid; gap: 20px; }
+.row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.btn { font: 600 1rem/1 var(--font-body); padding: 12px 20px; border-radius: var(--radius-btn); border: var(--btn-border); cursor: pointer; }
+.btn-primary { background: var(--accent); color: var(--on-accent); box-shadow: var(--btn-shadow); }
+.btn-secondary { background: transparent; color: var(--text); border: var(--btn2-border); }
+.btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.focus-demo { outline: 3px solid var(--focus); outline-offset: 3px; }
+.pill { display: inline-block; font: 700 .78rem/1 var(--font-body); padding: 6px 10px; border-radius: var(--radius-pill); text-transform: var(--pill-case); letter-spacing: var(--pill-tracking); }
+.ok { background: var(--success-bg); color: var(--success-fg); }
+.warn { background: var(--warning-bg); color: var(--warning-fg); }
+.bad { background: var(--danger-bg); color: var(--danger-fg); }
+.neutral { background: var(--photo-bg); color: var(--text); }
+.notes { color: var(--muted); font-size: .9rem; }
+.notes li { margin: 4px 0; }
+footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: .85rem; }
+.type .display { font-weight: 900; letter-spacing: -.02em; } .meta h1 { font-weight: 900; } .tile-card h3 { font-weight: 800; }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="meta"><h1>Direction B: Raffle Day</h1><p>The office raffle poster: loud, chunky, a little silly, with confetti and ticket stubs.</p></header>
+
+  <h2>Marks</h2>
+  <div class="grid marks">
+    <div>
+      <div class="org">
+        <figure><div class="tile"><svg width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="Kestrel"><path fill="var(--logo-ink)" d="M9 12 H55 a5 5 0 0 1 5 5 V25 a7 7 0 0 0 0 14 V47 a5 5 0 0 1 -5 5 H9 a5 5 0 0 1 -5 -5 V39 a7 7 0 0 0 0 -14 V17 a5 5 0 0 1 5 -5 Z"/><path fill="none" stroke="var(--logo-paper)" stroke-width="6.5" stroke-linejoin="miter" d="M22 20 V44 M22 33 L38 20 M28 28.5 L40 44"/></svg></div><figcaption>Kestrel mark, 64px</figcaption></figure>
+        <figure><div class="tile"><svg width="32" height="32" viewBox="0 0 64 64" role="img" aria-label="Kestrel"><path fill="var(--logo-ink)" d="M9 12 H55 a5 5 0 0 1 5 5 V25 a7 7 0 0 0 0 14 V47 a5 5 0 0 1 -5 5 H9 a5 5 0 0 1 -5 -5 V39 a7 7 0 0 0 0 -14 V17 a5 5 0 0 1 5 -5 Z"/><path fill="none" stroke="var(--logo-paper)" stroke-width="6.5" stroke-linejoin="miter" d="M22 20 V44 M22 33 L38 20 M28 28.5 L40 44"/></svg></div><figcaption>32px</figcaption></figure>
+        <figure><div class="tile"><svg width="16" height="16" viewBox="0 0 64 64" role="img" aria-label="Kestrel"><path fill="var(--logo-ink)" d="M9 12 H55 a5 5 0 0 1 5 5 V25 a7 7 0 0 0 0 14 V47 a5 5 0 0 1 -5 5 H9 a5 5 0 0 1 -5 -5 V39 a7 7 0 0 0 0 -14 V17 a5 5 0 0 1 5 -5 Z"/><path fill="none" stroke="var(--logo-paper)" stroke-width="6.5" stroke-linejoin="miter" d="M22 20 V44 M22 33 L38 20 M28 28.5 L40 44"/></svg></div><figcaption>16px favicon</figcaption></figure>
+        <figure><div class="tile"><svg width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="Kestrel"><path fill="var(--text)" d="M9 12 H55 a5 5 0 0 1 5 5 V25 a7 7 0 0 0 0 14 V47 a5 5 0 0 1 -5 5 H9 a5 5 0 0 1 -5 -5 V39 a7 7 0 0 0 0 -14 V17 a5 5 0 0 1 5 -5 Z"/><path fill="none" stroke="var(--surface)" stroke-width="6.5" stroke-linejoin="miter" d="M22 20 V44 M22 33 L38 20 M28 28.5 L40 44"/></svg></div><figcaption>One color</figcaption></figure>
+      </div>
+      <ul class="notes"><li>Kestrel mark: a K punched out of a raffle ticket. No bird; the ticket says 'event' at any size.</li><li>Event wordmark: an admit-one ticket with a hard offset shadow, confetti, and a 2026 stub that changes each year.</li></ul>
+    </div>
+    <div class="hero"><svg viewBox="0 0 660 260" role="img" aria-label="Kestrel Gives">
+<path fill="var(--logo-paper)" stroke="var(--logo-ink)" stroke-width="5" d="M24 20 H636 a12 12 0 0 1 12 12 V108 a22 22 0 0 0 0 44 V228 a12 12 0 0 1 -12 12 H24 a12 12 0 0 1 -12 -12 V152 a22 22 0 0 0 0 -44 V32 a12 12 0 0 1 12 -12 Z"/>
+<line x1="510" y1="34" x2="510" y2="226" stroke="var(--logo-ink)" stroke-width="4" stroke-dasharray="2 10" stroke-linecap="round"/>
+<g><circle cx="470" cy="62" r="9" fill="var(--logo-sun)"/><rect x="470" y="196" width="18" height="18" rx="3" transform="rotate(20 479 205)" fill="var(--logo-mint)"/><circle cx="62" cy="206" r="7" fill="var(--logo-grape)"/><rect x="430" y="96" width="14" height="14" rx="2" transform="rotate(-25 437 103)" fill="var(--logo-tomato)"/><circle cx="476" cy="160" r="6" fill="var(--logo-grape)"/></g>
+<text x="58" y="84" font-family="var(--font-display)" font-weight="800" font-size="34" letter-spacing="14" fill="var(--logo-ink)">KESTREL</text>
+<text x="52" y="210" font-family="var(--font-display)" font-weight="900" font-size="150" letter-spacing="-4" fill="var(--logo-tomato)">GIVES</text>
+<text x="46" y="203" font-family="var(--font-display)" font-weight="900" font-size="150" letter-spacing="-4" fill="var(--logo-ink)">GIVES</text>
+<text transform="translate(604 130) rotate(-90)" text-anchor="middle" font-family="var(--font-display)" font-weight="900" font-size="50" fill="var(--logo-ink)">2026</text>
+<text transform="translate(546 130) rotate(-90)" text-anchor="middle" font-family="var(--font-body)" font-weight="700" font-size="15" letter-spacing="4" fill="var(--logo-ink)">ADMIT ALL</text>
+</svg></div>
+  </div>
+
+  <h2>Palette</h2>
+  <div class="grid swatches"><div class="swatch"><i style="background: var(--logo-tomato)"></i><span><b>Tomato</b><br><small>Logo; text uses a darker tomato</small></span></div><div class="swatch"><i style="background: var(--logo-sun)"></i><span><b>Sunflower</b><br><small>Logo, banner fill; never text</small></span></div><div class="swatch"><i style="background: var(--logo-mint)"></i><span><b>Mint</b><br><small>Confetti; text uses deep mint</small></span></div><div class="swatch"><i style="background: var(--logo-grape)"></i><span><b>Grape</b><br><small>Confetti, focus ring</small></span></div><div class="swatch"><i style="background: var(--logo-ink)"></i><span><b>Ink</b><br><small>Text, borders, shadows</small></span></div><div class="swatch"><i style="background: var(--accent)"></i><span><b>Tomato (text-safe)</b><br><small>Buttons, prices, AA</small></span></div><div class="swatch"><i style="background: var(--success-fg)"></i><span><b>Deep mint</b><br><small>Winning, approved</small></span></div><div class="swatch"><i style="background: var(--warning-fg)"></i><span><b>Mustard</b><br><small>Ending soon</small></span></div></div>
+
+  <h2>Type</h2>
+  <div class="grid type">
+    <div><p class="display">Bid on a lake cabin weekend</p><code>Display: system-ui at weight 900 (SF Pro Black, Segoe UI Black, Roboto Black)</code></div>
+    <div><p>Pottery class for two, a sourdough starter with a loaf lesson, or a custom pet portrait. Every dollar goes to three local charities, split equally.</p><code>Body: system-ui</code><p class="notes">Optional upgrade: <b>Bricolage Grotesque</b> (SIL Open Font License), a chunky grotesque with character, for display only. Self-hosted, proposed first.</p></div>
+  </div>
+
+  <h2>Sample</h2>
+  <div class="sample">
+    <div class="site-header">
+      <a class="brand" href="#"><svg width="30" height="30" viewBox="0 0 64 64" role="img" aria-label="Kestrel"><path fill="var(--logo-sun)" d="M9 12 H55 a5 5 0 0 1 5 5 V25 a7 7 0 0 0 0 14 V47 a5 5 0 0 1 -5 5 H9 a5 5 0 0 1 -5 -5 V39 a7 7 0 0 0 0 -14 V17 a5 5 0 0 1 5 -5 Z"/><path fill="none" stroke="var(--header-bg)" stroke-width="6.5" stroke-linejoin="miter" d="M22 20 V44 M22 33 L38 20 M28 28.5 L40 44"/></svg><span>Kestrel</span></a>
+      <nav aria-label="Main"><a href="#">Home</a><a href="#" aria-current="page">Silent Auction</a><a href="#">Instant Sale</a><a href="#">Your Items</a></nav>
+      <span class="avatar" aria-label="Maya Okafor">MO</span>
+    </div>
+    <div class="banner">Bidding ends in 2 days · Friday at 5:00 PM EST</div>
+    <div class="sample-body">
+      <article class="tile-card">
+        <div class="photo">Item photo</div>
+        <div class="content">
+          <h3>Sourdough starter + a loaf lesson</h3>
+          <div class="price"><strong>$45</strong><span>6 bids · ends Fri</span></div>
+          <span class="pill ok">You're winning</span>
+        </div>
+      </article>
+      <div class="controls">
+        <div class="row"><button class="btn btn-primary">Place a bid</button><button class="btn btn-secondary">View details</button><button class="btn btn-primary focus-demo">Focused</button></div>
+        <div class="row"><span class="pill ok">You're winning</span><span class="pill bad">Outbid</span><span class="pill warn">Ending soon</span><span class="pill neutral">Sold out</span></div>
+        <ul class="notes"><li>Thick ink borders and hard offset shadows, like a printed poster.</li><li>All-caps pills; the sunflower banner is impossible to miss.</li><li>Steers clear of per-letter rainbow wordmarks, which read as real brands.</li></ul>
+      </div>
+    </div>
+  </div>
+
+  <footer>Kestrel is a fictional organization. Demo only.</footer>
+</div>
+</body>
+</html>
