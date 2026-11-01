@@ -1,0 +1,22 @@
+/* Layout for the /design-system gallery page only (not a component). Tokens only. */
+.gallery { max-width: var(--size-content); margin: 0 auto; padding: var(--space-8) var(--space-4) var(--space-12); }
+@media (width >= 40rem) { .gallery { padding-inline: var(--space-6); } }
+.gallery__header { display: grid; gap: var(--space-2); padding-bottom: var(--space-4); border-bottom: var(--border-thin) solid var(--color-border); }
+.gallery__header p { color: var(--color-text-muted); max-width: var(--size-content-narrow); }
+.gallery__section { padding-block: var(--space-10); border-bottom: var(--border-thin) solid var(--color-border); display: grid; gap: var(--space-4); }
+.gallery__section > p { color: var(--color-text-muted); max-width: var(--size-content-narrow); }
+.gallery__eyebrow { font: var(--type-overline); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--color-text-muted); }
+.gallery__label { font: var(--type-caption); color: var(--color-text-muted); }
+.gallery__row { display: flex; flex-wrap: wrap; align-items: end; gap: var(--space-6); }
+.gallery__specimen { display: grid; justify-items: center; gap: var(--space-2); padding-top: var(--space-3); }
+.gallery__panes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--size-tile-min)), 1fr)); gap: var(--space-4); }
+.gallery__pane { background: var(--color-bg); color: var(--color-text); border-radius: var(--radius-lg); padding: var(--space-5); box-shadow: var(--shadow-sm); display: grid; gap: var(--space-5); }
+.gallery__pane--light { color-scheme: light; }
+.gallery__pane--dark { color-scheme: dark; }
+.gallery__drawing { width: calc(var(--space-16) * 3); height: auto; overflow: visible; }
+.gallery__bids { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-1); }
+.gallery__bids li { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); background: var(--color-surface); }
+.gallery__bids .who { flex: 1; font: var(--type-body); }
+.gallery__bids .amount { font: var(--type-body); font-weight: var(--weight-semibold); color: var(--color-price); font-variant-numeric: var(--figures-amount); }
+.gallery__bids .when { font: var(--type-caption); color: var(--color-text-muted); font-variant-numeric: var(--figures-amount); }
+.gallery footer { padding-top: var(--space-6); font: var(--type-caption); color: var(--color-text-muted); }

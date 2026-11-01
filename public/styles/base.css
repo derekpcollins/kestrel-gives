@@ -1,5 +1,9 @@
 /* Base element styles: the page defaults every component builds on. Tokens only
    (SPEC §5); documented in DESIGN-SYSTEM.md. */
+@layer base, components;
+
+@layer base {
+
 *, *::before, *::after { box-sizing: border-box; }
 
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
@@ -23,3 +27,8 @@ a { color: var(--color-link); text-underline-offset: var(--space-1); }
 :focus-visible { outline: var(--focus-width) solid var(--color-focus); outline-offset: var(--focus-offset); }
 
 img { max-width: 100%; height: auto; }
+
+/* Visible only to screen readers. */
+.visually-hidden { position: absolute; width: var(--size-px); height: var(--size-px); margin: calc(var(--size-px) * -1); padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+
+}

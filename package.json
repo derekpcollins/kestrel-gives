@@ -9,7 +9,7 @@
   },
   "scripts": {
     "prepare": "git config core.hooksPath .githooks",
-    "build": "tsc -p tsconfig.client.json",
+    "build": "tsc -p tsconfig.client.json && node scripts/build-css.ts",
     "check:types": "tsc -p tsconfig.json && tsc -p tsconfig.client.json --noEmit",
     "db:migrate": "node --env-file=.env.local scripts/migrate.ts",
     "db:seed": "node --env-file=.env.local scripts/seed.ts",

@@ -200,3 +200,19 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   - **On the sheet:** at 1280, 390, and 320px there are no reflow problems and the lockup has a single name.
   - **Preload on design pages:** a preload can't work on a `file://` page (the browser blocks it as cross-origin), so the design page doesn't preload. The font still loads there through `@font-face`.
 - **Checks:** `npm run check` passes all seven.
+
+### 2026-11-01 — Stage A (components), part 1: plumbing and the crown
+- **Owner stepped in:** approved the stage A plan and specified the details:
+  - CSS joined in a deterministic order with `@layer`
+  - about 12 original line icons on a 24px grid, `aria-hidden` when decorative and labeled when standalone
+  - a public gallery
+  - class, variant, and state names kept consistent with DESIGN-SYSTEM.md, because the owner is mirroring the library in Figma after each checkpoint
+  - the crown shown first
+- **Built:**
+  - **CSS build:** `scripts/build-css.ts` (with `build-css-lib.ts` and 3 unit tests) runs in `npm run build`, and `npm start` watches it. `base.css` is now in `@layer base` with a `.visually-hidden` utility (#48).
+  - **Gallery:** `public/design-system/` with its own layout CSS. It's added to the screens list, so axe, reflow, and visual cover it (#49).
+  - **Avatar:** `avatar.css` with sm, md, and lg sizes and the crown. The crown is an original drawing on a 32×24 grid: three uneven points with round tips, a soft band, and curves instead of straight lines. It sits tilted −16° at the top-left edge. Avatars are `aria-hidden` next to the person's name, and the name carries "(top bidder)" as hidden text.
+- **Hard / caught:**
+  - **Floating crown:** the first placement floated above the small avatar instead of sitting on its edge. Caught in the 3× screenshots and moved.
+  - **Reflow false positive:** the reflow check flagged the visually-hidden text, which clips on purpose. The checker now skips elements of 1px or less, and synthetic cases confirm real clipping is still caught.
+  - **Crown contrast:** contrast was checked where the crown meets the avatar as well as the page. Each edge has one part at 3:1 or better: in light mode the fill against the dark-teal avatar (4.9:1) and the outline against the page (7.5:1); in dark mode the outline against the light-teal avatar (3.9:1) and the fill against the page (12.4:1).

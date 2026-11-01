@@ -1,0 +1,31 @@
+/* Avatar (DESIGN-SYSTEM.md): initials on a token-colored circle; the current high bidder
+   wears the crown (SPEC §5). Sizes: sm (bid history), md (header), lg (profile menu). */
+.avatar {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: var(--size-avatar-md);
+  height: var(--size-avatar-md);
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font: var(--type-label);
+  font-weight: var(--weight-bold);
+}
+.avatar--sm { width: var(--size-avatar-sm); height: var(--size-avatar-sm); font: var(--type-badge); }
+.avatar--lg { width: var(--size-avatar-lg); height: var(--size-avatar-lg); font: var(--type-heading-3); }
+
+/* The crown: small, slightly tilted, at the top-left edge. Its outline separates it from
+   white and from the avatar circle; in dark mode its fill separates it from the page. */
+.avatar__crown {
+  position: absolute;
+  width: 70%;
+  left: -16%;
+  top: -30%;
+  rotate: -16deg;
+  overflow: visible;
+  pointer-events: none;
+}
+.avatar__crown-shape { fill: var(--color-crown); stroke: var(--color-crown-stroke); stroke-linejoin: round; stroke-linecap: round; }
+.avatar__crown-band { fill: none; stroke: var(--color-crown-stroke); stroke-linecap: round; }

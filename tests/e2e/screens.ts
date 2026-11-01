@@ -6,4 +6,7 @@ export interface Screen {
   path: string;
 }
 
-export const SCREENS: readonly Screen[] = [{ name: "home", path: "/" }];
+export const SCREENS: readonly Screen[] = [
+  { name: "home", path: "/" },
+  { name: "design-system", path: "/design-system/" }, // every component, every state
+];

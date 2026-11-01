@@ -1,5 +1,5 @@
-// `npm start`: runs tsc --watch (front end → public/js) and vercel dev side by
-// side, with prefixed output. Ctrl-C stops both, and if either exits the other is
+// `npm start`: runs tsc --watch (front end → public/js), the component CSS build in
+// watch mode, and vercel dev side by side, with prefixed output. Ctrl-C stops both, and if either exits the other is
 // stopped too, so nothing keeps running unseen. Each tool gets its own process
 // group because `vercel` runs a native child that a plain kill would orphan.
 import { spawn, type ChildProcess } from "node:child_process";
@@ -9,6 +9,7 @@ const processes = new Map<string, ChildProcess>();
 let stopping = false;
 
 start("tsc", "node_modules/.bin/tsc", ["-p", "tsconfig.client.json", "--watch", "--preserveWatchOutput"]);
+start("css", "node", ["scripts/build-css.ts", "--watch"]);
 start("vercel", "vercel", ["dev"]);
 
 for (const signal of ["SIGINT", "SIGTERM"] as const) {

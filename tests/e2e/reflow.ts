@@ -9,6 +9,7 @@ interface Box {
   id: string;
   classList: ArrayLike<string> & Iterable<string>;
   clientWidth: number;
+  clientHeight: number;
   scrollWidth: number;
 }
 interface Page {
@@ -32,6 +33,8 @@ export function findReflowProblems(): string[] {
     // tables) and text deliberately truncated with an ellipsis.
     if (style.overflowX === "auto" || style.overflowX === "scroll") continue;
     if (style.textOverflow === "ellipsis") continue;
+    // Screen-reader-only text (the visually-hidden pattern) is clipped to 1px on purpose.
+    if (el.clientWidth <= 1 && el.clientHeight <= 1) continue;
     if (style.overflowX === "hidden" || style.overflowX === "clip") {
       problems.push(`${describe(el)} cuts off ${el.scrollWidth - el.clientWidth}px of content sideways`);
     }

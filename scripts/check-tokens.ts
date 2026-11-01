@@ -8,6 +8,7 @@ const ROOT = new URL("../", import.meta.url).pathname;
 const TOKENS = "public/styles/tokens.css";
 const SCAN = ["public", "src"];
 const SKIP_DIRS = new Set(["public/js"]); // tsc output; src/ is checked instead
+const SKIP_FILES = new Set(["public/styles/components.css"]); // generated; its sources are checked
 const EXTENSIONS = /\.(?:css|html|ts|svg)$/;
 
 const tokensCss = await readFile(join(ROOT, TOKENS), "utf8");
@@ -17,7 +18,7 @@ let scanned = 0;
 for (const dir of SCAN) {
   for (const file of await walk(join(ROOT, dir))) {
     const path = relative(ROOT, file);
-    if (path === TOKENS || !EXTENSIONS.test(path)) continue;
+    if (path === TOKENS || SKIP_FILES.has(path) || !EXTENSIONS.test(path)) continue;
     scanned++;
     const text = await readFile(file, "utf8");
     for (const { line, value } of findRawValues(text, breakpoints)) problems.push(`${path}:${line}  ${value}`);

@@ -9,6 +9,7 @@ Kestrel is a fictional organization. Every person, item, and charity in the demo
 - [`SPEC.md`](SPEC.md): what to build and the rules every change follows
 - [`DECISIONS.md`](DECISIONS.md): every significant decision and why
 - [`BUILD-LOG.md`](BUILD-LOG.md): how it was built, including where AI helped and where the owner stepped in
+- [Design system gallery](https://kestrel-gives.vercel.app/design-system/): every component in every state (source: [`public/design-system/`](public/design-system/), documented in `DESIGN-SYSTEM.md`)
 
 ## Stack
 
@@ -24,7 +25,7 @@ vercel link              # once: connect this folder to the Vercel project
 npm start                # http://localhost:3000
 ```
 
-`npm start` runs `tsc --watch` (front end → `public/js/`) and `vercel dev` (static files and API functions) together. Ctrl-C stops both. There's no hot reload; refresh the browser after a change.
+`npm start` runs `tsc --watch` (front end → `public/js/`), the component CSS build in watch mode (`public/styles/components/*.css` → `public/styles/components.css`, generated and not committed), and `vercel dev` (static files and API functions) together. Ctrl-C stops both. There's no hot reload; refresh the browser after a change.
 
 It's `npm start` rather than `npm run dev` because `vercel dev` refuses to run when `package.json` has a `dev` script that leads back to itself (see DECISIONS #33).
 

@@ -129,6 +129,7 @@
   --space-16: 4rem;    /* 64 */
 
   /* ---------- Sizes ---------- */
+  --size-px:          1px;     /* one CSS pixel: the visually-hidden pattern */
   --size-target:      2.75rem; /* 44: minimum height for buttons and inputs */
   --size-avatar-sm:   1.75rem; /* 28: bid history */
   --size-avatar-md:   2.25rem; /* 36: header */
