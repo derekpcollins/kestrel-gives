@@ -1,6 +1,6 @@
 # Kestrel Gives — Build Spec & Conformance Rules
 
-**Status:** v1.2 · Owner: Derek Collins · Last updated: Oct 31, 2026
+**Status:** v1.3 · Owner: Derek Collins · Last updated: Nov 1, 2026
 
 This document describes what to build and the rules every contribution must follow, whether a person or an AI agent writes it. Read it in full before writing any code. If something here conflicts with a request, stop and ask.
 
@@ -126,7 +126,12 @@ There is no inherited design system, so this project defines its own, from scrat
 - New components MUST be added to the design system before they're used in a screen.
 - The look is decided in Milestone 1: the owner reviews a token sheet before any screen is built.
 - Starter component list: button, text input, textarea, select, date-time input, form field (label + help + error), radio card, card, item tile, badge/status pill, table, tabs, dialog, toast, banner, empty state, page header, site header and nav, profile menu, avatar (with top-bidder crown), photo uploader (with reorder), photo carousel, demo bar.
-- **Logos:** the Kestrel wordmark, the big colorful Kestrel Gives event wordmark for Home, and the three charity logos are original, simple SVGs built from tokens so they work in dark mode.
+- **Logos:**
+  - **Marks:** the Kestrel org mark (the teal bird) and the Kestrel Gives event mark (the bird holding a heart) are the owner's own raster artwork, kept in `design/source/logos/`. They MUST be used unmodified: no redrawing, recoloring, or tracing. The only allowed changes are cropping whitespace and resizing or exporting (PNG at 1x and 2x, in `public/brand/`).
+  - **Dark mode:** the marks' white face and chest are part of the art, so in dark mode the marks sit on a light rounded tile in the art's own white. The Home hero (event mark with the lettering) is a light card in both modes, because the event mark's file has its white background built in.
+  - **Lettering:** the "Kestrel" wordmark and the hand-drawn "gives" in the Home hero are original SVG built from tokens. Brand teal and coral are sampled from the event mark.
+  - **Favicon:** the org mark as-is, padded to a square (16 and 32px). A dedicated small mark MAY come later.
+  - **Charities:** the three charity logos are original, simple SVGs built from tokens so they work in dark mode.
 - **Avatars:** initials on a token-colored circle. No photos of people.
 - **Top-bidder crown:** the current high bidder's avatar gets a small, slightly tilted, hand-drawn-style crown at its top edge, everywhere their avatar appears in that item's bid history. It MUST be an original drawing, not traced or copied from any artwork.
 
