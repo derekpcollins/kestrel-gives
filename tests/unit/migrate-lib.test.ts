@@ -59,29 +59,33 @@ describe("verifyApplied", () => {
 
 describe("decideDeploy", () => {
   const prod = { VERCEL_ENV: "production", NEON_MAIN_ENDPOINT: MAIN, NEON_DEV_ENDPOINT: DEV };
+  const refuse = (env: Record<string, string | undefined>, reason: RegExp) => {
+    const decision = decideDeploy(env);
+    assert.equal(decision.action, "refuse");
+    assert.match(decision.action === "refuse" ? decision.reason : "", reason);
+  };
 
-  test("runs only for a production build whose DATABASE_URL is main (pooled or direct)", () => {
-    assert.deepEqual(decideDeploy({ ...prod, DATABASE_URL: url(MAIN) }), { action: "run", url: url(MAIN) });
-    assert.equal(decideDeploy({ ...prod, DATABASE_URL: pooled(MAIN) }).action, "run");
+  test("runs only for a production build whose DATABASE_URL_UNPOOLED is main, and uses that URL as is", () => {
+    assert.deepEqual(decideDeploy({ ...prod, DATABASE_URL_UNPOOLED: url(MAIN), DATABASE_URL: pooled(MAIN) }), { action: "run", url: url(MAIN) });
   });
 
   test("preview, development and local builds skip without touching the database", () => {
     for (const VERCEL_ENV of ["preview", "development", undefined]) {
-      assert.equal(decideDeploy({ ...prod, VERCEL_ENV, DATABASE_URL: url(MAIN) }).action, "skip");
+      assert.equal(decideDeploy({ ...prod, VERCEL_ENV, DATABASE_URL_UNPOOLED: url(MAIN) }).action, "skip");
     }
   });
 
-  test("a production build refuses when the connection isn't provably main", () => {
-    const refuse = (env: Record<string, string | undefined>, reason: RegExp) => {
-      const decision = decideDeploy(env);
-      assert.equal(decision.action, "refuse");
-      assert.match(decision.action === "refuse" ? decision.reason : "", reason);
-    };
-    refuse({ ...prod, DATABASE_URL: url(DEV) }, /not the main branch/);
-    refuse({ ...prod, DATABASE_URL: url("ep-other-333") }, /not the main branch/);
-    refuse({ ...prod }, /DATABASE_URL is not set/);
-    refuse({ ...prod, NEON_MAIN_ENDPOINT: undefined, DATABASE_URL: url(MAIN) }, /NEON_MAIN_ENDPOINT is not set/);
-    refuse({ ...prod, NEON_DEV_ENDPOINT: MAIN, DATABASE_URL: url(MAIN) }, /are the same/);
-    refuse({ ...prod, DATABASE_URL: "not a url" }, /valid URL/);
+  test("no fallback: a production build without DATABASE_URL_UNPOOLED refuses even if DATABASE_URL is main", () => {
+    refuse({ ...prod, DATABASE_URL: pooled(MAIN) }, /DATABASE_URL_UNPOOLED is not set/);
+    refuse({ ...prod, DATABASE_URL: url(MAIN) }, /DATABASE_URL_UNPOOLED is not set/);
+  });
+
+  test("a production build refuses when the direct URL isn't provably main, or isn't direct", () => {
+    refuse({ ...prod, DATABASE_URL_UNPOOLED: url(DEV) }, /not the main branch/);
+    refuse({ ...prod, DATABASE_URL_UNPOOLED: url("ep-other-333") }, /not the main branch/);
+    refuse({ ...prod, DATABASE_URL_UNPOOLED: pooled(MAIN) }, /pooled host/);
+    refuse({ ...prod, NEON_MAIN_ENDPOINT: undefined, DATABASE_URL_UNPOOLED: url(MAIN) }, /NEON_MAIN_ENDPOINT is not set/);
+    refuse({ ...prod, NEON_DEV_ENDPOINT: MAIN, DATABASE_URL_UNPOOLED: url(MAIN) }, /are the same/);
+    refuse({ ...prod, DATABASE_URL_UNPOOLED: "not a url" }, /valid URL/);
   });
 });

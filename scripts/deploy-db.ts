@@ -1,10 +1,11 @@
 // The last step of the Vercel build (DECISIONS #67). On a production build, and only once
-// DATABASE_URL is confirmed to be Neon's main branch, it applies pending migrations and
+// DATABASE_URL_UNPOOLED (the direct URL) is confirmed to be Neon's main branch, it applies
+// pending migrations and
 // seeds the demo if the database has never been seeded, all under one advisory lock so two
 // builds can't race. Any other build skips it. Any failure fails the build, so the new
 // deployment never goes live against a half-migrated database.
 import { Pool } from "@neondatabase/serverless";
-import { decideDeploy, directUrl, runMigrations, withSchemaLock } from "./migrate-lib.ts";
+import { decideDeploy, runMigrations, withSchemaLock } from "./migrate-lib.ts";
 import { isEmpty, seed } from "./seed-lib.ts";
 
 const decision = decideDeploy(process.env);
@@ -17,9 +18,9 @@ if (decision.action === "refuse") {
   process.exit(1);
 }
 
-const pool = new Pool({ connectionString: directUrl(decision.url) });
+const pool = new Pool({ connectionString: decision.url }); // already direct; see decideDeploy
 try {
-  console.log("deploy-db: production build on the main branch.");
+  console.log("deploy-db: production build; DATABASE_URL_UNPOOLED confirmed as the main branch (direct connection).");
   await withSchemaLock(pool, async () => {
     await runMigrations(pool);
     if (await isEmpty(pool)) console.log(`deploy-db: first deploy, seeded (${await seed(pool)}).`);

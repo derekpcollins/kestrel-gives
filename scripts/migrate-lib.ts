@@ -24,9 +24,11 @@ export function checksumOf(sql: string): string {
 }
 
 /**
- * The direct (unpooled) form of a Neon connection string. Neon's "-pooler" host runs
+ * The direct (unpooled) form of a Neon connection string, for the local scripts (migrate,
+ * seed, tests), whose .env.local has only the pooled DATABASE_URL. Neon's "-pooler" host runs
  * PgBouncer in transaction mode, where a session-level advisory lock doesn't hold (the next
  * query can land on another backend), so migrations and seeding always connect directly.
+ * The production build doesn't use this: it reads DATABASE_URL_UNPOOLED (decideDeploy).
  */
 export function directUrl(url: string): string {
   const parsed = new URL(url);
@@ -65,28 +67,31 @@ export type DeployDecision =
   | { action: "run"; url: string };
 
 /**
- * Whether the build may touch the database. Only a Vercel production build, and only when
- * DATABASE_URL is confirmed to be the main branch. Everything else skips (not production)
- * or refuses (production, but the connection isn't provably main).
+ * Whether the build may touch the database. Only a Vercel production build, and only over
+ * DATABASE_URL_UNPOOLED (the Neon integration's direct, Production-only URL) once its
+ * endpoint is confirmed to be the main branch. Everything else skips (not production) or
+ * refuses (production, but no direct URL that is provably main). There is deliberately no
+ * fallback to DATABASE_URL: a missing or wrong direct URL fails the build.
  */
 export function decideDeploy(env: Readonly<Record<string, string | undefined>>): DeployDecision {
   const vercelEnv = env["VERCEL_ENV"];
   if (vercelEnv !== "production") {
     return { action: "skip", reason: `not a production build (VERCEL_ENV=${vercelEnv ?? "unset"}); dev is migrated locally and by the tests` };
   }
-  const url = env["DATABASE_URL"];
+  const url = env["DATABASE_URL_UNPOOLED"];
   const main = env["NEON_MAIN_ENDPOINT"];
   const dev = env["NEON_DEV_ENDPOINT"];
-  if (!url) return { action: "refuse", reason: "DATABASE_URL is not set" };
+  if (!url) return { action: "refuse", reason: "DATABASE_URL_UNPOOLED is not set" };
   if (!main) return { action: "refuse", reason: "NEON_MAIN_ENDPOINT is not set, so the connection can't be confirmed as main" };
   if (main === dev) return { action: "refuse", reason: "NEON_MAIN_ENDPOINT and NEON_DEV_ENDPOINT are the same; check the settings" };
-  let endpoint: string;
+  let host: string;
   try {
-    endpoint = endpointOf(url);
+    host = new URL(url).hostname;
   } catch {
-    return { action: "refuse", reason: "DATABASE_URL isn't a valid URL" };
+    return { action: "refuse", reason: "DATABASE_URL_UNPOOLED isn't a valid URL" };
   }
-  if (endpoint !== main) return { action: "refuse", reason: "DATABASE_URL is not the main branch" };
+  if ((host.split(".")[0] ?? "").endsWith("-pooler")) return { action: "refuse", reason: "DATABASE_URL_UNPOOLED is a pooled host; the advisory lock needs a direct connection" };
+  if (endpointOf(url) !== main) return { action: "refuse", reason: "DATABASE_URL_UNPOOLED is not the main branch" };
   return { action: "run", url };
 }
 

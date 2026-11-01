@@ -356,3 +356,9 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   - **`vercel dev` runs the build command too**, so local startup now type-checks and runs the unit tests; deploy-db skips there (`VERCEL_ENV=development`).
 - **Not testable locally, by design:** the production + `main` path. It first runs on the push after this checkpoint: it will record a checksum for `001_init.sql`, apply nothing new, and seed-if-empty will stamp the placeholder `app_meta` row on `main`.
 - **Checks:** `npm run check` passes all eight; `npm audit` unchanged (#27).
+
+### 2026-11-01 — Stage 2A checkpoint: owner review
+- **Owner stepped in:**
+  - Kept `NEON_MAIN_ENDPOINT` and `NEON_DEV_ENDPOINT` in all three Vercel scopes (#34, #35): they're IDs, not credentials. Checked without printing values: both are set in Production, Preview and Development.
+  - **The direct URL now comes from `DATABASE_URL_UNPOOLED`** (the Neon integration's, Production only, confirmed by name and scope), with the same main check plus a pooled-host refusal, and no fallback to stripping `-pooler` (#67 amended; SPEC v1.8 §4 wording corrected before its first push). 11 unit tests.
+  - **Preview → dev:** Preview's `DATABASE_URL` is a sensitive variable, so `vercel env pull` returns a placeholder and it can't be compared from the CLI. No throwaway branch; the Milestone 0 browser check stands. **To do:** next time a preview deploys in the normal course of work, check its `/api/health` shows `"db":"dev"` and note it here.
