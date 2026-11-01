@@ -125,5 +125,7 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 - **Hard / caught:**
   - **No transparency in the event mark:** its file has a white background built in, so it can't sit directly on a colored or dark page. The hero became a light card in both modes, and every mark sits on a #FEFEFE tile in dark mode.
   - **Teal differs between files:** #036765, #086060, and #026465. The event mark's value was chosen.
-  - **Apple touch icon dropped for now:** it needs the art flattened onto white, which is compositing, not just cropping. It can come later if the owner wants it.
+  - **Apple touch icon:** first left out, because it needs the art placed on white. The owner approved that as placement, not editing. `public/apple-touch-icon.png` is the org mark resized to 140px tall, centered on a white 180px square with a zlib-only scratch script. The source checksums were verified unchanged.
 - **Favicon note:** the org mark is used as-is. At 16px most of the detail is lost; a dedicated small mark could come later.
+- **Later, possibly:** a version of the event mark with a transparent background (and a solid white face and chest) would let the Home hero sit directly on the dark page instead of on a white card. The owner accepted the white card for now.
+- **Owner sign-off:** approved on 2026-11-01. Kept teal #036765 and kept the source logos tracked in the repo, because their provenance is part of the case study.

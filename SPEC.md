@@ -130,7 +130,7 @@ There is no inherited design system, so this project defines its own, from scrat
   - **Marks:** the Kestrel org mark (the teal bird) and the Kestrel Gives event mark (the bird holding a heart) are the owner's own raster artwork, kept in `design/source/logos/`. They MUST be used unmodified: no redrawing, recoloring, or tracing. The only allowed changes are cropping whitespace and resizing or exporting (PNG at 1x and 2x, in `public/brand/`).
   - **Dark mode:** the marks' white face and chest are part of the art, so in dark mode the marks sit on a light rounded tile in the art's own white. The Home hero (event mark with the lettering) is a light card in both modes, because the event mark's file has its white background built in.
   - **Lettering:** the "Kestrel" wordmark and the hand-drawn "gives" in the Home hero are original SVG built from tokens. Brand teal and coral are sampled from the event mark.
-  - **Favicon:** the org mark as-is, padded to a square (16 and 32px). A dedicated small mark MAY come later.
+  - **Favicon:** the org mark as-is, padded to a square (16 and 32px, transparent). The Apple touch icon (180px) is the org mark placed on a white square, since iOS shows transparency as black. A dedicated small mark MAY come later.
   - **Charities:** the three charity logos are original, simple SVGs built from tokens so they work in dark mode.
 - **Avatars:** initials on a token-colored circle. No photos of people.
 - **Top-bidder crown:** the current high bidder's avatar gets a small, slightly tilted, hand-drawn-style crown at its top edge, everywhere their avatar appears in that item's bid history. It MUST be an original drawing, not traced or copied from any artwork.
