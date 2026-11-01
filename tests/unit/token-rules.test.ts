@@ -1,6 +1,6 @@
 import { strict as assert } from "node:assert";
 import { describe, test } from "node:test";
-import { findRawValues } from "../../scripts/token-rules.ts";
+import { findRawValues, findUnpairedColors } from "../../scripts/token-rules.ts";
 
 const values = (text: string) => findRawValues(text).map((found) => found.value);
 
@@ -19,5 +19,19 @@ describe("token check rules", () => {
 
   test("reports line numbers", () => {
     assert.deepEqual(findRawValues("a {\n  color: #000;\n}"), [{ line: 2, value: "#000" }]);
+  });
+});
+
+describe("color tokens have light and dark values", () => {
+  test("accepts light-dark pairs and aliases", () => {
+    const css = ":root {\n  --color-a: light-dark(#fff, #000);\n  --color-b: light-dark(rgb(0 0 0 / 0.5), rgb(1 2 3));\n  --color-c: var(--color-a);\n  --space-1: 4px;\n}";
+    assert.deepEqual(findUnpairedColors(css), []);
+  });
+  test("flags single values and one-sided light-dark", () => {
+    const css = ":root { --color-a: #fff; --color-b: light-dark(rgb(0, 0, 0)); --color-c: rgb(0 0 0); }";
+    assert.deepEqual(findUnpairedColors(css), ["--color-a", "--color-b", "--color-c"]);
+  });
+  test("ignores commented-out declarations", () => {
+    assert.deepEqual(findUnpairedColors("/* --color-x: #fff; */ :root {}"), []);
   });
 });

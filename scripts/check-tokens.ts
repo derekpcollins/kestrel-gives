@@ -2,7 +2,7 @@
 // source outside public/styles/tokens.css.
 import { readdir, readFile } from "node:fs/promises";
 import { join, relative } from "node:path";
-import { findRawValues } from "./token-rules.ts";
+import { findRawValues, findUnpairedColors } from "./token-rules.ts";
 
 const ROOT = new URL("../", import.meta.url).pathname;
 const TOKENS = "public/styles/tokens.css";
@@ -23,12 +23,16 @@ for (const dir of SCAN) {
   }
 }
 
+for (const name of findUnpairedColors(await readFile(join(ROOT, TOKENS), "utf8"))) {
+  problems.push(`${TOKENS}  ${name} needs light-dark(<light>, <dark>)`);
+}
+
 if (problems.length > 0) {
-  console.error(`✗ Raw design values outside ${TOKENS}; use a token instead:`);
+  console.error(`✗ Token problems (raw values outside ${TOKENS}, or color tokens without a dark value):`);
   for (const problem of problems) console.error(`  ${problem}`);
   process.exit(1);
 }
-console.log(`✓ No raw design values in ${scanned} front-end file(s) outside ${TOKENS}.`);
+console.log(`✓ No raw design values in ${scanned} front-end file(s) outside ${TOKENS}; every color token has light and dark values.`);
 
 async function walk(dir: string): Promise<string[]> {
   const entries = await readdir(dir, { withFileTypes: true });

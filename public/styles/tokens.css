@@ -1,5 +1,148 @@
 /* Design tokens: the only file allowed to hold raw color, size, spacing, radius,
-   shadow, and motion values (SPEC §5). The look is decided in Milestone 1. */
+   shadow, and motion values (SPEC §5). Reviewed as design/token-sheet.html.
+
+   Every color token is light-dark(<light>, <dark>), so both values sit side by side
+   (SPEC §5, §6). The page follows prefers-color-scheme; there is no manual toggle. */
+
 :root {
   color-scheme: light dark;
+
+  /* ---------- Color: surfaces ---------- */
+  --color-bg:              light-dark(#F6FAF9, #0F1F1F); /* page */
+  --color-surface:         light-dark(#FFFFFF, #16292A); /* cards, header, dialogs, inputs */
+  --color-surface-muted:   light-dark(#E3EEEC, #1D3434); /* photo placeholder, neutral pill, disabled */
+  --color-overlay:         light-dark(rgb(15 31 31 / 0.5), rgb(0 0 0 / 0.6)); /* dialog backdrop */
+
+  /* ---------- Color: text ---------- */
+  --color-text:            light-dark(#12302F, #EAF4F2);
+  --color-text-muted:      light-dark(#4D6564, #A3BDBA); /* help text, meta, captions */
+  --color-text-disabled:   light-dark(#7A9593, #6E8C89); /* exempt from contrast, still legible */
+  --color-price:           light-dark(#B8363C, #FF8F86); /* prices and bid amounts; AA coral */
+
+  /* ---------- Color: lines ---------- */
+  --color-border:          light-dark(#D7E5E3, #25403F); /* dividers, table rules (decorative) */
+  --color-border-strong:   light-dark(#7A9593, #6E8C89); /* input edges: 3:1 against surface and page */
+
+  /* ---------- Color: accent (teal) ---------- */
+  --color-accent:          light-dark(#036765, #5CC8C0); /* primary button, avatar, current nav */
+  --color-accent-hover:    light-dark(#024E4D, #84DAD3);
+  --color-accent-soft:     light-dark(#E1F1EF, #173A39); /* secondary hover, selected radio card */
+  --color-on-accent:       light-dark(#FFFFFF, #0F1F1F);
+  --color-link:            light-dark(#036765, #5CC8C0);
+  --color-focus:           light-dark(#036765, #5CC8C0);
+
+  /* ---------- Color: status (text color works on its soft fill and on surface) ---------- */
+  --color-success:         light-dark(#0C5554, #A6E6E0); /* winning, approved, won */
+  --color-success-soft:    light-dark(#D3EEEC, #123735);
+  --color-warning:         light-dark(#6E4B00, #FFE08A); /* ending soon, proof due, amount short */
+  --color-warning-soft:    light-dark(#FFF0C2, #3A3112);
+  --color-danger:          light-dark(#9E2A30, #FFB3B0); /* outbid, rejected, cancelled, errors */
+  --color-danger-soft:     light-dark(#FBDDDD, #46201F);
+
+  /* ---------- Color: special surfaces ---------- */
+  --color-banner:          light-dark(#FFE08A, #FFE08A); /* phase banner: butter in both modes */
+  --color-on-banner:       light-dark(#12302F, #0F1F1F);
+  --color-inverse:         light-dark(#12302F, #EAF4F2); /* toast, demo bar */
+  --color-on-inverse:      light-dark(#F6FAF9, #0F1F1F);
+  --color-crown:           light-dark(#FFD86B, #FFD86B); /* top-bidder crown fill */
+  --color-crown-stroke:    light-dark(#6E4B00, #6E4B00);
+
+  /* ---------- Color: brand (fixed; only on the light mark tile and hero card) ---------- */
+  --color-brand-teal:      light-dark(#036765, #036765); /* sampled from the event mark */
+  --color-brand-coral:     light-dark(#F86256, #F86256); /* sampled; 3.06:1 on white, never body text */
+  --color-brand-butter:    light-dark(#FFD86B, #FFD86B); /* hero swash */
+  --color-mark-tile:       light-dark(#FEFEFE, #FEFEFE); /* the art's own white */
+
+  /* ---------- Type ---------- */
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: var(--font-sans); /* headings use weight, not a second family */
+
+  --text-xs:   0.75rem;  /* 12: pill labels, fine print */
+  --text-sm:   0.875rem; /* 14: meta, help, table */
+  --text-md:   1rem;     /* 16: body, inputs, buttons */
+  --text-lg:   1.125rem; /* 18: tile titles, lead */
+  --text-xl:   1.375rem; /* 22: section headings, prices on tiles */
+  --text-2xl:  1.75rem;  /* 28: page titles */
+  --text-3xl:  2.25rem;  /* 36: item price on detail page */
+  --text-4xl:  3rem;     /* 48: Home headline */
+
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+  --weight-heavy:    800;
+
+  --leading-tight:  1.2;
+  --leading-snug:   1.35;
+  --leading-normal: 1.5;
+
+  --tracking-tight: -0.01em; /* large headings */
+  --tracking-label: 0.08em;  /* uppercase eyebrow labels */
+
+  /* ---------- Spacing (4px steps) ---------- */
+  --space-1:  0.25rem; /*  4 */
+  --space-2:  0.5rem;  /*  8 */
+  --space-3:  0.75rem; /* 12 */
+  --space-4:  1rem;    /* 16 */
+  --space-5:  1.25rem; /* 20 */
+  --space-6:  1.5rem;  /* 24 */
+  --space-8:  2rem;    /* 32 */
+  --space-10: 2.5rem;  /* 40 */
+  --space-12: 3rem;    /* 48 */
+  --space-16: 4rem;    /* 64 */
+
+  /* ---------- Sizes ---------- */
+  --size-target:      2.75rem; /* 44: minimum height for buttons and inputs */
+  --size-avatar-sm:   1.75rem; /* 28: bid history */
+  --size-avatar-md:   2.25rem; /* 36: header */
+  --size-avatar-lg:   3rem;    /* 48: profile menu */
+  --size-mark-header: 2rem;    /* 32: org mark in the header */
+  --size-tile-min:    16rem;   /* item grid: tiles wrap at this width, no breakpoints */
+  --size-content:     72rem;   /* page max width */
+  --size-content-narrow: 40rem; /* forms, reading text */
+
+  /* ---------- Lines ---------- */
+  --border-thin:  1px;
+  --border-thick: 2px; /* inputs, secondary button ring, selected radio card */
+  --focus-width:  3px;
+  --focus-offset: 2px;
+
+  /* ---------- Radius ---------- */
+  --radius-sm:   0.5rem;  /*  8: small chips, table cells */
+  --radius-md:   0.75rem; /* 12: inputs, mark tiles */
+  --radius-lg:   1.125rem; /* 18: cards, item tiles */
+  --radius-xl:   1.5rem;  /* 24: dialogs, hero card */
+  --radius-pill: 999px;   /* buttons, pills, avatars */
+
+  /* ---------- Shadow (soft in light; a hairline edge in dark, where shadows vanish) ---------- */
+  --shadow-sm: 0 1px 3px light-dark(rgb(18 48 47 / 0.08), rgb(0 0 0 / 0.3)),
+               0 0 0 1px light-dark(transparent, #25403F);
+  --shadow-md: 0 2px 6px light-dark(rgb(18 48 47 / 0.08), rgb(0 0 0 / 0.3)),
+               0 12px 28px light-dark(rgb(18 48 47 / 0.08), rgb(0 0 0 / 0.3)),
+               0 0 0 1px light-dark(transparent, #25403F);
+  --shadow-lg: 0 8px 16px light-dark(rgb(18 48 47 / 0.1), rgb(0 0 0 / 0.4)),
+               0 24px 48px light-dark(rgb(18 48 47 / 0.14), rgb(0 0 0 / 0.5)),
+               0 0 0 1px light-dark(transparent, #2F4E4C);
+
+  /* ---------- Motion ---------- */
+  --duration-fast: 120ms; /* hover, press */
+  --duration-base: 200ms; /* toasts, tabs */
+  --duration-slow: 320ms; /* dialogs, carousel */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-exit:     cubic-bezier(0.4, 0, 1, 1);
+
+  /* ---------- Layers ---------- */
+  --layer-header: 10;
+  --layer-demo:   20;
+  --layer-dialog: 30;
+  --layer-toast:  40;
+}
+
+/* SPEC §6: respect reduced motion. Components animate only through these tokens. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-base: 0ms;
+    --duration-slow: 0ms;
+  }
 }

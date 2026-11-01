@@ -26,3 +26,26 @@ export function findRawValues(text: string): RawValue[] {
   });
   return found;
 }
+
+// SPEC §5: every color token has a light and a dark value. In tokens.css each --color-*
+// declaration must be light-dark(<light>, <dark>), or a var() alias of another color token.
+export function findUnpairedColors(css: string): string[] {
+  const code = css.replace(/\/\*[\s\S]*?\*\//g, "");
+  const unpaired: string[] = [];
+  for (const [, name, value] of code.matchAll(/(--color-[\w-]+)\s*:\s*([^;]+);/g)) {
+    const v = value!.trim();
+    const alias = /^var\(--color-[\w-]+\)$/.test(v);
+    if (!alias && !(v.startsWith("light-dark(") && v.endsWith(")") && hasTopLevelComma(v.slice(11, -1)))) unpaired.push(name!);
+  }
+  return unpaired;
+}
+
+function hasTopLevelComma(s: string): boolean {
+  let depth = 0;
+  for (const c of s) {
+    if (c === "(") depth++;
+    else if (c === ")") depth--;
+    else if (c === "," && depth === 0) return true;
+  }
+  return false;
+}

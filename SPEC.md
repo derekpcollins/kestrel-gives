@@ -1,6 +1,6 @@
 # Kestrel Gives — Build Spec & Conformance Rules
 
-**Status:** v1.3 · Owner: Derek Collins · Last updated: Nov 1, 2026
+**Status:** v1.4 · Owner: Derek Collins · Last updated: Nov 1, 2026
 
 This document describes what to build and the rules every contribution must follow, whether a person or an AI agent writes it. Read it in full before writing any code. If something here conflicts with a request, stop and ask.
 
@@ -275,7 +275,7 @@ The agent proposes the final schema in Milestone 2. Expected tables: `events`, `
 These run before any change counts as done. Each is a script in `package.json`.
 
 1. **Dependency allowlist:** `package.json` contains only the packages in section 4.
-2. **Token check:** a short Node script (no dependencies) finds raw color, size, or spacing values outside `public/styles/tokens.css`.
+2. **Token check:** a short Node script (no dependencies) finds raw color, size, or spacing values outside `public/styles/tokens.css`, and confirms every color token in that file has a light and a dark value, written `light-dark(<light>, <dark>)`.
 3. **Accessibility:** axe checks via Playwright on every screen, in light and dark mode, with zero violations.
 4. **Type check:** `tsc --noEmit` passes.
 5. **Business rules:** `node:test` tests cover section 7: bid minimums and increments, no self-outbidding, time windows for every phase, the inventory floor, simultaneous bids and purchases (against real Postgres on the `dev` branch), edit locks, delete and cancel rules, the reset lock, and template variable validation.
