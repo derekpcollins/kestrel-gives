@@ -1,0 +1,9 @@
+/* Hero lockup (DESIGN-SYSTEM.md; DECISIONS #47): the event mark, then "Kestrel" (teal)
+   over "gives" (coral), live text in the heading font with one accessible name. The mark's
+   file is white, so the lockup sits on a light card in both modes (.lockup--card). */
+.lockup { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--space-2) var(--space-4); margin: 0; }
+.lockup__mark { display: block; height: var(--size-lockup-mark); width: auto; }
+.lockup__words { display: flex; flex-direction: column; font: var(--type-hero); letter-spacing: var(--tracking-lockup); }
+.lockup__kestrel { color: var(--color-brand-teal); }
+.lockup__gives { color: var(--color-brand-coral); }
+.lockup--card { padding: var(--space-6); border-radius: var(--radius-xl); background: var(--color-mark-tile); box-shadow: var(--shadow-md); }

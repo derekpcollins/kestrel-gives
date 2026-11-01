@@ -1,6 +1,6 @@
 # Kestrel Gives — Build Spec & Conformance Rules
 
-**Status:** v1.5 · Owner: Derek Collins · Last updated: Nov 1, 2026
+**Status:** v1.6 · Owner: Derek Collins · Last updated: Nov 1, 2026
 
 This document describes what to build and the rules every contribution must follow, whether a person or an AI agent writes it. Read it in full before writing any code. If something here conflicts with a request, stop and ask.
 
@@ -129,7 +129,7 @@ There is no inherited design system, so this project defines its own, from scrat
 - **Breakpoints:** layouts are intrinsic by default (grids wrap at `--size-tile-min`). Things that need a condition, such as the nav collapsing to a menu, MAY use only the named breakpoint values documented in `tokens.css` (`--breakpoint-sm` 40rem, `--breakpoint-lg` 64rem). They're written out only inside `@media` or `@container` conditions, in range syntax, because CSS can't read custom properties there.
 - **Fonts:** body, UI, and numbers use the system font stack. One Google Font, self-hosted, is used only for headings (the display and heading roles) and the hero lockup: **Plus Jakarta Sans** (Tokotype, SIL OFL 1.1), preloaded on each page. It's the variable WOFF2 with the Latin subset, committed under `public/fonts/` with its license, and loaded with `@font-face` and `font-display: swap`. The system stack is its fallback. The site MUST NOT request anything from Google's servers. The font's license (SIL OFL) is recorded in `CREDITS.md`.
 - **Figma:** `tokens.css` is the source of truth. Figma variables and styles mirror it with matching names: drop the `--` and turn the first hyphen into a slash (`--color-accent` ↔ `color/accent`). The token sheet lists each Figma name. On Figma Pro there's no Variables REST API or Code Connect, so the sync is a manual push plus a drift check at each milestone checkpoint, not CI. The Figma work happens outside this repo.
-- Starter component list: button, text input, textarea, select, date-time input, form field (label + help + error), radio card, card, item tile, badge/status pill, table, tabs, dialog, toast, banner, empty state, page header, site header and nav, profile menu, avatar (with top-bidder crown), photo uploader (with reorder), photo carousel, demo bar.
+- Starter component list: button, text input, textarea, select, date-time input, form field (label + help + error), radio card, card, item tile, badge/status pill, table, dialog, toast, banner, empty state, page header, site header and nav, profile menu, avatar (with top-bidder crown), photo uploader (with reorder), photo carousel, demo bar.
 - **Logos:**
   - **Marks:** the Kestrel org mark (the teal bird) and the Kestrel Gives event mark (the bird holding a heart) are the owner's own raster artwork, kept in `design/source/logos/`. They MUST be used unmodified: no redrawing, recoloring, or tracing. The only allowed changes are cropping whitespace and resizing or exporting (PNG at 1x and 2x, in `public/brand/`).
   - **Dark mode:** the marks' white face and chest are part of the art, so in dark mode the marks sit on a light rounded tile in the art's own white. The Home hero (event mark with the lettering) is a light card in both modes, because the event mark's file has its white background built in.
@@ -144,6 +144,7 @@ There is no inherited design system, so this project defines its own, from scrat
 - MUST meet **WCAG 2.2 AA**, in both light and dark mode.
 - MUST use semantic HTML first, and ARIA only when no native element works.
 - Everything MUST work with a keyboard alone, with visible focus states. No interaction may require dragging (photo reordering uses arrow buttons).
+- Interactive targets are at least 44px (`--size-target`). 36px (`--size-target-sm`) is allowed only in dense rows (tables) and the toast's dismiss button; never below WCAG 2.2's 24px. Links inside running text are exempt, as in WCAG 2.5.8. (Added v1.6.)
 - Status changes (outbid, bid placed, sold out, phase changes, demo user switched) MUST be announced to screen readers.
 - MUST respect `prefers-reduced-motion`.
 - **Dark mode ships now**, following `prefers-color-scheme`. There is no manual toggle.
@@ -230,7 +231,7 @@ Money MUST be stored as whole cents (integers), never floating point.
 ## 8. Screens
 
 ### Navigation
-Site header with the Kestrel wordmark and: **Home**, **Silent Auction**, **Instant Sale**, **Your Items**, and **Submit an Item** (shown only during the submission window). In the upper right is the user's avatar. For admins, it has a chevron and opens a menu with a link to the **Admin Dashboard**. Admin links are never shown to employees. On small screens the nav collapses to a menu button.
+Site header with the Kestrel wordmark and: **Home**, **Silent Auction**, **Instant Sale**, **Your Items**, and **Submit an Item** (shown only during the submission window). In the upper right is the user's avatar. For admins, it has a chevron and opens a menu with a link to the **Admin Dashboard**: a disclosure (a button with `aria-expanded` and a list of links), not an ARIA `role="menu"`, since it's navigation. Admin links are never shown to employees. The nav collapses to a menu button when the header is narrower than `--breakpoint-lg` (64rem), measured on the header's own width (a container query); the full nav needs about 52rem, and 64rem is the next named breakpoint. (Updated v1.6.)
 
 ### Responsive
 One responsive, mobile-first site, not a separate app. Every screen MUST work from 360px wide up (the design target), and at 320px nothing may scroll or be cut off sideways (WCAG 2.2 reflow, 1.4.10). The only exceptions are regions meant to scroll sideways, such as a wide table. Layouts start from the phone and add columns as space allows (section 5, Breakpoints). The browser checks run at 390px and 1280px, plus a reflow check at 320px (section 12).

@@ -1,0 +1,19 @@
+/* Skip link (DESIGN-SYSTEM.md): the first thing Tab reaches on every page. Hidden until
+   focused, then shown over the top-left corner. */
+.skip-link {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: var(--layer-dialog);
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--size-target);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-inverse);
+  color: var(--color-on-inverse);
+  font: var(--type-label);
+  text-decoration: underline;
+  translate: 0 calc(-100% - var(--space-4));
+}
+.skip-link:focus-visible, .skip-link.is-focus { translate: 0 0; outline: var(--focus-width) solid var(--color-focus); outline-offset: var(--focus-offset); }

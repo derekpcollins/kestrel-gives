@@ -1,0 +1,46 @@
+/* Profile menu (DESIGN-SYSTEM.md; SPEC §8): for admins, the avatar and a chevron open a
+   short list of links (a disclosure, not role="menu"). Employees see their avatar only,
+   as .profile-menu__static. */
+.profile-menu { position: relative; }
+.profile-menu__button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: var(--size-target);
+  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-1);
+  border: var(--border-thin) solid transparent;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+}
+.profile-menu__button:hover, .profile-menu__button.is-hover { background: var(--color-surface-muted); }
+.profile-menu__button:active, .profile-menu__button.is-active { background: var(--color-accent-soft-active); }
+.profile-menu__button.is-focus { outline: var(--focus-width) solid var(--color-focus); outline-offset: var(--focus-offset); }
+.profile-menu__button > .icon { transition: rotate var(--duration-fast) var(--ease-standard); }
+.profile-menu__button[aria-expanded="true"] { border-color: var(--color-border-strong); }
+.profile-menu__button[aria-expanded="true"] > .icon { rotate: 180deg; }
+.profile-menu__static { display: inline-flex; align-items: center; min-height: var(--size-target); }
+
+.profile-menu__panel {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  z-index: var(--layer-header);
+  display: grid;
+  gap: var(--space-2);
+  min-width: calc(var(--space-16) * 3.5);
+  padding: var(--space-3);
+  border: var(--border-thin) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-lg);
+}
+.profile-menu__panel[hidden] { display: none; }
+.profile-menu__who { display: grid; padding: var(--space-1) var(--space-2) var(--space-2); border-bottom: var(--border-thin) solid var(--color-border); }
+.profile-menu__name { font: var(--type-label); }
+.profile-menu__role { font: var(--type-caption); color: var(--color-text-muted); }
+.profile-menu__links { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-1); }
+.profile-menu__link { display: flex; align-items: center; gap: var(--space-2); min-height: var(--size-target); padding: var(--space-2); border-radius: var(--radius-md); color: var(--color-text); font: var(--type-label); text-decoration: none; }
+.profile-menu__link:hover, .profile-menu__link.is-hover { background: var(--color-surface-muted); }
+.profile-menu__link[aria-current="page"] { color: var(--color-link); }

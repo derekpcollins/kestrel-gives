@@ -1,0 +1,32 @@
+/* Demo bar (DESIGN-SYSTEM.md; SPEC §3.1): the demo's own controls, first on every page and
+   in the normal flow (it never covers content). Inverse colors and a striped edge set it
+   apart from the app. A <details>, so it collapses to a strip; src/components/demo-bar.ts
+   remembers that, announces who you're viewing as, and hides it for ?demo=off. */
+.demo-bar { position: relative; background: var(--color-inverse); color: var(--color-on-inverse); }
+.demo-bar::before { content: ""; display: block; height: var(--space-1); background: repeating-linear-gradient(135deg, var(--color-banner) 0 var(--space-2), var(--color-inverse) var(--space-2) var(--space-4)); }
+.demo-bar__details { max-width: var(--size-content); margin: 0 auto; padding-inline: var(--space-4); }
+.demo-bar__summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--size-target);
+  font: var(--type-label);
+  cursor: pointer;
+  list-style: none;
+}
+.demo-bar__summary::-webkit-details-marker { display: none; }
+.demo-bar__summary:focus-visible { outline-color: var(--color-on-inverse); }
+.demo-bar__summary > .icon { margin-left: auto; transition: rotate var(--duration-fast) var(--ease-standard); }
+.demo-bar__details[open] > .demo-bar__summary > .icon { rotate: 180deg; }
+.demo-bar__tag { padding: 0 var(--space-2); border-radius: var(--radius-pill); background: var(--color-banner); color: var(--color-on-banner); font: var(--type-badge); text-transform: uppercase; letter-spacing: var(--tracking-label); }
+.demo-bar__who { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.demo-bar__controls { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-3) var(--space-6); padding-block: var(--space-2) var(--space-4); }
+.demo-bar .field__label, .demo-bar__group-label { color: var(--color-on-inverse); }
+.demo-bar__viewing { flex: 1 1 calc(var(--space-16) * 3.5); max-width: calc(var(--space-16) * 5); }
+.demo-bar__jump { display: grid; gap: var(--space-2); min-width: 0; margin: 0; padding: 0; border: 0; }
+.demo-bar__group-label { padding: 0; font: var(--type-label); }
+.demo-bar__jump-buttons { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+/* The current phase: filled, plus aria-pressed for screen readers. */
+.demo-bar__jump-buttons .btn[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-on-inverse); color: var(--color-on-accent); }
+.demo-bar :focus-visible { outline-color: var(--color-on-inverse); }

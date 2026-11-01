@@ -1,11 +1,18 @@
 // The /design-system gallery: draws the icons from the one icon source and wires the
 // live demos. Not loaded by the app.
+import { enhanceDemoBar } from "./components/demo-bar.ts";
+import { enhanceSiteHeader } from "./components/disclosure.ts";
 import { enableWhenChosen, enhanceForm } from "./components/forms.ts";
 import { hydrateIcons } from "./components/icons.ts";
 import { showToast } from "./components/toast.ts";
 import { createUploader } from "./components/uploader.ts";
 
 hydrateIcons();
+
+// Live specimens; [data-static] ones show a fixed state (menu open) and stay as drawn.
+document.querySelectorAll<HTMLElement>(".site-header:not([data-static])").forEach(enhanceSiteHeader);
+document.querySelectorAll<HTMLElement>("[data-demo-bar]").forEach(enhanceDemoBar);
+document.addEventListener("demo:restore", () => showToast("In the app, this opens a confirmation dialog first (stage C2)."));
 
 document.querySelector("[data-demo-toast]")?.addEventListener("click", () => {
   showToast("Bid placed. You're the top bidder.", { tone: "success" });

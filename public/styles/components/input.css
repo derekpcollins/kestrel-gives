@@ -43,7 +43,7 @@ textarea.input { min-height: calc(var(--size-target) * 3); resize: vertical; }
 .input-group > .input:not(:last-child) { border-top-right-radius: 0; border-bottom-right-radius: 0; }
 
 /* Select: the native control, with the chevron from the icon set drawn over it. */
-.select { position: relative; display: grid; }
+.select { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; } /* shrinks below its longest option */
 .select > .input { appearance: none; padding-right: calc(var(--space-3) * 2 + var(--size-icon-md)); cursor: pointer; }
 .select > .icon { position: absolute; right: var(--space-3); top: 50%; translate: 0 -50%; pointer-events: none; color: var(--color-text-muted); }
 .select > .input:disabled + .icon { color: var(--color-text-disabled); }

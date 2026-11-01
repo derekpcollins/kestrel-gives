@@ -254,3 +254,91 @@ How forms behave, for every component below:
 - **Accessibility:** focus moves to it, so screen readers read it right away. Each link moves focus to its field.
 - **Do:** keep messages identical to the ones under the fields. **Don't:** show it before the first submit.
 - **Figma:** *Error summary* · no variants: a *Banner* (Tone = Danger) with a list of links in place of the text.
+
+---
+
+## Page structure (stage C1)
+
+## Skip link
+
+**Purpose:** lets keyboard users jump past the header to the page's content.
+
+- **Markup:** `<a class="skip-link" href="#main">Skip to main content</a>` as the first element in `<body>`; `<main id="main" tabindex="-1">`.
+- **States:** hidden until focused; **focus** shows it over the top-left corner with the focus ring. Hover and active: it's only visible while focused. Disabled, loading, error and empty: N/A.
+- **Accessibility:** it's the first tab stop on every page. `tabindex="-1"` on `<main>` lets focus land there in every browser.
+- **Do:** keep the wording exactly "Skip to main content". **Don't:** hide it with `display: none` (it must stay focusable).
+- **Figma:** *Skip link* · no variants (show it in the Focus state).
+
+## Site header and nav
+
+**Purpose:** the org mark and name, the main nav (Home, Silent Auction, Instant Sale, Your Items, and Submit an Item during the submission window only), and the person (SPEC §8).
+
+- **Markup:** `<header class="site-header">` > `.site-header__inner` with:
+  - `.site-header__brand`: `.site-header__mark` (org mark, `alt=""`) and `.site-header__name`
+  - `<nav class="site-header__nav" aria-label="Main">`: `.site-header__menu-button` and `ul.site-header__links` of `a.site-header__link`
+  - `.site-header__end`: a profile menu or an avatar
+  - Behavior: `enhanceSiteHeader()` in `src/components/disclosure.ts`.
+- **Collapsing:** the header is a size container. Below `--breakpoint-lg` (64rem) **of its own width**, the links collapse behind a **Menu** button (a disclosure). They open as a panel under the header, and Escape or a click outside closes it. The full nav needs about 52rem, and 64rem is the next named breakpoint (DECISIONS #57). Without JavaScript the links simply show, wrapped.
+- **Mark:** in light mode no backing; in dark mode it sits on the art's own white (`--color-mark-backing`, #39).
+- **States (links):** default; hover (muted fill); active (deeper fill); focus (ring); **current page** (`aria-current="page"`: accent text and a bar, so it isn't shown by color alone; the bar is under the link when expanded and beside it in the collapsed panel). Disabled: N/A (a link that doesn't apply is left out, like Submit an Item outside the window). Loading, error and empty: N/A.
+- **States (Menu button):** the quiet button's states, plus open: `aria-expanded="true"` and the icon changes to `close`. Its accessible name stays "Menu".
+- **Accessibility:** one `<nav aria-label="Main">`. Every link and button is 44px tall. Focus stays on the Menu button when the panel opens, and Tab moves into the links.
+- **Do:** keep link labels exactly as SPEC names them. **Don't:** add admin links here; they live in the profile menu.
+- **Figma:** *Site header* · Layout = Expanded / Collapsed × Role = Admin / Employee (4), with the collapsed panel shown as *Site header* · Layout = Collapsed, Menu = Open. *Nav link* · State = Default / Hover / Active / Focus / Current (5).
+
+## Profile menu
+
+**Purpose:** the person in the top right. For admins, a button (avatar and chevron) opens a short list of links: the Admin Dashboard (SPEC §8). Employees see their avatar only.
+
+- **Markup:** `.profile-menu` > `button.profile-menu__button` (avatar, visually hidden "Maya Okafor, admin", `chevron-down`) and `.profile-menu__panel` (`hidden` when closed) with `.profile-menu__who` and `ul.profile-menu__links`. Employees: `.profile-menu__static` with the avatar and visually hidden "Signed in as Jules Ferreira".
+- **Pattern:** a **disclosure**, not `role="menu"`. It's navigation, so Tab moves through the links and there are no arrow-key menu rules. `aria-expanded` on the button and `aria-controls` point at the panel.
+- **States:**
+  - Default, hover, active and focus (ring).
+  - **Open:** `aria-expanded="true"`, a border on the button, and the chevron flips.
+  - **Closing:** Escape closes it and returns focus to the button. A click outside closes it, and focus goes back to the button unless the click landed on another control. Tabbing out closes it.
+  - Disabled, loading, error and empty: N/A.
+- **Accessibility:** the button's name is the person's name and role. The avatar is `aria-hidden`.
+- **Do:** keep the panel to a few links. **Don't:** put actions with side effects here without a confirmation.
+- **Figma:** *Profile menu* · Role = Admin / Employee × State = Default / Hover / Focus / Open (8; Employee uses Default only).
+
+## Page header
+
+**Purpose:** the top of each page: an optional back link, the page's h1, an optional description and actions.
+
+- **Markup:** `.page-header` > `a.link.link--quiet.page-header__back` (`chevron-left` + the parent page's name), `.page-header__row` > `.page-header__text` (`h1.page-header__title`, `p.page-header__description`) and `.page-header__actions`.
+- **States:** default. The back link and actions have their own states. Hover, focus, active, disabled, loading, error and empty: N/A.
+- **Accessibility:** exactly one h1 per page, here. The back link is 44px tall and names where it goes.
+- **Do:** keep at most one primary action. **Don't:** repeat the nav here.
+- **Figma:** *Page header* · Back = On / Off × Description = On / Off × Actions = On / Off (8).
+
+## Demo bar
+
+**Purpose:** the demo's own controls (SPEC §3.1): **Viewing as**, **Jump to** and **Restore demo data**.
+
+- **Markup:** `<section class="demo-bar" aria-label="Demo controls" data-demo-bar="page">` > `details.demo-bar__details` > `summary.demo-bar__summary` (a "Demo" tag, `.demo-bar__who` and a chevron) and `.demo-bar__controls`:
+  - a *Select* field for Viewing as
+  - a `fieldset.demo-bar__jump` of four buttons with `aria-pressed`
+  - the Restore button (`data-demo-restore`)
+  - a visually hidden `role="status"` for announcements
+  - Behavior: `enhanceDemoBar()` in `src/components/demo-bar.ts`.
+- **Placement:** the first thing on the page, right after the (invisible) skip link in the DOM, so the skip link stays the first tab stop. It's in the normal flow and never overlays content. Inverse colors and a striped top edge set it apart from the app.
+- **States:**
+  - **Open** and **collapsed** (`<details>`); the collapsed state is remembered in `localStorage`.
+  - The current phase shows as **pressed** (filled, `aria-pressed="true"`).
+  - Focus rings switch to the on-inverse color on the bar.
+  - Hidden entirely with `?demo=off`; gallery specimens (`data-demo-bar="specimen"`) never hide.
+  - Loading: it will use the buttons' loading state once it talks to the API (Milestone 3). Disabled, error and empty: N/A.
+- **Accessibility:** a region named "Demo controls". Changing who you're viewing as is announced ("Now viewing as Dev Kapoor (employee)"). Moving the phase is announced too. All controls are 44px.
+- **Do:** keep it visually distinct from the app. **Don't:** make it sticky or overlay content.
+- **Figma:** *Demo bar* · State = Open / Collapsed (2); the jump buttons are *Button* (Secondary), with the pressed look drawn as an override.
+
+## Hero lockup
+
+**Purpose:** the event's name on Home (DECISIONS #47).
+
+- **Markup:** `<div class="lockup lockup--card" role="img" aria-label="Kestrel Gives">` > `img.lockup__mark` (`alt=""`) and `.lockup__words` > `.lockup__kestrel` + `.lockup__gives`. On Home it sits inside the page's h1.
+- **Tokens:** `--type-hero` and `--tracking-lockup` for the words; `--size-lockup-mark` scales the mark with them; the brand teal and coral on `--color-mark-tile`.
+- **States:** default only (it isn't interactive). Every other state is N/A.
+- **Accessibility:** one name, "Kestrel Gives", instead of the mark and two separate words.
+- **Do:** use the card in both modes (the mark's file is white). **Don't:** recolor, redraw or crop the mark beyond whitespace (logo rule, #39).
+- **Figma:** *Hero lockup* · no variants.

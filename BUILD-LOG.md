@@ -261,3 +261,27 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   - **Photo cap:** kept 4 MB as a placeholder and decided that Milestone 5 resizes photos in the browser before upload (#54, #55).
 - **Hard / caught:** a grid `gap` on the fieldset couldn't add the space, because a `<legend>` sits outside the fieldset's grid; a top margin on the cards does. Added a test that every thumbnail control measures at least 44px.
 - **Checks:** `npm run check` passes all seven, including reflow at 320px.
+
+### 2026-11-01 — Stage C1 (page structure) (15:42–16:00 EST)
+- **Owner stepped in:**
+  - **SPEC v1.6:** made the 44px target rule part of SPEC §6 (#56), and asked for the nav collapse point to be justified there (#57).
+  - **Profile menu:** chose the disclosure pattern over `role="menu"` (#58).
+  - **Tabs:** dropped them, since no screen needs them (#59).
+  - **Item tiles (C2):** asked for ended-phase states ("You won", "Ended", "Sold out").
+- **Built:**
+  - **Skip link.**
+  - **Site header and nav:** a container query collapses it to a Menu button below 64rem of its own width.
+  - **Profile menu:** a disclosure for admins, avatar only for employees.
+  - **Page header.**
+  - **Demo bar:** `<details>`, inverse colors with a striped edge, Viewing as, Jump to with `aria-pressed`, Restore (raises an event until the dialog exists), the collapsed state remembered, announcements, and `?demo=off`.
+  - **Hero lockup** as a component.
+  - **Behavior:** `disclosure.ts` and `demo-bar.ts`.
+  - **Tokens:** `--color-mark-backing` and `--size-lockup-mark`.
+  - **Keyboard tests (5 new):** skip link, nav menu, profile menu, demo bar announcements, and the remembered collapse with `?demo=off`.
+- **Hard / caught:**
+  - **Nav width:** measured the expanded nav at about 52rem before choosing 64rem.
+  - **320px reflow:** the collapsed header (394px) and a select with long options both overflowed. The header now wraps its name (not the avatar) and shows an icon-only Menu button when narrow; fields and selects now shrink (#60).
+  - **Focus after outside clicks:** the keyboard test found that clicking inside `<main tabindex="-1">` focused `<main>`, which the "focus nowhere" rule missed.
+  - **Test race:** the demo bar test reloaded before the async `toggle` event had saved its state; it now waits for the save.
+  - **Token check:** it flagged "64rem" in gallery prose; the prose names the token instead.
+- **Checks:** `npm run check` passes all seven.

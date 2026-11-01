@@ -1,0 +1,9 @@
+/* Page header (DESIGN-SYSTEM.md): the top of each page. Optional back link, the h1, an
+   optional description, and actions that wrap under the title on small screens. */
+.page-header { display: grid; gap: var(--space-2); padding-block: var(--space-6) var(--space-4); }
+.page-header__back { display: inline-flex; align-items: center; gap: var(--space-1); justify-self: start; min-height: var(--size-target); font: var(--type-label); }
+.page-header__row { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-4); }
+.page-header__title { font: var(--type-heading-1); letter-spacing: var(--tracking-tight); }
+.page-header__text { display: grid; gap: var(--space-2); min-width: 0; flex: 1 1 calc(var(--space-16) * 5); }
+.page-header__description { max-width: var(--size-content-narrow); color: var(--color-text-muted); font: var(--type-body-lg); }
+.page-header__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }

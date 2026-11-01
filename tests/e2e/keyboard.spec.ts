@@ -95,3 +95,112 @@ test("photo uploader: reorder and remove with the keyboard, with announcements",
   await expect(uploader).toHaveClass(/uploader--full/);
   await expect(uploader.locator(".uploader__count")).toHaveText("5 of 5 photos. Remove one to add another.");
 });
+
+test("skip link is the first tab stop and moves focus to main", async ({ page }) => {
+  await page.goto("/design-system/");
+  await page.keyboard.press("Tab");
+  const skip = page.locator("body > .skip-link");
+  await expect(skip).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("main#main")).toBeFocused();
+});
+
+test("collapsed nav: Menu opens the links; Escape and outside clicks close it", async ({ page }) => {
+  await page.goto("/design-system/#site-header");
+  const nav = page.locator('nav[aria-label="Main (hnl)"]');
+  const button = nav.getByRole("button", { name: "Menu" });
+  await expect(button).toHaveAttribute("aria-expanded", "false");
+  await expect(nav.getByRole("link", { name: "Silent Auction" })).toBeHidden();
+
+  await button.focus();
+  await page.keyboard.press("Enter");
+  await expect(button).toHaveAttribute("aria-expanded", "true");
+  await page.keyboard.press("Tab");
+  await expect(nav.getByRole("link", { name: "Home" })).toBeFocused();
+  await expect(nav.getByRole("link", { name: "Home" })).toHaveAttribute("aria-current", "page");
+
+  await page.keyboard.press("Escape");
+  await expect(button).toHaveAttribute("aria-expanded", "false");
+  await expect(button).toBeFocused();
+
+  await button.click();
+  await page.locator(".gallery__header h1").click();
+  await expect(button).toHaveAttribute("aria-expanded", "false");
+  await expect(button).toBeFocused(); // the click landed on nothing focusable
+});
+
+test("profile menu: a disclosure of links; Escape, outside clicks and tabbing out close it", async ({ page }) => {
+  await page.goto("/design-system/#site-header");
+  const menu = page.locator(".site-header:not([data-static]) .profile-menu").first();
+  const button = menu.getByRole("button", { name: "Maya Okafor, admin" });
+  const panel = menu.locator(".profile-menu__panel");
+  await expect(menu.locator('[role="menu"], [role="menuitem"]')).toHaveCount(0);
+  await expect(panel).toBeHidden();
+
+  await button.press("Enter");
+  await expect(button).toHaveAttribute("aria-expanded", "true");
+  await expect(panel).toBeVisible();
+  await page.keyboard.press("Tab");
+  await expect(panel.getByRole("link", { name: "Admin Dashboard" })).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(panel).toBeHidden();
+  await expect(button).toBeFocused();
+
+  await button.click();
+  await page.locator(".gallery__header h1").click();
+  await expect(panel).toBeHidden();
+  await expect(button).toBeFocused();
+
+  await button.press("Enter");
+  await page.keyboard.press("Tab"); // to the link
+  await page.keyboard.press("Tab"); // out of the menu
+  await expect(panel).toBeHidden();
+});
+
+test("demo bar: announces who you're viewing as and the phase; restore raises an event", async ({ page }) => {
+  await page.goto("/design-system/#demo-bar");
+  const bar = page.locator('[data-demo-bar="specimen"]').first();
+  await bar.getByLabel("Viewing as").selectOption({ label: "Dev Kapoor (employee)" });
+  await expect(bar.locator(".demo-bar__status")).toHaveText("Now viewing as Dev Kapoor (employee)");
+  await expect(bar.locator(".demo-bar__who")).toHaveText("Viewing as Dev Kapoor (employee)");
+
+  const ended = bar.getByRole("button", { name: "Bidding ended" });
+  await ended.click();
+  await expect(ended).toHaveAttribute("aria-pressed", "true");
+  await expect(bar.getByRole("button", { name: "Bidding live" })).toHaveAttribute("aria-pressed", "false");
+
+  await bar.getByRole("button", { name: "Restore demo data" }).click();
+  await expect(page.locator(".toast-region")).toContainText("confirmation dialog");
+});
+
+test("demo bar: collapsed state is remembered, and ?demo=off removes the page's bar", async ({ page }) => {
+  // A page-level bar, built on the gallery page for the test.
+  // Runs in the page as a module, so this file needs no DOM types (DECISIONS #26).
+  const addBar = async () => {
+    await page.addScriptTag({ type: "module", content: `
+      import { enhanceDemoBar } from "/js/components/demo-bar.js";
+      const bar = document.querySelector('[data-demo-bar="specimen"]').cloneNode(true);
+      bar.dataset.demoBar = "page";
+      document.body.prepend(bar);
+      enhanceDemoBar(bar);
+      document.body.dataset.barReady = String(Number(document.body.dataset.barReady ?? 0) + 1);
+    ` });
+    await expect(page.locator("body[data-bar-ready]")).toHaveCount(1);
+  };
+  await page.goto("/design-system/");
+  await page.addScriptTag({ content: 'localStorage.removeItem("kestrel-demo-bar-collapsed")' });
+  await addBar();
+  const pageBar = page.locator('[data-demo-bar="page"]');
+  await pageBar.locator("summary").click(); // collapse
+  await expect(pageBar.locator("details")).not.toHaveAttribute("open");
+  // The <details> toggle event is async; wait for it to be saved before reloading.
+  await expect.poll(() => page.evaluate('localStorage.getItem("kestrel-demo-bar-collapsed")')).toBe("true");
+  await page.reload();
+  await addBar();
+  await expect(page.locator('[data-demo-bar="page"] details')).not.toHaveAttribute("open");
+
+  await page.goto("/design-system/?demo=off");
+  await addBar();
+  await expect(page.locator('[data-demo-bar="page"]')).toHaveCount(0);
+  await expect(page.locator('[data-demo-bar="specimen"]')).toHaveCount(2);
+});

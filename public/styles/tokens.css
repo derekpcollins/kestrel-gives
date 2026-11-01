@@ -70,6 +70,7 @@
   --color-brand-coral:     light-dark(#F86256, #F86256); /* sampled; 3.06:1 on white, never body text */
   --color-brand-butter:    light-dark(#FFD86B, #FFD86B); /* hero swash */
   --color-mark-tile:       light-dark(#FEFEFE, #FEFEFE); /* the art's own white */
+  --color-mark-backing:    light-dark(transparent, #FEFEFE); /* behind the header mark: none in light, the art's white in dark (#39) */
 
   /* ---------- Type: families ---------- */
   /* System fonts for body, UI, and numbers. Plus Jakarta Sans only for the hero lockup and
@@ -145,6 +146,7 @@
   --size-avatar-md:   2.25rem; /* 36: header */
   --size-avatar-lg:   3rem;    /* 48: profile menu */
   --size-mark-header: 2rem;    /* 32: org mark in the header */
+  --size-lockup-mark: calc(var(--text-5xl) * 2.6); /* event mark in the hero lockup, scaled with the words */
   --size-tile-min:    16rem;   /* item grid: tiles wrap at this width, no breakpoints */
   --size-content:     72rem;   /* page max width */
   --size-content-narrow: 40rem; /* forms, reading text */
