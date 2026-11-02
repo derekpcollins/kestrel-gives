@@ -1,7 +1,8 @@
 // Home's computed proof window (SPEC §7.6): from the event's dates, never hard-coded.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { proofDaysWords } from "../../src/pages/home-rules.ts";
+import { PLACEHOLDER_LOGO as SEED_PLACEHOLDER } from "../../lib/seed/data.ts";
+import { PLACEHOLDER_LOGO, logoAlt, proofDaysWords } from "../../src/pages/home-rules.ts";
 
 test("proof days come from the close and the deadline", () => {
   const closes = "2026-11-04T19:00:00.000Z";
@@ -11,4 +12,11 @@ test("proof days come from the close and the deadline", () => {
   assert.equal(proofDaysWords({ biddingClosesAt: "2026-10-30T19:00:00.000Z", proofDeadline: "2026-11-13T19:00:00.000Z" }), "14 days");
   assert.equal(proofDaysWords({ biddingClosesAt: null, proofDeadline: null }), null);
   assert.equal(proofDaysWords(null), null);
+});
+
+test("the placeholder logo is announced as one; a real logo is decorative", () => {
+  assert.equal(PLACEHOLDER_LOGO, SEED_PLACEHOLDER);
+  assert.equal(logoAlt("/seed/charities/placeholder-logo.png"), "Placeholder logo");
+  assert.equal(logoAlt("https://example.test/seed/charities/placeholder-logo.png"), "Placeholder logo");
+  assert.equal(logoAlt("/seed/charities/lantern-paws.png"), "");
 });

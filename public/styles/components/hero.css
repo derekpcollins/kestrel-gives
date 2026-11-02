@@ -1,12 +1,15 @@
 /* Hero (DESIGN-SYSTEM.md): the top of Home. The lockup inside the page's h1, then the
-   event's name and description. Stacked and centered on phones; side by side once the
+   event's name and description. On phones the lockup and overline are centered and the
+   paragraphs left-aligned, like the headings and cards below; side by side once the
    page is wide enough. */
 .hero { display: grid; justify-items: center; gap: var(--space-6); padding-block: var(--space-8) var(--space-4); text-align: center; }
 .hero__title { margin: 0; }
-.hero__text { display: grid; gap: var(--space-3); max-width: var(--size-content-narrow); }
-.hero__event { font: var(--type-overline); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--color-text-muted); }
+.hero__text { display: grid; gap: var(--space-3); justify-self: stretch; max-width: var(--size-content-narrow); margin-inline: auto; text-align: start; }
+.hero__event { text-align: center; font: var(--type-overline); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--color-text-muted); }
 .hero__lead { font: var(--type-body-lg); }
 .hero__more { color: var(--color-text-muted); }
 @media (min-width: 64rem) {
   .hero { grid-template-columns: auto 1fr; justify-items: start; align-items: center; gap: var(--space-12); text-align: start; }
+  .hero__text { margin-inline: 0; }
+  .hero__event { text-align: start; }
 }

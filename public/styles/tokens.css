@@ -60,6 +60,12 @@
   /* ---------- Color: special surfaces ---------- */
   --color-banner:          light-dark(#FFE08A, #FFE08A); /* phase banner: butter in both modes */
   --color-on-banner:       light-dark(#12302F, #0F1F1F);
+  /* The calm phase banner (submissions open, bidding open, ended): butter in light mode; in
+     dark mode a dark butter-tinted surface with a butter border and light text. Ending soon
+     keeps the bright butter above in both modes so urgency stands out. */
+  --color-banner-calm:        light-dark(#FFE08A, #3A3320);
+  --color-banner-calm-border: light-dark(#FFE08A, #FFE08A);
+  --color-on-banner-calm:     light-dark(#12302F, #FDF3D0);
   --color-inverse:         light-dark(#12302F, #EAF4F2); /* toast, demo bar */
   --color-on-inverse:      light-dark(#F6FAF9, #0F1F1F);
   --color-crown:           light-dark(#FFD86B, #FFD86B); /* top-bidder crown fill */

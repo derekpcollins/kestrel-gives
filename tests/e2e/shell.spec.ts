@@ -139,3 +139,61 @@ test("an employee's avatar is an image with their name, not a control", async ({
   expect(stops.some((c) => c.includes("profile-menu__static") || c.includes("avatar"))).toBe(false);
   expect(stops.some((c) => c.includes("site-header__link"))).toBe(true); // the walk did reach the header
 });
+
+test("demo bar at 1280: the Viewing as and Jump to labels share a top edge, and so do their controls", async ({ page }) => {
+  await open(page);
+  const viewing = await bar(page).locator(".demo-bar__viewing .field__label").boundingBox();
+  const jump = await bar(page).locator(".demo-bar__group-label").boundingBox();
+  expect(Math.abs(viewing!.y - jump!.y)).toBeLessThanOrEqual(1);
+  // ...and so do the controls under them.
+  const select = await bar(page).locator(".demo-bar__viewing select").boundingBox();
+  const firstJump = await bar(page).locator(".demo-bar__jump-buttons .btn").first().boundingBox();
+  expect(Math.abs(select!.y - firstJump!.y)).toBeLessThanOrEqual(1);
+});
+
+test("demo bar below 40rem starts collapsed, keeps its strip, and a visitor's choice wins", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await open(page); // clears the remembered choice
+  const details = bar(page).locator("details");
+  await expect(details).not.toHaveAttribute("open");
+  const strip = bar(page).locator("summary");
+  await expect(strip.locator(".demo-bar__tag")).toHaveText("Demo");
+  await expect(strip.locator(".demo-bar__who")).toHaveText("Viewing as Jules Ferreira (employee)");
+  await expect(strip.locator(".demo-bar__note")).toHaveText("Shared demo · resets daily");
+  for (const part of [".demo-bar__tag", ".demo-bar__who", ".demo-bar__note"]) await expect(strip.locator(part)).toBeVisible();
+
+  await strip.click(); // the visitor opens it
+  await expect(details).toHaveAttribute("open");
+  await page.reload();
+  await expect(bar(page).locator("details")).toHaveAttribute("open");
+
+  // Wide screens start open when nothing is remembered.
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await open(page);
+  await expect(bar(page).locator("details")).toHaveAttribute("open");
+});
+
+test("phase banner in dark mode: calm phases get the dark butter surface; ending soon stays bright", async ({ page, request }) => {
+  await page.emulateMedia({ colorScheme: "dark" });
+  const colors = async () => String(await page.evaluate(`(() => {
+    const s = getComputedStyle(document.querySelector("[data-shell-banner] .banner"));
+    return [s.backgroundColor, s.borderTopColor, s.color].join("|");
+  })()`)).split("|");
+  const BUTTER = "rgb(255, 224, 138)";
+  await request.post("/api/demo", { data: { action: "jump", to: "live" } });
+  await open(page);
+  const [bg, border, text] = await colors();
+  expect(bg).not.toBe(BUTTER);
+  expect(border).toBe(BUTTER);
+  expect(text).toBe("rgb(253, 243, 208)");
+
+  await bar(page).getByRole("button", { name: "Ending soon", exact: true }).click();
+  await expect(banner(page)).toHaveClass(/banner--urgent/);
+  expect((await colors())[0]).toBe(BUTTER);
+
+  await page.emulateMedia({ colorScheme: "light" }); // light mode unchanged: butter for both
+  expect((await colors())[0]).toBe(BUTTER);
+  await bar(page).getByRole("button", { name: "Bidding live", exact: true }).click();
+  await expect(banner(page)).not.toHaveClass(/banner--urgent/);
+  expect((await colors())[0]).toBe(BUTTER);
+});

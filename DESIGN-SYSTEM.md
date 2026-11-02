@@ -99,11 +99,11 @@ The same pattern applies to every component below. Each entry's **Figma** line g
 
 **Purpose:** a message about the whole page or event that stays until the situation changes.
 
-- **Classes:** `.banner` with `__body`, `__title`, `__text`, `__action`, and a leading icon. Tones: `--phase` (butter; where the event is: "Bidding is open"), `--info` (neutral: `--color-surface-muted` fill with an accent icon; also the default fill), `--success` (teal-soft fill), `--warning`, `--danger`.
+- **Classes:** `.banner` with `__body`, `__title`, `__text`, `__action`, and a leading icon. Tones: `--phase` (where the event is: "Bidding is open"; butter in light mode, and in dark mode a dark butter-tinted surface with a butter border and light text, from `--color-banner-calm*`), `--phase --urgent` ("Bidding ends soon": the bright butter, `--color-banner`, in both modes so urgency stands out), `--info` (neutral: `--color-surface-muted` fill with an accent icon; also the default fill), `--success` (teal-soft fill), `--warning`, `--danger`.
 - **States:** default. Hover, focus, active, disabled and loading are N/A on the banner itself; its action button has its own states. **Error** is `--danger`. Empty: N/A (no banner is shown).
 - **Accessibility:** the phase banner and banners that appear after page load use `role="status"`. A danger banner that appears after a failed submit uses `role="alert"`, or focus moves to it, and it links to the field to fix. Icons are decorative.
 - **Do:** say what happened and what to do next. **Don't:** use a banner for a passing confirmation (use a toast); don't stack more than two.
-- **Figma:** *Banner* · Tone = Phase / Info / Success / Warning / Danger × Action = On / Off (10), with the icon as an instance swap and the action as a nested *Button* (Size = Medium: 44px, SPEC §6).
+- **Figma:** *Banner* · Tone = Phase / Phase urgent / Info / Success / Warning / Danger × Action = On / Off (12), with the icon as an instance swap and the action as a nested *Button* (Size = Medium: 44px, SPEC §6).
 
 ## Toast
 
@@ -324,7 +324,7 @@ How forms behave, for every component below:
   - Behavior: `enhanceDemoBar()` in `src/components/demo-bar.ts`.
 - **Placement:** the first thing on the page, right after the (invisible) skip link in the DOM, so the skip link stays the first tab stop. It's in the normal flow and never overlays content. Inverse colors and a striped top edge set it apart from the app.
 - **States:**
-  - **Open** and **collapsed** (`<details>`); the collapsed state is remembered in `localStorage`.
+  - **Open** and **collapsed** (`<details>`). With no remembered choice it starts open from `--breakpoint-sm` (40rem) up and collapsed below it; once the visitor toggles it, that choice is remembered in `localStorage` and wins. Collapsed, the strip still shows the Demo tag, who you're viewing as and the shared-demo note.
   - The current phase shows as **pressed** (filled, `aria-pressed="true"`).
   - Focus rings switch to the on-inverse color on the bar.
   - Hidden entirely with `?demo=off`; gallery specimens (`data-demo-bar="specimen"`) never hide.
@@ -362,7 +362,7 @@ How forms behave, for every component below:
 **Purpose:** the top of Home (SPEC §8): the hero lockup inside the page's h1, then the event's name, a lead paragraph and a short description.
 
 - **Classes:** `section.hero` > `h1.hero__title` (holding the *Hero lockup*) and `.hero__text` > `p.hero__event` (overline, filled from the data), `p.hero__lead`, `p.hero__more`.
-- **Layout:** stacked and centered on phones; from 64rem, the lockup and text sit side by side, left-aligned.
+- **Layout:** stacked on phones, with the lockup and overline centered and the paragraphs left-aligned like the headings and cards below; from 64rem, the lockup and text sit side by side, left-aligned.
 - **States:** default only; nothing in it is interactive. The event name stays `hidden` until the data arrives. Every other state is N/A.
 - **Accessibility:** the h1's name is "Kestrel Gives" (from the lockup's `role="img"`).
 - **Do:** keep the lead to one or two sentences. **Don't:** put item lists here (SPEC §8).
@@ -385,7 +385,7 @@ How forms behave, for every component below:
 
 - **Classes:** `ul.charity-list` > `li` > `article.card.card--flat.charity-card` > `img.charity-card__logo` (`--size-charity-logo`, on the mark tile's white) and `.charity-card__text` > `h3.charity-card__name`, `p.charity-card__description`.
 - **States:** default. **Loading:** the list is `aria-busy` and empty until the data arrives. Hover, focus, active, disabled, error and empty: N/A (always three charities; if the data fails, the page's danger banner says so).
-- **Accessibility:** the logo has `alt=""` because the name is right beside it. Until the owner's logos arrive, the placeholder image says it's a placeholder (SPEC §7.2).
+- **Accessibility:** a real logo has `alt=""` because the name is right beside it. Until the owner's logos arrive, the placeholder is a dashed tile reading "Logo" with `alt="Placeholder logo"` (`logoAlt()`), so it's marked as a placeholder to everyone (SPEC §7.2).
 - **Do:** keep descriptions to one sentence. **Don't:** make the card a link (there's no charity page).
 - **Figma:** *Charity card* · Logo = Placeholder / Real (2).
 

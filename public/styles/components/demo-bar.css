@@ -21,11 +21,14 @@
 .demo-bar__tag { padding: 0 var(--space-2); border-radius: var(--radius-pill); background: var(--color-banner); color: var(--color-on-banner); font: var(--type-badge); text-transform: uppercase; letter-spacing: var(--tracking-label); }
 .demo-bar__who { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.demo-bar__controls { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-3) var(--space-6); padding-block: var(--space-2) var(--space-4); }
+/* Top-aligned, so the Viewing as and Jump to labels share a line (owner, pre-push review). */
+.demo-bar__controls { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--space-3) var(--space-6); padding-block: var(--space-2) var(--space-4); }
 .demo-bar .field__label, .demo-bar__group-label { color: var(--color-on-inverse); }
 .demo-bar__viewing { flex: 1 1 calc(var(--space-16) * 3.5); max-width: calc(var(--space-16) * 5); }
 .demo-bar__jump { display: grid; gap: var(--space-2); min-width: 0; margin: 0; padding: 0; border: 0; }
-.demo-bar__group-label { padding: 0; font: var(--type-label); }
+/* A legend isn't a grid item, so the fieldset's gap doesn't reach it; the margin matches
+   the field's label-to-control gap, so the buttons line up with the select. */
+.demo-bar__group-label { padding: 0; margin-bottom: var(--space-2); font: var(--type-label); }
 .demo-bar__jump-buttons { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 /* The current phase: filled, plus aria-pressed for screen readers. */
 .demo-bar__jump-buttons .btn[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-on-inverse); color: var(--color-on-accent); }

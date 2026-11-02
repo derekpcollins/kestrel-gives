@@ -525,3 +525,13 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   - deploy-db runs the steps after migrations and seed-if-empty, inside the deploy lock. The first step, `m3-land-live-demo`, restores the demo once. DECISIONS #84.
 - **Tests:** 7 new database tests. They cover once, re-deploy skip, two builds at once, failure then retry, refused names, and the real step restoring to live (rolled back). They also run the real `deploy-db.ts` against dev as preview, development, local, and a production build pointed at dev; each skips or refuses and writes nothing. One new unit test checks the step list. 129 unit and 49 database tests pass; `npm run check` is green; `npm audit` shows only the accepted zod advisory.
 - **Preview (2026-11-02 14:30 EST):** deployment `kestrel-gives-p8fpmy5t5`, Ready. Build: 4 functions compile cleanly, unit tests 129 pass, `deploy-db: skipped, not a production build (VERCEL_ENV=preview)`. `/api/health` → `{"ok":true,"db":"dev","schema":"005","seedPhotos":true}`.
+
+### 2026-11-02 — Final Milestone 3 checkpoint: owner review and pre-push fixes
+- **Owner stepped in:** after a visual review of Home, asked for five fixes, then a push without another checkpoint if `npm run check` is green. All five are done (DECISIONS #85), each with an e2e test:
+  1. demo bar labels top-aligned at 1280;
+  2. the demo bar collapsed by default below 40rem, with the visitor's choice winning;
+  3. the hero's paragraphs left-aligned on phones;
+  4. a dark-mode calm phase banner (#3A3320 surface, butter border, #FDF3D0 text, 11.3:1), with ending soon kept bright;
+  5. the placeholder logo redrawn as just "Logo", with `alt="Placeholder logo"`.
+- **Caught:** top-aligning the labels exposed a second offset. A `<legend>` isn't a grid item, so the fieldset's gap never reached it, and the jump buttons sat 8px above the select. Fixed with a matching margin; the test now checks that both the labels and the controls line up.
+- `npm run check` green (130 unit, 49 database, all browser checks); `npm audit` shows only the accepted zod advisory.

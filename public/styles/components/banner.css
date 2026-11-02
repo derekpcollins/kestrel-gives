@@ -1,5 +1,6 @@
 /* Banner (DESIGN-SYSTEM.md): a message about the whole page or event that stays until
-   the situation changes. Phase (butter) says where the event is; info (neutral, the
+   the situation changes. Phase (butter; a dark butter-tinted surface in dark mode, bright
+   butter for --urgent) says where the event is; info (neutral, the
    default fill) gives context; success, warning and danger report outcomes. Icon, then a title and text, then an optional action. */
 .banner {
   display: flex;
@@ -21,7 +22,9 @@
 /* The action is a full-size button: 44px (SPEC §6). Banners aren't dense rows, so never --sm. */
 .banner__action .btn { min-height: var(--size-target); }
 
-.banner--phase   { background: var(--color-banner); color: var(--color-on-banner); }
+.banner--phase   { background: var(--color-banner-calm); border-color: var(--color-banner-calm-border); color: var(--color-on-banner-calm); }
+/* Ending soon: the bright butter in both modes. */
+.banner--phase.banner--urgent { background: var(--color-banner); border-color: var(--color-banner); color: var(--color-on-banner); }
 .banner--success { background: var(--color-success-soft); }
 .banner--success > .icon { color: var(--color-success); }
 .banner--warning { background: var(--color-warning-soft); }

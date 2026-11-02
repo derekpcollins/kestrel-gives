@@ -19,7 +19,21 @@ test("Home: hero, how to participate, and the charities from the data", async ({
   await expect(charities.getByRole("heading", { level: 3 })).toHaveText(["Lantern Paws", "Lunchbox Brigade", "Saplingworks"]);
   await expect(charities.locator("[data-charities]")).not.toHaveAttribute("aria-busy");
 
+  // The placeholder logo says it's a placeholder.
+  await expect(charities.getByRole("img", { name: "Placeholder logo" })).toHaveCount(3);
+
   // No item lists on Home (SPEC §8), and no payment words anywhere on it.
   await expect(page.locator(".item-tile")).toHaveCount(0);
   expect(await page.locator("main").innerText()).not.toMatch(/\b(pay|paid|payment|checkout)\b/i);
 });
+
+test("Home on a phone: the description is left-aligned; only the overline is centered", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await expect(page.locator("[data-event-name]")).toBeVisible();
+  const align = (sel: string) => page.evaluate(`getComputedStyle(document.querySelector("${sel}")).textAlign`);
+  expect(await align(".hero__lead")).toMatch(/^(start|left)$/);
+  expect(await align(".hero__more")).toMatch(/^(start|left)$/);
+  expect(await align(".hero__event")).toBe("center");
+});
+

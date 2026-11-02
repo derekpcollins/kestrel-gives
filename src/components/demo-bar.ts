@@ -83,8 +83,15 @@ export function enhanceDemoBar(bar: HTMLElement, actions?: DemoBarActions): void
   const select = bar.querySelector<HTMLSelectElement>(".demo-bar__viewing select");
 
   if (details && bar.dataset.demoBar === "page") {
-    if (localStorage.getItem(COLLAPSED_KEY) === "true") details.open = false;
-    details.addEventListener("toggle", () => localStorage.setItem(COLLAPSED_KEY, String(!details.open)));
+    // A remembered choice wins. Without one, the bar starts open on wide screens and
+    // collapsed below 40rem, where it would push the page down (owner, pre-push review).
+    const remembered = localStorage.getItem(COLLAPSED_KEY);
+    details.open = remembered === null ? isWide() : remembered !== "true";
+    // Only the visitor's own toggles are remembered, not the default set above. The click on
+    // the summary runs before <details> flips, so the new state is the opposite of now.
+    details.querySelector("summary")?.addEventListener("click", () => {
+      localStorage.setItem(COLLAPSED_KEY, String(details.open));
+    });
   }
 
   let previous = select?.value ?? "";
@@ -163,4 +170,10 @@ function announce(status: HTMLElement | null, text: string): void {
   if (!status) return;
   status.textContent = "";
   requestAnimationFrame(() => { status.textContent = text; });
+}
+
+/** At or above --breakpoint-sm the bar starts open; below it, collapsed. Read from the token. */
+function isWide(): boolean {
+  const breakpoint = getComputedStyle(document.documentElement).getPropertyValue("--breakpoint-sm").trim();
+  return breakpoint ? matchMedia(`(min-width: ${breakpoint})`).matches : true;
 }

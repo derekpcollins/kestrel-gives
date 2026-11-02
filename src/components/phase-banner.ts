@@ -20,6 +20,7 @@ export function updatePhaseBanner(slot: HTMLElement, state: AppState): void {
     );
     slot.replaceChildren(el("div", { className: "phase-banner" }, banner));
   }
+  banner.classList.toggle("banner--urgent", words.urgent === true);
   banner.querySelector(".phase-banner__icon, .icon")?.replaceWith(icon(words.icon));
   banner.querySelector(".banner__title")!.textContent = words.title;
   banner.querySelector(".banner__text")!.textContent = words.text;

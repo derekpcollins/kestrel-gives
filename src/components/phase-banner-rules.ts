@@ -8,6 +8,8 @@ export interface PhaseBannerText {
   text: string;
   /** An icon name from icons.ts (kept as a plain union so this file stays DOM-free for the server's type check). */
   icon: "clock" | "alert" | "check";
+  /** Ending soon: drawn with the bright treatment in both modes. */
+  urgent?: boolean;
 }
 
 const MINUTE = 60_000;
@@ -36,7 +38,7 @@ export function phaseBanner(event: BannerEvent | null, now: Date, timeZone?: str
     if (!closes) return { title: "Bidding is open", text: "Place bids and claim instant-sale items.", icon: "clock" };
     const left = durationWords(closes.getTime() - now.getTime());
     return event.endingSoon
-      ? { title: "Bidding ends soon", text: `Bidding closes in ${left}, ${when(closes, now, timeZone)}.`, icon: "alert" }
+      ? { title: "Bidding ends soon", text: `Bidding closes in ${left}, ${when(closes, now, timeZone)}.`, icon: "alert", urgent: true }
       : { title: "Bidding is open", text: `Bidding ends in ${left}, ${when(closes, now, timeZone)}.`, icon: "clock" };
   }
   if (deadline && deadline.getTime() > now.getTime()) {
