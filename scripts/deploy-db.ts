@@ -1,12 +1,13 @@
 // The last step of the Vercel build (DECISIONS #67). On a production build, and only once
 // DATABASE_URL_UNPOOLED (the direct URL) is confirmed to be Neon's main branch, it applies
-// pending migrations and
-// seeds the demo if the database has never been seeded, all under one advisory lock so two
-// builds can't race. Any other build skips it. Any failure fails the build, so the new
+// pending migrations and seeds the demo if there is no event yet, all under one advisory
+// lock so two builds can't race. Any other build skips it. Any failure fails the build, so the new
 // deployment never goes live against a half-migrated database.
 import { Pool } from "@neondatabase/serverless";
 import { decideDeploy, runMigrations, withSchemaLock } from "./migrate-lib.ts";
-import { isEmpty, seed } from "./seed-lib.ts";
+import { withTransaction } from "../lib/data/db.ts";
+import { PHOTOS_INSTALLED } from "../lib/seed/data.ts";
+import { seedIfEmptyIn } from "../lib/seed/seed.ts";
 
 const decision = decideDeploy(process.env);
 if (decision.action === "skip") {
@@ -23,8 +24,14 @@ try {
   console.log("deploy-db: production build; DATABASE_URL_UNPOOLED confirmed as the main branch (direct connection).");
   await withSchemaLock(pool, async () => {
     await runMigrations(pool);
-    if (await isEmpty(pool)) console.log(`deploy-db: first deploy, seeded (${await seed(pool)}).`);
-    else console.log("deploy-db: data already present, not seeding.");
+    // "Empty" means no event row (DECISIONS #76); a seeded or live demo is never reseeded.
+    // main is seeded once, so never with placeholder photos: wait for the real ones (2D).
+    if (!PHOTOS_INSTALLED) {
+      console.log("deploy-db: seed photos aren't installed yet (Stage 2D); not seeding.");
+    } else {
+      const seeded = await withTransaction(pool, (tx) => seedIfEmptyIn(tx, new Date()));
+      console.log(seeded ? "deploy-db: no event found; seeded the demo." : "deploy-db: an event exists; not seeding.");
+    }
   });
 } catch (error) {
   // Driver errors can include host details; print the message only.

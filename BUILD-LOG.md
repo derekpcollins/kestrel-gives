@@ -381,3 +381,15 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 - **Open question noted (#74):** whether an admin-cancelled purchase returns the unit to stock; decided with the admin screens.
 
 - **Production run:** pushed `ce6f560` and `28b39fa` (with `1f3ce3e`). Build log: unit tests 68 pass / 0 fail; `deploy-db: production build; DATABASE_URL_UNPOOLED confirmed as the main branch (direct connection).`, `applied 002_schema.sql`, `1 applied.`, `deploy-db: data already present, not seeding.` `/api/health` → `{"ok":true,"db":"main","schema":"002"}`. Stage 2B is complete; `main` has the schema and no seed data.
+
+### 2026-11-01 — Stage 2C: the seed (committed locally; ships with 2D)
+- **Owner stepped in:** 2C is tested on `dev` and committed but not pushed on its own: `main` is seeded once, so 2C and 2D go out together after the photos are approved. Stock on a cancelled purchase waits for Milestone 6, with the owner's lean recorded in #74 (restock while the sale is open, not after close).
+- **Built:**
+  - `lib/seed/data.ts` (plain data, times relative to now) and `lib/seed/seed.ts` (`seedIn`, `seedIfEmptyIn`, `hasNoEventIn`), shared by `db:seed`, deploy-db and, later, Restore demo data. `scripts/seed-lib.ts` is gone, so nothing outside the migrations mentions `app_meta`.
+  - `lib/email-templates.ts`: the six defaults, each with its own variables; proof requests use `{{donation_total}}`.
+  - Placeholder images in `public/seed/` (photo, charity logo, proof), rendered from a scratch page, each labeled as a placeholder.
+  - deploy-db: "empty" means no event row; it also skips seeding, with a log line, until the real photos are installed, so an early push can't spend the one-time seed on placeholders.
+  - **Tests:** 7 unit tests on the data itself (counts, photo distribution, image paths exist, bids follow §7.4, purchases within stock, proof holders hold no top bid, templates use only their variables and no payment words) and 4 database tests (seed-if-empty both ways, an event alone counts as not empty, seeding twice gives identical rows, every §10 state present, with ending soon and won reached through the app's own date and finalize code). `npm run check` passes all eight: 75 unit and 32 database tests.
+- **Hard / caught:**
+  - **Parameter types:** reusing `$11` in a value and a `COALESCE` made Postgres deduce two types; explicit `::timestamptz` casts fixed it.
+  - **TRUNCATE vs deferred checks:** the seed-twice test hit "cannot TRUNCATE items because it has pending trigger events". The deferred winner key queues checks for earlier changes in the transaction, so the seed checks that one key immediately before truncating and defers it again after. Restore demo data would have hit the same thing.
