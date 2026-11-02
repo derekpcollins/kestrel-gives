@@ -19,8 +19,32 @@
     <div data-shell-header></div>
     <div data-shell-banner></div>
     <main class="page" id="main" tabindex="-1">
-      <h1>Kestrel Gives</h1>
-      <p>Home is built in the next stage of Milestone 3.</p>
+      <section class="hero" aria-labelledby="home-title">
+        <h1 class="hero__title" id="home-title">
+          <span class="lockup lockup--card" role="img" aria-label="Kestrel Gives"><img class="lockup__mark" src="/brand/kestrel-gives-event-mark-280.png" srcset="/brand/kestrel-gives-event-mark-280.png 1x, /brand/kestrel-gives-event-mark-560.png 2x" width="280" height="280" alt=""><span class="lockup__words"><span class="lockup__kestrel">Kestrel</span><span class="lockup__gives">gives</span></span></span>
+        </h1>
+        <div class="hero__text">
+          <p class="hero__event" data-event-name hidden></p>
+          <p class="hero__lead">Kestrel's yearly charity auction. Coworkers donate things they make and do, everyone bids on them or claims them, and every dollar goes to three charities.</p>
+          <p class="hero__more">It runs in three parts: a submission window, when anyone can offer an item; a few days of bidding; then time to donate and upload proof.</p>
+        </div>
+      </section>
+
+      <section class="home-section" aria-labelledby="participate">
+        <h2 id="participate">How to participate</h2>
+        <ol class="steps">
+          <li class="steps__item"><h3 class="steps__title">Submit an item</h3><p class="steps__text">Offer something you make or do, from a cabin weekend to a dozen lemon squares. Anyone can submit while submissions are open.</p></li>
+          <li class="steps__item"><h3 class="steps__title">Bid or buy</h3><p class="steps__text">Bid in the silent auction, where the highest bid at the close wins, or claim instant-sale items at a set price while they last.</p></li>
+          <li class="steps__item"><h3 class="steps__title">Donate once</h3><p class="steps__text">When bidding closes, donate your total once on the giving platform. Your Items shows the amount.</p></li>
+          <li class="steps__item"><h3 class="steps__title">Upload proof</h3><p class="steps__text">Upload a screenshot of your donation within <span data-proof-days>7 days</span> of the close. An admin reviews it.</p></li>
+        </ol>
+      </section>
+
+      <section class="home-section" aria-labelledby="charities">
+        <h2 id="charities">Where donations go</h2>
+        <p>Every donation is split equally among these three charities, so you donate once and all three benefit.</p>
+        <ul class="charity-list" data-charities aria-busy="true"></ul>
+      </section>
     </main>
     <footer class="site-footer">
       <p>Kestrel is a fictional organization, and this is a demo. <a href="/design-system/">Design system</a></p>

@@ -357,6 +357,38 @@ How forms behave, for every component below:
 - **Do:** use the card in both modes (the mark's file is white). **Don't:** recolor, redraw or crop the mark beyond whitespace (logo rule, #39).
 - **Figma:** *Hero lockup* · no variants.
 
+## Hero
+
+**Purpose:** the top of Home (SPEC §8): the hero lockup inside the page's h1, then the event's name, a lead paragraph and a short description.
+
+- **Classes:** `section.hero` > `h1.hero__title` (holding the *Hero lockup*) and `.hero__text` > `p.hero__event` (overline, filled from the data), `p.hero__lead`, `p.hero__more`.
+- **Layout:** stacked and centered on phones; from 64rem, the lockup and text sit side by side, left-aligned.
+- **States:** default only; nothing in it is interactive. The event name stays `hidden` until the data arrives. Every other state is N/A.
+- **Accessibility:** the h1's name is "Kestrel Gives" (from the lockup's `role="img"`).
+- **Do:** keep the lead to one or two sentences. **Don't:** put item lists here (SPEC §8).
+- **Figma:** *Hero* · Width = 390 / 1280 (2).
+
+## Steps
+
+**Purpose:** a short numbered list of what to do, in order (How to participate on Home).
+
+- **Classes:** `ol.steps` > `li.steps__item` > `h3.steps__title` and `p.steps__text`. The number circle is generated from a CSS counter (`--size-step-number`, accent-soft fill).
+- **Layout:** intrinsic, like the item grid: items wrap at `--size-tile-min`, so four across on a wide page and one per row on a phone.
+- **States:** default only. Hover, focus, active, disabled, loading, error and empty: N/A (not interactive; never empty).
+- **Accessibility:** a real `<ol>`, so screen readers announce "list, 4 items" and the order; the drawn numbers are decoration that matches.
+- **Do:** start each title with a verb. **Don't:** link the whole step; put a link in the text if one is needed.
+- **Figma:** *Step* · no variants; *Steps* is an auto-layout of four.
+
+## Charity card
+
+**Purpose:** a charity on Home: logo, name and what it does (SPEC §7.2).
+
+- **Classes:** `ul.charity-list` > `li` > `article.card.card--flat.charity-card` > `img.charity-card__logo` (`--size-charity-logo`, on the mark tile's white) and `.charity-card__text` > `h3.charity-card__name`, `p.charity-card__description`.
+- **States:** default. **Loading:** the list is `aria-busy` and empty until the data arrives. Hover, focus, active, disabled, error and empty: N/A (always three charities; if the data fails, the page's danger banner says so).
+- **Accessibility:** the logo has `alt=""` because the name is right beside it. Until the owner's logos arrive, the placeholder image says it's a placeholder (SPEC §7.2).
+- **Do:** keep descriptions to one sentence. **Don't:** make the card a link (there's no charity page).
+- **Figma:** *Charity card* · Logo = Placeholder / Real (2).
+
 ---
 
 ## Overlays and data (stage C2)

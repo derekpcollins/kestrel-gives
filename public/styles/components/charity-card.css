@@ -1,0 +1,8 @@
+/* Charity card (DESIGN-SYSTEM.md): a charity's logo, name and what it does (Home). Built
+   on .card--flat; the logo is a fixed square so placeholder and real logos line up. */
+.charity-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(var(--size-tile-min), 100%), 1fr)); gap: var(--space-4); }
+.charity-card { flex-direction: row; align-items: flex-start; gap: var(--space-4); padding: var(--space-4); height: 100%; }
+.charity-card__logo { flex: none; width: var(--size-charity-logo); height: var(--size-charity-logo); border-radius: var(--radius-md); object-fit: contain; background: var(--color-mark-tile); }
+.charity-card__text { display: grid; gap: var(--space-1); min-width: 0; }
+.charity-card__name { font: var(--type-heading-3); }
+.charity-card__description { color: var(--color-text-muted); }

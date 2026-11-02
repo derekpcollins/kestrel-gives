@@ -1,0 +1,17 @@
+/* Steps (DESIGN-SYSTEM.md): a short numbered list of what to do, in order (How to
+   participate on Home). An <ol>, so the order is real; the circles repeat its numbers. */
+.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(var(--size-tile-min), 100%), 1fr)); gap: var(--space-4); counter-reset: step; }
+.steps__item { counter-increment: step; display: grid; align-content: start; gap: var(--space-2); padding: var(--space-4); border: var(--border-thin) solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+.steps__item::before {
+  content: counter(step);
+  display: inline-grid;
+  place-items: center;
+  width: var(--size-step-number);
+  height: var(--size-step-number);
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-soft);
+  color: var(--color-link);
+  font: var(--type-heading-3);
+}
+.steps__title { font: var(--type-heading-3); }
+.steps__text { color: var(--color-text-muted); }

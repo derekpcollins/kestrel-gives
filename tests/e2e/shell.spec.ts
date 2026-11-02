@@ -115,14 +115,17 @@ test("an employee's avatar is an image with their name, not a control", async ({
   await expect(avatar).toBeVisible();
   await expect(page.locator(".site-header__end").getByRole("button")).toHaveCount(0);
   await expect(page.locator(".site-header__end a, .site-header__end [tabindex]")).toHaveCount(0);
-  expect(await avatar.evaluate((el) => getComputedStyle(el).cursor)).toBe("default");
+  // Runs in the page as an expression; this file has no DOM types (DECISIONS #26).
+  const STATIC = `document.querySelector(".site-header__end [role=img]")`;
+  expect(await page.evaluate(`getComputedStyle(${STATIC}).cursor`)).toBe("default");
 
   // No hover state: hovering changes nothing that's drawn.
-  const look = () => avatar.evaluate((el) => {
-    const s = getComputedStyle(el), a = getComputedStyle(el.firstElementChild!);
+  const look = async () => String(await page.evaluate(`(() => {
+    const el = ${STATIC}, s = getComputedStyle(el), a = getComputedStyle(el.firstElementChild);
     return [s.backgroundColor, s.outlineStyle, s.borderColor, s.boxShadow, a.backgroundColor, a.color].join("|");
-  });
+  })()`));
   const before = await look();
+  expect(before).toMatch(/rgb/); // really read the styles
   await avatar.hover();
   expect(await look()).toBe(before);
 
@@ -131,7 +134,7 @@ test("an employee's avatar is an image with their name, not a control", async ({
   const stops: string[] = [];
   for (let i = 0; i < 30; i++) {
     await page.keyboard.press("Tab");
-    stops.push(await page.evaluate(() => document.activeElement?.className ?? ""));
+    stops.push(String(await page.evaluate('document.activeElement?.className ?? ""')));
   }
   expect(stops.some((c) => c.includes("profile-menu__static") || c.includes("avatar"))).toBe(false);
   expect(stops.some((c) => c.includes("site-header__link"))).toBe(true); // the walk did reach the header

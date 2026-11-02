@@ -2,6 +2,7 @@
 // page's own content once the state arrives.
 import type { AppState } from "./app-state.ts";
 import { hydrateIcons } from "./components/icons.ts";
+import { showHome } from "./pages/home.ts";
 import { startShell } from "./shell.ts";
 
 hydrateIcons();
@@ -11,5 +12,9 @@ document.addEventListener("kg:state", (event) => {
   const role = (event as CustomEvent<AppState>).detail.viewer?.role;
   for (const block of document.querySelectorAll<HTMLElement>("[data-for-role]")) block.hidden = block.dataset.forRole !== role;
 });
+
+if (document.body.dataset.page === "home") {
+  document.addEventListener("kg:state", (event) => showHome((event as CustomEvent<AppState>).detail));
+}
 
 await startShell();

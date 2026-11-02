@@ -503,3 +503,13 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   - the employee avatar is exposed as an image with the person's name, not a control, with an e2e test covering the role and name, the cursor, no hover change and no tab stop.
   The branch ID stays out of DECISIONS.
 
+
+### 2026-11-02 — Stage 3C: Home (awaiting checkpoint)
+- **Built:**
+  - Home has a hero (the lockup as the h1, the event's name from the data, a lead and a one-line outline), How to participate as a four-step ordered list, and Where donations go ("split equally among these three charities" plus the three charities from `/api/app`).
+  - The proof window in step 4 is computed from the event's dates.
+  - New Hero, Steps and Charity card components, with gallery specimens and DESIGN-SYSTEM.md entries, plus two size tokens. DECISIONS #83.
+- **Tests:** a unit test for the proof window (128 unit tests pass) and `tests/e2e/home.spec.ts`: the h1's name, the event name, the steps in order, the proof window, the charities in order, no item tiles and no payment words. Home stays in the axe, reflow and visual checks. `npm run check` is green; `npm audit` shows only the accepted zod advisory.
+- **Hard / caught:**
+  - `vercel dev` doesn't serve a folder created after it started (`public/js/pages/`); a restart fixed it.
+  - The avatar test I added in the 3B fixes passed vacuously at first: a function written as a string and passed to `locator.evaluate` isn't run as a function, so both sides of the hover comparison were `undefined`. The full check caught the cursor half. Both checks now run as page expressions, and the test asserts that real styles were read.
