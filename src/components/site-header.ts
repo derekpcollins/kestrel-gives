@@ -39,7 +39,8 @@ export function renderSiteHeader(state: AppState | null, page: PageKey): HTMLEle
 function renderProfile(viewer: PersonView): HTMLElement {
   const avatar = el("span", { className: "avatar", text: initials(viewer), attrs: { "aria-hidden": "true" } });
   if (viewer.role !== "admin") {
-    return el("span", { className: "profile-menu__static" }, avatar, el("span", { className: "visually-hidden", text: `Signed in as ${fullName(viewer)}` }));
+    // Not a control: an image named with the person's name, outside the tab order.
+    return el("span", { className: "profile-menu__static", attrs: { role: "img", "aria-label": fullName(viewer) } }, avatar);
   }
   const chevron = icon("chevron-down", { size: "sm" });
   return el("div", { className: "profile-menu" },

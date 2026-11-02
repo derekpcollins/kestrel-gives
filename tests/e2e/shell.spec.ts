@@ -48,7 +48,7 @@ test("viewing as an admin shows the profile menu with the Admin Dashboard; an em
   await expect(page.getByRole("button", { name: "Maya Okafor, admin" })).toBeVisible();
 
   await bar(page).getByLabel("Viewing as").selectOption({ label: "Jules Ferreira (employee)" });
-  await expect(page.locator(".profile-menu__static")).toContainText("Signed in as Jules Ferreira");
+  await expect(page.getByRole("img", { name: "Jules Ferreira" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Admin Dashboard" })).toHaveCount(0);
 });
 
@@ -106,4 +106,33 @@ test("Restore asks first, restores, and a second restore within the cooldown sho
   await expect(dialog.locator(".dialog__error")).toContainText("The demo was just restored.");
   await page.keyboard.press("Escape");
   await expect(restore).toBeFocused();
+});
+
+test("an employee's avatar is an image with their name, not a control", async ({ page }) => {
+  await page.request.post("/api/demo", { data: { action: "view-as", userId: "3" } });
+  await open(page, "/silent-auction");
+  const avatar = page.locator(".site-header__end").getByRole("img", { name: "Jules Ferreira" });
+  await expect(avatar).toBeVisible();
+  await expect(page.locator(".site-header__end").getByRole("button")).toHaveCount(0);
+  await expect(page.locator(".site-header__end a, .site-header__end [tabindex]")).toHaveCount(0);
+  expect(await avatar.evaluate((el) => getComputedStyle(el).cursor)).toBe("default");
+
+  // No hover state: hovering changes nothing that's drawn.
+  const look = () => avatar.evaluate((el) => {
+    const s = getComputedStyle(el), a = getComputedStyle(el.firstElementChild!);
+    return [s.backgroundColor, s.outlineStyle, s.borderColor, s.boxShadow, a.backgroundColor, a.color].join("|");
+  });
+  const before = await look();
+  await avatar.hover();
+  expect(await look()).toBe(before);
+
+  // Not in the tab order: tabbing through the whole page never lands on it.
+  await page.locator("body").focus();
+  const stops: string[] = [];
+  for (let i = 0; i < 30; i++) {
+    await page.keyboard.press("Tab");
+    stops.push(await page.evaluate(() => document.activeElement?.className ?? ""));
+  }
+  expect(stops.some((c) => c.includes("profile-menu__static") || c.includes("avatar"))).toBe(false);
+  expect(stops.some((c) => c.includes("site-header__link"))).toBe(true); // the walk did reach the header
 });

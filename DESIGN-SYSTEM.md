@@ -290,7 +290,7 @@ How forms behave, for every component below:
 
 **Purpose:** the person in the top right. For admins, a button (avatar and chevron) opens a short list of links: the Admin Dashboard (SPEC §8). Employees see their avatar only.
 
-- **Markup:** `.profile-menu` > `button.profile-menu__button` (avatar, visually hidden "Maya Okafor, admin", `chevron-down`) and `.profile-menu__panel` (`hidden` when closed) with `.profile-menu__who` and `ul.profile-menu__links`. Employees: `.profile-menu__static` with the avatar and visually hidden "Signed in as Jules Ferreira".
+- **Markup:** `.profile-menu` > `button.profile-menu__button` (avatar, visually hidden "Maya Okafor, admin", `chevron-down`) and `.profile-menu__panel` (`hidden` when closed) with `.profile-menu__who` and `ul.profile-menu__links`. Employees: `span.profile-menu__static` with `role="img"` and `aria-label` set to the person's name ("Jules Ferreira"), around the `aria-hidden` avatar. It isn't a control: no pointer cursor, no hover or focus state, not in the tab order.
 - **Pattern:** a **disclosure**, not `role="menu"`. It's navigation, so Tab moves through the links and there are no arrow-key menu rules. `aria-expanded` on the button and `aria-controls` point at the panel.
 - **States:**
   - Default, hover, active and focus (ring).

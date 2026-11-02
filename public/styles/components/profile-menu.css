@@ -20,7 +20,8 @@
 .profile-menu__button > .icon { transition: rotate var(--duration-fast) var(--ease-standard); }
 .profile-menu__button[aria-expanded="true"] { border-color: var(--color-border-strong); }
 .profile-menu__button[aria-expanded="true"] > .icon { rotate: 180deg; }
-.profile-menu__static { display: inline-flex; align-items: center; min-height: var(--size-target); }
+/* Employees: an image of their initials, not a control. No pointer, hover or focus state. */
+.profile-menu__static { display: inline-flex; align-items: center; min-height: var(--size-target); cursor: default; }
 
 .profile-menu__panel {
   position: absolute;

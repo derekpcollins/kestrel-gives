@@ -18,9 +18,11 @@ describe("phase banner", () => {
   });
   test("live: time left and the close, in the viewer's zone", () => {
     const b = phaseBanner(event({ biddingClosesAt: iso(47.5) }), NOW, NY)!;
-    assert.deepEqual([b.title, b.text], ["Bidding is open", "Bidding ends in 1 day, on Wednesday, November 4 at 1:00 PM EST."]);
+    assert.deepEqual([b.title, b.text], ["Bidding is open", "Bidding ends in 47 hours, on Wednesday, November 4 at 1:00 PM EST."]);
     const la = phaseBanner(event({ biddingClosesAt: iso(47.5) }), NOW, "America/Los_Angeles")!;
-    assert.equal(la.text, "Bidding ends in 1 day, on Wednesday, November 4 at 10:00 AM PST.");
+    assert.equal(la.text, "Bidding ends in 47 hours, on Wednesday, November 4 at 10:00 AM PST.");
+    const three = phaseBanner(event({ biddingClosesAt: iso(72.5) }), NOW, NY)!;
+    assert.equal(three.text, "Bidding ends in 3 days, on Thursday, November 5 at 2:00 PM EST.");
   });
   test("ending soon: today or tomorrow", () => {
     const today = phaseBanner(event({ endingSoon: true, biddingClosesAt: iso(3.5) }), NOW, NY)!;
@@ -41,8 +43,18 @@ describe("phase banner", () => {
     assert.match(b.text, /Monday, December 1, 2025/);
     assert.equal(phaseBanner(null, NOW, NY), null);
   });
-  test("durations round down", () => {
-    assert.deepEqual([3 * 24, 47.9, 24, 23.9, 1.5, 0.99, 0.001].map((h) => durationWords(h * HOUR)), ["3 days", "1 day", "1 day", "23 hours", "1 hour", "59 minutes", "1 minute"]);
+  test("durations round down; whole days only from 48 hours", () => {
+    const words = (h: number) => durationWords(h * HOUR);
+    // The 48-hour boundary: days from exactly 48 hours, hours just below.
+    assert.equal(words(48), "2 days");
+    assert.equal(words(47.99), "47 hours");
+    assert.equal(words(71.99), "2 days");
+    assert.equal(words(72), "3 days");
+    // The 24-hour boundary: hours on both sides, never "1 day".
+    assert.equal(words(24), "24 hours");
+    assert.equal(words(24.5), "24 hours");
+    assert.equal(words(23.99), "23 hours");
+    assert.deepEqual([2, 1.99, 1, 0.99, 0.001].map(words), ["2 hours", "1 hour", "1 hour", "59 minutes", "1 minute"]);
   });
   test("no payment words in any banner", () => {
     const all = [

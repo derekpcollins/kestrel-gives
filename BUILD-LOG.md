@@ -495,3 +495,11 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   - A type-only import of the icon names pulled a DOM file into the server's type check and broke `vercel dev`'s build. The banner rules now carry their own small union.
   - My first checkpoint screenshots caught chevrons mid-rotation and swapped the open and collapsed demo bar shots (the remembered state hadn't saved yet). Re-shot with reduced motion and the collapsed state set directly.
 - **Preview (2026-11-02 14:00 EST):** deployment `kestrel-gives-nz7d04tsi`, Ready. `/api/health` → `{"ok":true,"db":"dev","schema":"004","seedPhotos":true}`; `/`, `/silent-auction`, `/admin` and `/submit` serve their pages through the clean URLs.
+
+### 2026-11-02 — 3B checkpoint: owner review
+- **Owner stepped in:** approved 3B with three fixes, all done:
+  - between 24 and 48 hours the countdown shows hours ("47 hours"), with whole days only from 48 hours, and unit tests at both boundaries;
+  - each placeholder is one sentence with no milestone number;
+  - the employee avatar is exposed as an image with the person's name, not a control, with an e2e test covering the role and name, the cursor, no hover change and no tab stop.
+  The branch ID stays out of DECISIONS.
+

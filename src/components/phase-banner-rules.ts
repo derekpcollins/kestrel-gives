@@ -49,10 +49,12 @@ export function phaseBanner(event: BannerEvent | null, now: Date, timeZone?: str
   };
 }
 
-/** "in 2 days", "1 day", "20 hours", "45 minutes": rounded down, so it never overstates the time left. */
+/**
+ * "3 days", "47 hours", "1 hour", "45 minutes": rounded down, so it never overstates the
+ * time left. Whole days only from 48 hours up (owner, 3B review); below that, hours.
+ */
 export function durationWords(ms: number): string {
   if (ms >= 2 * DAY) return `${Math.floor(ms / DAY)} days`;
-  if (ms >= DAY) return "1 day";
   if (ms >= 2 * HOUR) return `${Math.floor(ms / HOUR)} hours`;
   if (ms >= HOUR) return "1 hour";
   const minutes = Math.max(1, Math.floor(ms / MINUTE));
