@@ -3,6 +3,9 @@
   // Vercel compiles api/ on deploy and Node 24 runs .ts scripts directly.
   // Imports use explicit .ts extensions everywhere so Node's type stripping can
   // resolve them; the client build rewrites them to .js.
+  // typeRoots is explicit because Vercel compiles each function through a temporary
+  // tsconfig that extends this one from the system temp folder; the default lookup would
+  // start there and miss node_modules/@types (TS2688). scripts/check-vercel-ts.ts checks it.
   "compilerOptions": {
     "strict": true,
     "target": "es2023",
@@ -10,6 +13,7 @@
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "types": ["node"],
+    "typeRoots": ["./node_modules/@types"],
     "verbatimModuleSyntax": true,
     "erasableSyntaxOnly": true,
     "allowImportingTsExtensions": true,

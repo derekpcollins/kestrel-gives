@@ -11,7 +11,7 @@
     "prepare": "git config core.hooksPath .githooks",
     "build": "tsc -p tsconfig.client.json && node scripts/build-css.ts",
     "build:vercel": "npm run build && node scripts/check-seed-base.ts && npm run check:types && env -u DATABASE_URL -u BLOB_READ_WRITE_TOKEN npm run test:rules && node scripts/deploy-db.ts",
-    "check:types": "tsc -p tsconfig.json && tsc -p tsconfig.client.json --noEmit",
+    "check:types": "tsc -p tsconfig.json && tsc -p tsconfig.client.json --noEmit && node scripts/check-vercel-ts.ts",
     "db:migrate": "node --env-file=.env.local scripts/migrate.ts",
     "db:seed": "node --env-file=.env.local scripts/seed.ts",
     "test:rules": "NODE_ENV=test node --env-file-if-exists=.env.local --test 'tests/unit/**/*.test.ts'",

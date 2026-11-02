@@ -11,8 +11,8 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 - **Milestone 3: land the live demo in the intended phase (added 2026-11-02, owner).** `main` was seeded once, on the 2C/2D push (2026-11-02), with dates relative to that moment, so bidding there closes about Nov 4 and the dates stay frozen. By the time the pages first read the database, `main` will be past close, and the first look at the live site would be stuck in "ended". **Proposal (to decide at the Milestone 3 plan):** the deploy that switches the pages to the database runs Restore demo data on `main` once, inside deploy-db under the existing advisory lock, as a one-shot data step recorded by name (like a migration) so it never runs twice. It reuses `seedIn`, writes rows only, and makes no Blob calls (#77). After that, Jump to and Restore demo data in the demo bar keep the phase in reach for visitors. Alternatives: rely on Jump to and Restore only (simplest, but the first impression is "ended" until someone clicks); shift all dates at read time (seed stays fresh forever, but every query and test has to know the offset); a scheduled daily restore (always fresh, but wipes visitors' demo changes on a timer and adds a cron). Recommended: the one-shot restore, plus the demo bar.
 - **Preview health:** the next time a preview deploys in normal work, check that `/api/health` shows `"db":"dev"` and `"seedPhotos":true`, and note it here (#34/#35, #77).
 - **Neon manual snapshot of `main`** after the 2C/2D push; record it in DECISIONS (#68).
-- **Drop `app_meta`** in its own migration, with its own checkpoint (#74).
-- **`error TS2688: Cannot find type definition file for 'node'`** appears in Vercel's own TypeScript step for the functions, after our build finishes. It's in the 2B deploy log too and doesn't fail the deploy. Look into it (likely the `types` setting in `tsconfig.json` as Vercel's function compiler sees it) before it hides a real error.
+- **Drop `app_meta`** in its own migration, with its own checkpoint (#74). *In progress: migration 003, awaiting checkpoint (#79).*
+- **`error TS2688` in Vercel's function compile:** *fixed, awaiting checkpoint (#79).*
 - **Milestone 6:** whether an admin-cancelled purchase returns the unit to stock (owner's lean: yes while the sale is open, not after close; #74).
 
 ---
@@ -443,3 +443,12 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   - `vercel env pull .env.local` rewrote the file (same four names, mode 600) with nothing printed. `npm run db:check` confirmed it points at `dev`, and `npm run test:db` passed 33 of 33 against `dev` with the new password.
   - The pull also appended `.env*` to `.gitignore`. That's redundant with the existing `.env` and `.env.*` rules, so I reverted it.
   - Existing preview deployments still have the old `dev` password and fail until the next preview deploy.
+
+### 2026-11-02 — Stage 2E: drop `app_meta`, clean build log (awaiting checkpoint)
+- **Owner stepped in:** asked for both as one small stage, with a production build log free of error lines.
+- **Built:**
+  - `migrations/003_drop_app_meta.sql`, applied to `dev`, with a database test that it's gone (34 database tests).
+  - `"typeRoots"` in `tsconfig.json`, and `scripts/check-vercel-ts.ts`, which compiles the functions exactly the way Vercel's builder does; it now runs in `check:types`.
+  - Recorded in DECISIONS #79.
+- **Hard / caught:** the error appeared only on Vercel. Reading the builder's source (via the web, not the globally installed CLI, which is outside this folder) showed it compiles through a temporary tsconfig in the system temp folder, so TypeScript looked for type definitions from there. Mirroring that locally reproduced the exact message; the check was confirmed to fail without the fix.
+

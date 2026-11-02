@@ -1,6 +1,6 @@
 // Smoke test for the deploy pipeline: the function runs, reaches Postgres, and says
 // which branch it's on, by label only, since the production site is public. "schema" is
-// the number of the latest applied migration ("002"), so a deploy's migration is visible.
+// the number of the latest applied migration ("003"), so a deploy's migration is visible.
 // "seedPhotos" says whether the seed photos will display as themselves (DECISIONS #77): on
 // Production and Preview, that SEED_PHOTOS_BASE_URL is a valid Blob base URL (never shown);
 // locally, that every gitignored copy is present.

@@ -98,6 +98,17 @@ const buy = (w: World, buyer: string) =>
 const proofStatus = async (proofId: string) => (await one<{ status: string }>(`SELECT status FROM proofs WHERE id = $1`, [proofId])).status;
 const winnerOf = async (item: string) => (await one<{ winning_bid_id: string | null }>(`SELECT winning_bid_id FROM items WHERE id = $1`, [item])).winning_bid_id;
 
+describe("migrations", () => {
+  test("001's placeholder app_meta is gone (003); the app's tables and schema_migrations remain", async () => {
+    const row = await one<{ app_meta: string | null; events: string | null; migrations: string | null }>(
+      "SELECT to_regclass('public.app_meta') AS app_meta, to_regclass('public.events') AS events, to_regclass('public.schema_migrations') AS migrations",
+    );
+    assert.equal(row.app_meta, null);
+    assert.equal(row.events, "events");
+    assert.equal(row.migrations, "schema_migrations");
+  });
+});
+
 describe("shape", () => {
   test("every timestamp column is timestamptz", async () => {
     const { rows } = await db.query<{ col: string }>(
