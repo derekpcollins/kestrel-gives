@@ -375,3 +375,8 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   - **Deferred keys and rolled-back tests:** a deferred key is only checked at commit, which a rolled-back test never reaches; the tests force the check with `SET CONSTRAINTS ALL IMMEDIATE`.
   - **Proving the test can fail:** with the winner recompute deliberately removed from `removeBidIn`, the removal test failed; restored and confirmed identical.
 
+### 2026-11-01 — Stage 2B checkpoint: owner review
+- **Owner stepped in:** kept the database-level "winner is never a removed bid" key. Narrowed the proof re-check: only an approved proof goes back to pending; pending is unchanged; rejected stays rejected with its reason (SPEC v1.9 §7.6). Asked for one re-check function called from every path that changes a total.
+- **Built:** `recheckProofsIn` now reopens approved proofs only, and is called from `finalizeWinnersIn`, `removeBidIn`, and the new `cancelPurchaseIn` and `cancelItemIn`. Four new database tests (28 in all): each proof status under a changed total, cancelling a purchase after an approved proof, cancelling items, and finalizing winners after a purchase-only proof.
+- **Open question noted (#74):** whether an admin-cancelled purchase returns the unit to stock; decided with the admin screens.
+

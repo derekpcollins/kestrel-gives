@@ -7,7 +7,7 @@ import { Pool, type PoolClient } from "@neondatabase/serverless";
 import { databaseUrl } from "../../scripts/db-target.ts";
 import { directUrl } from "../../scripts/migrate-lib.ts";
 import { donationTotalIn } from "../../lib/data/totals.ts";
-import { finalizeWinnersIn, removeBidIn } from "../../lib/data/winners.ts";
+import { cancelItemIn, cancelPurchaseIn, finalizeWinnersIn, removeBidIn } from "../../lib/data/winners.ts";
 
 let pool: Pool;
 let db: PoolClient;
@@ -87,10 +87,14 @@ const bid = (item: string, bidder: string, dollars: number) =>
   id(`INSERT INTO bids (item_id, bidder_id, amount_cents) VALUES ($1, $2, $3) RETURNING id`, [item, bidder, dollars * 100]);
 const proof = (w: World, user: string, owedDollars: number, status = "approved") =>
   id(
-    `INSERT INTO proofs (event_id, user_id, amount_cents, owed_cents, image_path, status, reviewed_by, reviewed_at)
-     VALUES ($1, $2, $3, $3, 'test/proofs/x.png', $4::text, $5, CASE WHEN $4::text = 'pending' THEN NULL ELSE now() END) RETURNING id`,
+    `INSERT INTO proofs (event_id, user_id, amount_cents, owed_cents, image_path, status, rejection_reason, reviewed_by, reviewed_at)
+     VALUES ($1, $2, $3, $3, 'test/proofs/x.png', $4::text,
+             CASE WHEN $4::text = 'rejected' THEN 'The screenshot is cut off.' END,
+             $5, CASE WHEN $4::text = 'pending' THEN NULL ELSE now() END) RETURNING id`,
     [w.event, user, owedDollars * 100, status, status === "pending" ? null : w.admin],
   );
+const buy = (w: World, buyer: string) =>
+  id(`INSERT INTO purchases (item_id, buyer_id, price_cents) VALUES ($1, $2, 2000) RETURNING id`, [w.instant, buyer]);
 const proofStatus = async (proofId: string) => (await one<{ status: string }>(`SELECT status FROM proofs WHERE id = $1`, [proofId])).status;
 const winnerOf = async (item: string) => (await one<{ winning_bid_id: string | null }>(`SELECT winning_bid_id FROM items WHERE id = $1`, [item])).winning_bid_id;
 
@@ -267,6 +271,65 @@ describe("winners and totals", () => {
     assert.equal(live.winner, null);
     assert.equal(await winnerOf(w.auction), null);
     await db.query("SET CONSTRAINTS ALL IMMEDIATE");
+  });
+
+  test("a changed total reopens only an approved proof; pending stays pending; rejected stays rejected with its reason", async () => {
+    const w = await world();
+    const people = [w.alice, w.bob, w.cara];
+    const purchases = [];
+    for (const person of people) purchases.push(await buy(w, person), await buy(w, person));
+    const approved = await proof(w, w.alice, 40, "approved");
+    const pending = await proof(w, w.bob, 40, "pending");
+    const rejected = await proof(w, w.cara, 40, "rejected");
+    for (const [i] of people.entries()) await cancelPurchaseIn(db, purchases[i * 2]!);
+    assert.equal(await proofStatus(approved), "pending");
+    assert.equal(await proofStatus(pending), "pending");
+    const r = await one<{ status: string; rejection_reason: string; owed_cents: number }>(
+      `SELECT status, rejection_reason, owed_cents FROM proofs WHERE id = $1`, [rejected]);
+    assert.deepEqual([r.status, r.rejection_reason], ["rejected", "The screenshot is cut off."]);
+    assert.equal(await donationTotalIn(db, w.event, w.cara), 2_000); // the banner's new total; the proof keeps $40 as uploaded
+    assert.equal(Number(r.owed_cents), 4_000);
+  });
+
+  test("cancelling a purchase after an approved proof lowers the total and sends the proof back to pending", async () => {
+    const w = await world();
+    const first = await buy(w, w.alice);
+    await buy(w, w.alice);
+    const approved = await proof(w, w.alice, 40);
+    const result = await cancelPurchaseIn(db, first);
+    assert.equal(await donationTotalIn(db, w.event, w.alice), 2_000);
+    assert.equal(await proofStatus(approved), "pending");
+    assert.deepEqual(result.proofsReopened, [approved]);
+    const reviewed = await one<{ reviewed_by: string | null; reviewed_at: string | null }>(`SELECT reviewed_by, reviewed_at FROM proofs WHERE id = $1`, [approved]);
+    assert.deepEqual([reviewed.reviewed_by, reviewed.reviewed_at], [null, null]);
+    await assert.rejects(cancelPurchaseIn(db, first), /already cancelled/);
+  });
+
+  test("cancelling an item drops its purchases and winning bid from totals and reopens those approved proofs", async () => {
+    const w = await world();
+    await bid(w.auction, w.bob, 70);
+    await finalizeWinnersIn(db, w.event);
+    await buy(w, w.alice);
+    const bobs = await proof(w, w.bob, 70);
+    const alices = await proof(w, w.alice, 20);
+    await cancelItemIn(db, w.auction);
+    await cancelItemIn(db, w.instant);
+    assert.equal(await donationTotalIn(db, w.event, w.bob), 0);
+    assert.equal(await donationTotalIn(db, w.event, w.alice), 0);
+    assert.equal(await proofStatus(bobs), "pending");
+    assert.equal(await proofStatus(alices), "pending");
+    const open = await one<{ n: number }>(`SELECT count(*)::int AS n FROM purchases WHERE item_id = $1 AND cancelled_at IS NULL`, [w.instant]);
+    assert.equal(open.n, 0);
+  });
+
+  test("finalizing winners reopens an approved proof that covered only purchases", async () => {
+    const w = await world();
+    await buy(w, w.alice);
+    const early = await proof(w, w.alice, 20);
+    await bid(w.auction, w.alice, 50);
+    await finalizeWinnersIn(db, w.event);
+    assert.equal(await donationTotalIn(db, w.event, w.alice), 7_000);
+    assert.equal(await proofStatus(early), "pending");
   });
 
   test("a bid can't be removed twice", async () => {

@@ -17,12 +17,16 @@ export async function donationTotalIn(tx: Tx, eventId: Id, userId: Id): Promise<
 }
 
 /**
- * For each person, if their latest proof was uploaded against a different total than they
- * owe now, it goes back to pending (and loses its review) so an admin looks again and the
- * banner asks them to check it. Returns the ids of proofs that changed.
+ * The one re-check, called by every path that changes a donation total (DECISIONS #74):
+ * finalizeWinnersIn, removeBidIn, cancelPurchaseIn and cancelItemIn today; buying (Milestone 4)
+ * must call it too. For each person, only an **approved** latest proof that was uploaded
+ * against a different total than they owe now goes back to pending, with its review
+ * cleared. A pending proof is left alone (the amount warning covers a mismatch). A rejected
+ * proof stays rejected with its reason; the banner shows the new total and still asks for
+ * a new upload. Returns the ids of proofs that went back to pending.
  */
 export async function recheckProofsIn(tx: Tx, eventId: Id, userIds: readonly Id[]): Promise<Id[]> {
-  const changed: Id[] = [];
+  const reopened: Id[] = [];
   for (const userId of new Set(userIds)) {
     const { rows } = await tx.query<{ id: Id; owed_cents: number; status: string }>(
       `SELECT id, owed_cents, status FROM proofs WHERE event_id = $1 AND user_id = $2
@@ -30,13 +34,10 @@ export async function recheckProofsIn(tx: Tx, eventId: Id, userIds: readonly Id[
       [eventId, userId],
     );
     const latest = rows[0];
-    if (!latest || latest.status === "pending") continue;
+    if (!latest || latest.status !== "approved") continue;
     if (Number(latest.owed_cents) === (await donationTotalIn(tx, eventId, userId))) continue;
-    await tx.query(
-      `UPDATE proofs SET status = 'pending', rejection_reason = NULL, reviewed_by = NULL, reviewed_at = NULL WHERE id = $1`,
-      [latest.id],
-    );
-    changed.push(latest.id);
+    await tx.query(`UPDATE proofs SET status = 'pending', reviewed_by = NULL, reviewed_at = NULL WHERE id = $1`, [latest.id]);
+    reopened.push(latest.id);
   }
-  return changed;
+  return reopened;
 }

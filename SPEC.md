@@ -1,6 +1,6 @@
 # Kestrel Gives — Build Spec & Conformance Rules
 
-**Status:** v1.8 · Owner: Derek Collins · Last updated: Nov 1, 2026
+**Status:** v1.9 · Owner: Derek Collins · Last updated: Nov 1, 2026
 
 This document describes what to build and the rules every contribution must follow, whether a person or an AI agent writes it. Read it in full before writing any code. If something here conflicts with a request, stop and ask.
 
@@ -206,7 +206,12 @@ Each has a name, a one-sentence description, and an original logo. The owner sup
 ### 7.6 Donation proof and statuses
 - Auction winners and instant-sale buyers donate on the outside giving platform, then upload proof: the amount and a screenshot. (No charity choice; see 7.2.)
 - **One combined proof per person per event**, covering their total, since every donation is split across all three charities. The **donation total** is the sum of the person's winning bids plus their non-cancelled purchases. It is computed, never stored; each proof records the total as it was at upload.
-- If a person's total changes after they uploaded proof (for example, an admin removes a winning bid after close), their latest proof goes back to pending and a banner asks them to check it ("Your donation total changed…"). (Combined proof added v1.8.)
+- If a person's total changes after they uploaded proof (an admin removes a winning bid after close, a purchase or item is cancelled, winners are finalized), what happens depends on their latest proof (v1.9):
+  - **Approved:** it goes back to pending with its review cleared, and a banner asks them to check it ("Your donation total changed…").
+  - **Pending:** unchanged; the amount warning already covers a mismatch.
+  - **Rejected:** stays rejected with its reason; the banner shows the new total and still asks for a new upload.
+
+  One function makes this check, and every path that changes a total calls it. (Combined proof added v1.8.)
 - Proof is due **7 days after the event closes** (event setting). The dashboard shows days remaining.
 - If the amount entered is less than the donation total, the form warns but allows submission. The admin decides.
 - Admins **approve** or **reject** each proof. A rejection requires a reason, shown to the person, who MAY upload again.

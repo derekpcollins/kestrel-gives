@@ -1,4 +1,5 @@
-// Winners and bid removal (SPEC §7.1, §7.4, DECISIONS #74).
+// Winners, bid removal and cancellations: every change to who owes what (SPEC §7.1, §7.3,
+// §7.4, DECISIONS #74). Each path that changes a donation total calls recheckProofsIn.
 import type { Id, Tx } from "./db.ts";
 import { recheckProofsIn } from "./totals.ts";
 
@@ -15,6 +16,7 @@ const TOP_BID = `
  * Returns true if this call did it.
  */
 export async function finalizeWinnersIn(tx: Tx, eventId: Id): Promise<boolean> {
+  // Winning bids add to totals; someone may already have an approved proof for purchases.
   const claimed = await tx.query(
     `UPDATE events SET winners_finalized_at = now()
       WHERE id = $1 AND winners_finalized_at IS NULL AND bidding_closes_at <= now()
@@ -22,11 +24,15 @@ export async function finalizeWinnersIn(tx: Tx, eventId: Id): Promise<boolean> {
     [eventId],
   );
   if (claimed.rowCount === 0) return false;
-  await tx.query(
-    `UPDATE items i SET winning_bid_id = (${TOP_BID}), updated_at = now()
-      WHERE i.event_id = $1 AND i.type = 'auction' AND i.status = 'active'`,
+  const { rows } = await tx.query<{ bidder_id: Id }>(
+    `WITH won AS (
+       UPDATE items i SET winning_bid_id = (${TOP_BID}), updated_at = now()
+        WHERE i.event_id = $1 AND i.type = 'auction' AND i.status = 'active'
+        RETURNING winning_bid_id)
+     SELECT DISTINCT b.bidder_id FROM won JOIN bids b ON b.id = won.winning_bid_id`,
     [eventId],
   );
+  await recheckProofsIn(tx, eventId, rows.map((r) => r.bidder_id));
   return true;
 }
 
@@ -81,3 +87,47 @@ export async function removeBidIn(tx: Tx, bidId: Id, adminId: Id): Promise<Remov
   const proofsReopened = await recheckProofsIn(tx, item.event_id, people.map((p) => p.bidder_id));
   return { itemId: item.item_id, previousWinner, winner, proofsReopened };
 }
+
+/**
+ * A purchase is cancelled. Its price leaves the buyer's total, so their approved proof is
+ * re-checked. Stock is not changed here (see DECISIONS #74).
+ */
+export async function cancelPurchaseIn(tx: Tx, purchaseId: Id): Promise<{ proofsReopened: Id[] }> {
+  const { rows } = await tx.query<{ buyer_id: Id; event_id: Id }>(
+    `UPDATE purchases p SET cancelled_at = now()
+       FROM items i
+      WHERE p.id = $1 AND i.id = p.item_id AND p.cancelled_at IS NULL
+      RETURNING p.buyer_id, i.event_id`,
+    [purchaseId],
+  );
+  const purchase = rows[0];
+  if (!purchase) throw new Error("That purchase doesn't exist or was already cancelled.");
+  return { proofsReopened: await recheckProofsIn(tx, purchase.event_id, [purchase.buyer_id]) };
+}
+
+/**
+ * An admin cancels an item (SPEC §7.3): it leaves listings, its purchases are cancelled, and
+ * its winning bid no longer counts (cancelled items drop out of totals). Everyone whose
+ * total changed has their approved proof re-checked.
+ */
+export async function cancelItemIn(tx: Tx, itemId: Id): Promise<{ proofsReopened: Id[] }> {
+  const { rows: items } = await tx.query<{ event_id: Id; winning_bid_id: Id | null }>(
+    `UPDATE items SET status = 'cancelled', cancelled_at = now(), updated_at = now()
+      WHERE id = $1 AND status = 'active'
+      RETURNING event_id, winning_bid_id`,
+    [itemId],
+  );
+  const item = items[0];
+  if (!item) throw new Error("That item doesn't exist or was already cancelled.");
+  const { rows: buyers } = await tx.query<{ buyer_id: Id }>(
+    `UPDATE purchases SET cancelled_at = now() WHERE item_id = $1 AND cancelled_at IS NULL RETURNING buyer_id`,
+    [itemId],
+  );
+  const affected = buyers.map((b) => b.buyer_id);
+  if (item.winning_bid_id) {
+    const { rows } = await tx.query<{ bidder_id: Id }>(`SELECT bidder_id FROM bids WHERE id = $1`, [item.winning_bid_id]);
+    if (rows[0]) affected.push(rows[0].bidder_id);
+  }
+  return { proofsReopened: await recheckProofsIn(tx, item.event_id, affected) };
+}
+
