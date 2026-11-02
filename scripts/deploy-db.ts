@@ -1,13 +1,15 @@
-// The last step of the Vercel build (DECISIONS #67). On a production build, and only once
+// The last step of the Vercel build (DECISIONS #67, #84). On a production build, and only once
 // DATABASE_URL_UNPOOLED (the direct URL) is confirmed to be Neon's main branch, it applies
-// pending migrations and seeds the demo if there is no event yet, all under one advisory
-// lock so two builds can't race. Any other build skips it. Any failure fails the build, so the new
+// pending migrations, seeds the demo if there is no event yet, and runs any one-off deploy
+// steps not yet recorded (scripts/deploy-steps.ts), all under one advisory lock so two
+// builds can't race. Any other build skips it. Any failure fails the build, so the new
 // deployment never goes live against a half-migrated database.
 import { Pool } from "@neondatabase/serverless";
 import { decideDeploy, runMigrations, withSchemaLock } from "./migrate-lib.ts";
 import { withTransaction } from "../lib/data/db.ts";
 import { PHOTOS_INSTALLED } from "../lib/seed/data.ts";
 import { seedIfEmptyIn } from "../lib/seed/seed.ts";
+import { DEPLOY_STEPS, runDeploySteps } from "./deploy-steps.ts";
 
 const decision = decideDeploy(process.env);
 if (decision.action === "skip") {
@@ -32,6 +34,7 @@ try {
       const seeded = await withTransaction(pool, (tx) => seedIfEmptyIn(tx, new Date()));
       console.log(seeded ? "deploy-db: no event found; seeded the demo." : "deploy-db: an event exists; not seeding.");
     }
+    await runDeploySteps(pool, DEPLOY_STEPS);
   });
 } catch (error) {
   // Driver errors can include host details; print the message only.

@@ -8,7 +8,7 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 
 ## To-do
 
-- **Milestone 3: land the live demo in the intended phase (added 2026-11-02, owner).** `main` was seeded once, on the 2C/2D push (2026-11-02), with dates relative to that moment, so bidding there closes about Nov 4 and the dates stay frozen. By the time the pages first read the database, `main` will be past close, and the first look at the live site would be stuck in "ended". **Proposal (to decide at the Milestone 3 plan):** the deploy that switches the pages to the database runs Restore demo data on `main` once, inside deploy-db under the existing advisory lock, as a one-shot data step recorded by name (like a migration) so it never runs twice. It reuses `seedIn`, writes rows only, and makes no Blob calls (#77). After that, Jump to and Restore demo data in the demo bar keep the phase in reach for visitors. Alternatives: rely on Jump to and Restore only (simplest, but the first impression is "ended" until someone clicks); shift all dates at read time (seed stays fresh forever, but every query and test has to know the offset); a scheduled daily restore (always fresh, but wipes visitors' demo changes on a timer and adds a cron). Recommended: the one-shot restore, plus the demo bar.
+- ~~**Milestone 3: land the live demo in the intended phase**~~ built in 3D: the one-off deploy step `m3-land-live-demo` (#84), plus the demo bar and the daily cron (#80). Runs on the push to main.
 - ~~**Preview health**~~ done 2026-11-02 on the 3A Preview: `{"ok":true,"db":"dev","schema":"004","seedPhotos":true}` (#34/#35, #77).
 - ~~**DECISIONS #68 details from the owner**~~ recorded 2026-11-02: only `neondb_owner` on all three branches; restore branch created 12:42:01 Eastern; never "Reset from parent" on it.
 - ~~**Drop `app_meta`**~~ done: migration 003, live 2026-11-02 (#79).
@@ -514,3 +514,13 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   - `vercel dev` doesn't serve a folder created after it started (`public/js/pages/`); a restart fixed it.
   - The avatar test I added in the 3B fixes passed vacuously at first: a function written as a string and passed to `locator.evaluate` isn't run as a function, so both sides of the hover comparison were `undefined`. The full check caught the cursor half. Both checks now run as page expressions, and the test asserts that real styles were read.
 - **Preview (2026-11-02 14:20 EST):** deployment `kestrel-gives-h7m81h8tl`, Ready. `/api/health` → `{"ok":true,"db":"dev","schema":"004","seedPhotos":true}`; Home's script is served, and `/api/app` reports the live phase and the three charities.
+
+### 2026-11-02 — 3C checkpoint: owner review
+- **Owner stepped in:** approved the 3B fixes and 3C. Asked for 3D, with a final checkpoint before anything goes to main. The owner will review the Home contact sheets visually before approving the push.
+
+### 2026-11-02 — Stage 3D: one-off deploy steps; land the live demo (awaiting the final checkpoint)
+- **Built:**
+  - `migrations/005_deploy_steps.sql`, applied to `dev`.
+  - `scripts/deploy-steps.ts`: an append-only list, plus `runDeploySteps`, which records each step in the same transaction as its work.
+  - deploy-db runs the steps after migrations and seed-if-empty, inside the deploy lock. The first step, `m3-land-live-demo`, restores the demo once. DECISIONS #84.
+- **Tests:** 7 new database tests. They cover once, re-deploy skip, two builds at once, failure then retry, refused names, and the real step restoring to live (rolled back). They also run the real `deploy-db.ts` against dev as preview, development, local, and a production build pointed at dev; each skips or refuses and writes nothing. One new unit test checks the step list. 129 unit and 49 database tests pass; `npm run check` is green; `npm audit` shows only the accepted zod advisory.
