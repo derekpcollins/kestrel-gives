@@ -32,3 +32,6 @@ visual-review/
 # copies that local dev serves from public/seed/ (the deployed site reads them from Blob)
 .seed-photos/
 public/seed/*.jpg
+
+# Checkpoint screenshots for the owner to open directly (Milestone 4 on)
+.review/
