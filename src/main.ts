@@ -1,13 +1,15 @@
-// Placeholder entry point until Milestone 3: proves the tsc → public/js pipeline
-// and that the API answers.
-const status = document.querySelector<HTMLElement>("[data-api-status]");
+// Entry point for every app page: the shell (demo bar, header, phase banner), then the
+// page's own content once the state arrives.
+import type { AppState } from "./app-state.ts";
+import { hydrateIcons } from "./components/icons.ts";
+import { startShell } from "./shell.ts";
 
-if (status) {
-  try {
-    const response = await fetch("/api/health");
-    const body: { db?: string } = await response.json();
-    status.textContent = response.ok ? `API: ok · database: ${body.db}` : `API: error ${response.status}`;
-  } catch {
-    status.textContent = "API: unreachable";
-  }
-}
+hydrateIcons();
+
+// Blocks meant for one role (the Admin Dashboard's note to employees) follow the viewer.
+document.addEventListener("kg:state", (event) => {
+  const role = (event as CustomEvent<AppState>).detail.viewer?.role;
+  for (const block of document.querySelectorAll<HTMLElement>("[data-for-role]")) block.hidden = block.dataset.forRole !== role;
+});
+
+await startShell();

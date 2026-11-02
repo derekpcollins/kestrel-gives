@@ -17,7 +17,7 @@ hydrateIcons();
 
 // Live specimens; [data-static] ones show a fixed state (menu open) and stay as drawn.
 document.querySelectorAll<HTMLElement>(".site-header:not([data-static])").forEach(enhanceSiteHeader);
-document.querySelectorAll<HTMLElement>("[data-demo-bar]").forEach(enhanceDemoBar);
+document.querySelectorAll<HTMLElement>("[data-demo-bar]").forEach((bar) => enhanceDemoBar(bar));
 
 document.querySelector("[data-demo-toast]")?.addEventListener("click", () => {
   showToast("Bid placed. You're the top bidder.", { tone: "success" });

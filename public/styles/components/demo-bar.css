@@ -30,3 +30,12 @@
 /* The current phase: filled, plus aria-pressed for screen readers. */
 .demo-bar__jump-buttons .btn[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-on-inverse); color: var(--color-on-accent); }
 .demo-bar :focus-visible { outline-color: var(--color-on-inverse); }
+/* "Shared demo · resets daily" (SPEC §3.1, v1.11): visible open or collapsed. On a narrow
+   bar it wraps to its own line under the name instead of squeezing it. */
+.demo-bar__summary { flex-wrap: wrap; padding-block: var(--space-1); }
+.demo-bar__who { flex: 1 1 auto; }
+.demo-bar__note { order: 1; flex-basis: 100%; font: var(--type-caption); }
+@container demo-bar (min-width: 40rem) {
+  .demo-bar__note { order: 0; flex-basis: auto; }
+}
+.demo-bar { container: demo-bar / inline-size; }

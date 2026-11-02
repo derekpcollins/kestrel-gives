@@ -10,16 +10,21 @@
     <link rel="preload" href="/fonts/plus-jakarta-sans-latin-var.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="/styles/tokens.css">
     <link rel="stylesheet" href="/styles/base.css">
+    <link rel="stylesheet" href="/styles/components.css">
     <script type="module" src="/js/main.js"></script>
   </head>
-  <body>
-    <main>
+  <body data-page="home">
+    <a class="skip-link" href="#main">Skip to main content</a>
+    <div data-shell-demo></div>
+    <div data-shell-header></div>
+    <div data-shell-banner></div>
+    <main class="page" id="main" tabindex="-1">
       <h1>Kestrel Gives</h1>
-      <p>Placeholder page. The app is under construction.</p>
-      <p data-api-status aria-live="polite">API: checking…</p>
+      <p>Home is built in the next stage of Milestone 3.</p>
     </main>
-    <footer>
-      <p>Kestrel is a fictional organization. Demo only.</p>
+    <footer class="site-footer">
+      <p>Kestrel is a fictional organization, and this is a demo. <a href="/design-system/">Design system</a></p>
     </footer>
+    <noscript><p class="page">This demo needs JavaScript to load its data.</p></noscript>
   </body>
 </html>

@@ -479,3 +479,18 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 - **Secret:** `CRON_SECRET` is in Production, Secret type. It was generated with `openssl rand` and piped straight into `vercel env add`, never printed or saved. A mistaken attempt to add a throwaway probe variable to learn the CLI's prompts was blocked by the permission check before it ran, so nothing extra was created. Lesson: read `--help` instead.
 - **Speed note:** a full reseed takes about 6–7 seconds from this laptop (about 100 sequential inserts over WebSocket). On the Preview, next to Neon, a Restore took 1.5 seconds round trip, including `vercel curl`'s own overhead.
 - **Preview (2026-11-02 13:35 EST):** pushed branch `m3-app-shell`, deployment `kestrel-gives-i86pm905r`. Build: 4 functions compile cleanly, unit tests 115 pass, and deploy-db skipped (preview). `/api/health` → `{"ok":true,"db":"dev","schema":"004","seedPhotos":true}`. `/api/app` returned Jules, live, 7 people and the three charities. `/api/cron-restore` without the secret → 401 (`CRON_SECRET` is Production-only, and Vercel runs crons only on Production). `POST /api/demo` restore → live.
+
+### 2026-11-02 — 3A checkpoint: owner review
+- **Owner stepped in:** approved 3A. Asked to keep requiring JSON on `POST /api/demo` (it also blocks cross-site form posts; kept), to confirm the `kg_viewer` flags (Secure on https, SameSite=Lax, Path=/; confirmed by unit tests and, without Secure on local http, an e2e test), and to mark the preview health check done (done). Sent the #68 details: the role audit and the restore branch's creation time, plus a new rule, never "Reset from parent" on that branch. All recorded in #68; the branch ID stays out of the repo.
+
+### 2026-11-02 — Stage 3B: the app shell (to 14:20 EST; awaiting checkpoint)
+- **Built:**
+  - `src/shell.ts` fills each page's slots from `/api/app`: the demo bar (`renderDemoBar`, wired to `POST /api/demo` with loading and error states, plus the "Shared demo · resets daily" note), the site header and profile menu (`site-header.ts`), and the phase banner (`phase-banner.ts`).
+  - Pure rules in `phase-banner-rules.ts` and `shell-rules.ts`; the shared `AppState` type in `src/app-state.ts`.
+  - Placeholder pages for Silent Auction, Instant Sale, Your Items, Submit an Item and the Admin Dashboard, with clean URLs. A `page.css` component covers the content column, banner slot and footer.
+  - DESIGN-SYSTEM.md has a new Page layout and footer entry and updated Demo bar states. Its content guidance no longer says the demo never resets on a schedule (SPEC v1.11). DECISIONS #82.
+- **Tests:** 12 new unit tests (127 pass) and `tests/e2e/shell.spec.ts` (5 tests, serial, against the real API on dev): the JSON-only rule and cookie flags, the admin and employee profile menus with the cookie surviving a reload, the admin page's note, every jump (banner, pressed button, Submit an Item only in the submission window), and Restore with its cooldown message in the dialog. The five new pages joined the axe, reflow and visual checks. `npm run check` is green; `npm audit` shows only the accepted zod advisory.
+- **Hard / caught:**
+  - The new e2e test caught `display: flex` on `.banner` overriding the `hidden` attribute. Fixed for every component with `[hidden] { display: none !important }` in the base layer.
+  - A type-only import of the icon names pulled a DOM file into the server's type check and broke `vercel dev`'s build. The banner rules now carry their own small union.
+  - My first checkpoint screenshots caught chevrons mid-rotation and swapped the open and collapsed demo bar shots (the remembered state hadn't saved yet). Re-shot with reduced motion and the collapsed state set directly.

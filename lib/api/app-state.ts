@@ -2,34 +2,15 @@
 // could view as, the current event and its phase, and the charities. Served by GET /api/app
 // and returned by POST /api/demo after each change, so the page redraws from one answer.
 import type { Tx } from "../data/db.ts";
-import { currentEventIn, phaseOf, proofDeadlineOf, type Phase } from "../data/event.ts";
-import { resolveViewer, type Person } from "../demo/viewer.ts";
+import { currentEventIn, phaseOf, proofDeadlineOf } from "../data/event.ts";
+import { resolveViewer } from "../demo/viewer.ts";
 import { photoUrl } from "../seed/photo-url.ts";
 import { ENDING_SOON_HOURS } from "../../src/components/thresholds.ts";
+import type { AppState } from "../../src/app-state.ts";
+
+export type { AppState };
 
 type Env = Readonly<Record<string, string | undefined>>;
-
-export interface AppState {
-  /** The server's time, so the page can show countdowns without trusting the device clock. */
-  now: string;
-  viewer: Person | null;
-  people: Person[];
-  event: null | {
-    id: string;
-    name: string;
-    timeZone: string;
-    submissionsOpenAt: string | null;
-    biddingOpensAt: string | null;
-    biddingClosesAt: string | null;
-    proofDeadline: string | null;
-    phase: Phase;
-    /** Live, with bidding closing within ENDING_SOON_HOURS. */
-    endingSoon: boolean;
-    winnersFinalized: boolean;
-    givingPlatformUrl: string | null;
-  };
-  charities: Array<{ id: string; name: string; description: string; logoUrl: string }>;
-}
 
 const iso = (d: Date | null) => (d ? d.toISOString() : null);
 

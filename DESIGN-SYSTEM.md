@@ -16,7 +16,7 @@ Every component, its variants and states, and how to use it. Required by SPEC §
 
 - **No payment language.** The app never takes payments: winners donate to the charity themselves and upload proof. Never write pay, paid, payment or checkout. (SPEC's "bid receipt" and "purchase receipt" status names are fine: they confirm a bid or an instant-sale claim, not a payment.) Use **donate**, **donation** and **proof** ("Donate and upload proof by November 21", "Proof of donation due", "Upload proof").
 - **Donors are coworkers.** Items are donated by people in the organization (SPEC §10), never by businesses: "donated by Maya Okafor".
-- **Describe the demo accurately.** It doesn't reset on a schedule; people start over with **Restore demo data** in the top bar.
+- **Describe the demo accurately.** It's shared by everyone and resets to the live phase once a day (SPEC §3.1, v1.11); anyone can start over sooner with **Restore demo data** in the top bar, which resets it for everyone.
 - **Computed amounts.** Minimum-bid and increment copy comes from the event settings and the current high bid, never hard-coded (SPEC §7.4).
 - Fictional names only (SPEC §2). Sentence case, plain words, and labels that start with a verb.
 
@@ -319,6 +319,7 @@ How forms behave, for every component below:
   - a *Select* field for Viewing as
   - a `fieldset.demo-bar__jump` of five buttons with `aria-pressed`: Submissions open, Bidding live, Ending soon (bidding closes in under 24 hours), Bidding ended, 30+ days after
   - the Restore button (`data-demo-restore`)
+  - `.demo-bar__note` in the summary: "Shared demo · resets daily", visible open or collapsed; on a bar narrower than 40rem it wraps to its own line under the name
   - a visually hidden `role="status"` for announcements
   - Behavior: `enhanceDemoBar()` in `src/components/demo-bar.ts`.
 - **Placement:** the first thing on the page, right after the (invisible) skip link in the DOM, so the skip link stays the first tab stop. It's in the normal flow and never overlays content. Inverse colors and a striped top edge set it apart from the app.
@@ -327,10 +328,23 @@ How forms behave, for every component below:
   - The current phase shows as **pressed** (filled, `aria-pressed="true"`).
   - Focus rings switch to the on-inverse color on the bar.
   - Hidden entirely with `?demo=off`; gallery specimens (`data-demo-bar="specimen"`) never hide.
-  - Loading: it will use the buttons' loading state once it talks to the API (Milestone 3). Disabled, error and empty: N/A.
+  - **Loading:** on app pages (`renderDemoBar()`), a Jump to button shows the button loading state while its request runs; the select is `aria-busy` while switching people; Restore uses the danger dialog's loading state ("Restoring…").
+  - **Error:** a failed Jump or Viewing as change shows a danger toast with the server's reason and leaves the bar as it was; a failed Restore shows the reason in the dialog (for example the 10-second cooldown). Disabled and empty: N/A.
+  - The pressed button comes from the data (`currentJump()`), so it's right after a reload or someone else's jump.
 - **Accessibility:** a region named "Demo controls". Changing who you're viewing as is announced ("Now viewing as Dev Kapoor (employee)"). Moving the phase is announced too. All controls are 44px.
 - **Do:** keep it visually distinct from the app. **Don't:** make it sticky or overlay content.
 - **Figma:** *Demo bar* · State = Open / Collapsed (2); the jump buttons are *Button* (Secondary), with the pressed look drawn as an override.
+
+## Page layout and footer
+
+**Purpose:** the frame every app page shares (Milestone 3B): demo bar, site header, phase banner, the page's content column, and the footer.
+
+- **Markup:** `<body data-page="…">` > skip link, `[data-shell-demo]`, `[data-shell-header]`, `[data-shell-banner]`, `<main class="page" id="main" tabindex="-1">`, `footer.site-footer`. `src/shell.ts` fills the three slots from `GET /api/app`; the banner sits in `.phase-banner` (the content width, under the header).
+- **Phase banner words** come from `phaseBanner()` (`src/components/phase-banner-rules.ts`), one per phase: "Submissions are open", "Bidding is open", "Bidding ends soon" (alert icon), "Bidding has ended" (proof due, or the deadline passed). Times are in the viewer's zone with the zone labeled ("today at 5:00 PM EST", "on Wednesday, November 4 at 1:00 PM EST").
+- **States:** default. Loading: the header draws at once without the person or Submit an Item, then fills in. **Error:** if the state can't load, a danger banner (`role="alert"`) takes the banner slot. Hover, focus, active, disabled and empty: N/A.
+- **Accessibility:** one `<main>`; the phase banner is `role="status"`, so a phase change is announced. The `hidden` attribute always wins over a component's `display` (base.css).
+- **Do:** put page content in `.page`, starting with a *Page header*. **Don't:** put page-specific content in the shell slots.
+- **Figma:** *Page frame* · Role = Admin / Employee × Width = 390 / 1280 (4), built from the components above.
 
 ## Hero lockup
 

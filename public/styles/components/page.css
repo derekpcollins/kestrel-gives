@@ -1,0 +1,7 @@
+/* Page layout (DESIGN-SYSTEM.md › Page layout and footer): the content column every page
+   shares, the slot for the phase banner under the header, and the footer. */
+.page { display: grid; gap: var(--space-6); align-content: start; max-width: var(--size-content); margin: 0 auto; padding: 0 var(--space-4) var(--space-12); }
+.page:focus { outline: none; }
+.phase-banner { max-width: var(--size-content); margin: var(--space-4) auto 0; padding-inline: var(--space-4); }
+.site-footer { border-top: var(--border-thin) solid var(--color-border); color: var(--color-text-muted); font: var(--type-caption); }
+.site-footer > p { max-width: var(--size-content); margin: 0 auto; padding: var(--space-6) var(--space-4); }
