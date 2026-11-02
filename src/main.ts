@@ -2,6 +2,7 @@
 // page's own content once the state arrives.
 import type { AppState } from "./app-state.ts";
 import { hydrateIcons } from "./components/icons.ts";
+import { startBrowse } from "./pages/browse.ts";
 import { showHome } from "./pages/home.ts";
 import { startShell } from "./shell.ts";
 
@@ -16,5 +17,8 @@ document.addEventListener("kg:state", (event) => {
 if (document.body.dataset.page === "home") {
   document.addEventListener("kg:state", (event) => showHome((event as CustomEvent<AppState>).detail));
 }
+
+const browseType = document.querySelector<HTMLElement>("[data-browse-type]")?.dataset.browseType;
+if (browseType === "auction" || browseType === "instant") startBrowse(browseType);
 
 await startShell();

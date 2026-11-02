@@ -7,3 +7,8 @@
 .site-footer > p { max-width: var(--size-content); margin: 0 auto; padding: var(--space-6) var(--space-4); }
 /* A titled section of a page (Home's How to participate and Where donations go). */
 .home-section { display: grid; gap: var(--space-4); padding-top: var(--space-4); }
+/* Browse pages: the item count and the sort above the grid. The sort keeps its own width and
+   drops under the count when the row runs out of room. */
+.browse-toolbar { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--space-3) var(--space-4); }
+.browse-toolbar__count { font: var(--type-label); color: var(--color-text-muted); font-variant-numeric: var(--figures-amount); }
+.browse-toolbar__sort { min-width: min(100%, var(--size-tile-min)); }

@@ -25,9 +25,25 @@
           <p class="page-header__description">Claim items at a set price while they last.</p>
         </div></div>
       </header>
-      <section class="empty" aria-labelledby="later">
-        <span class="empty__icon" data-icon="clock" data-icon-size="lg"></span>
-        <h2 class="empty__title" id="later">The instant sale arrives in a later milestone of this demo.</h2>
+      <div class="browse-toolbar">
+        <p class="browse-toolbar__count" data-browse-count></p>
+        <div class="field browse-toolbar__sort">
+          <label class="field__label" for="sort">Sort by</label>
+          <div class="select"><select class="input" id="sort" data-browse-sort></select><span data-icon="chevron-down"></span></div>
+        </div>
+      </div>
+      <p class="visually-hidden" role="status" data-browse-status></p>
+      <ul class="item-grid" aria-label="Items" aria-busy="true" data-browse-grid data-browse-type="instant"></ul>
+      <section class="empty" aria-labelledby="empty-title" data-browse-empty hidden>
+        <span class="empty__icon" data-icon="info" data-icon-size="lg"></span>
+        <h2 class="empty__title" id="empty-title" data-empty-title></h2>
+        <p class="empty__text" data-empty-text></p>
+      </section>
+      <section class="empty" aria-labelledby="error-title" data-browse-error hidden>
+        <span class="empty__icon" data-icon="alert" data-icon-size="lg"></span>
+        <h2 class="empty__title" id="error-title">We couldn't load the items</h2>
+        <p class="empty__text">Check your connection and try again.</p>
+        <div class="empty__actions"><button type="button" class="btn btn--secondary">Try again</button></div>
       </section>
     </main>
     <footer class="site-footer">

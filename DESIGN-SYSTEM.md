@@ -347,6 +347,17 @@ How forms behave, for every component below:
 - **Do:** put page content in `.page`, starting with a *Page header*. **Don't:** put page-specific content in the shell slots.
 - **Figma:** *Page frame* · Role = Admin / Employee × Width = 390 / 1280 (4), built from the components above.
 
+## Browse toolbar
+
+**Purpose:** the item count and the sort above a browse grid (Silent Auction, Instant Sale; SPEC §8, Milestone 4B).
+
+- **Markup:** `.browse-toolbar` > `p.browse-toolbar__count` ("9 items") and a *Field* with a *Select* (`.browse-toolbar__sort`, label "Sort by"), then a visually hidden `role="status"`, the `ul.item-grid` and two *Empty states* (no items; couldn't load, with **Try again**). Built by `src/pages/browse.ts`; the words come from `src/pages/browse-rules.ts`.
+- **Sorts:** Newest, Price: low to high, and (silent auction only) Most bids. The sort is kept in `?sort=` (Newest leaves the URL clean), so a sorted page can be bookmarked; an unknown value falls back to Newest.
+- **States:** default. **Loading:** the grid has `aria-busy="true"` until the items arrive. **Empty:** "No silent auction items yet". **Error:** "We couldn't load the items" with **Try again**. Hover, focus, active and disabled come from *Select*.
+- **Accessibility:** changing the sort is announced once the new order is drawn ("Sorted by price: low to high. 9 items."), and focus stays on the select. Redraws after a state change (view as someone else, a jump) announce nothing.
+- **Do:** let the count and the sort wrap onto two lines on phones. **Don't:** add a search box (SPEC §8).
+- **Figma:** *Browse toolbar* · no variants; the sort is a nested *Select*.
+
 ## Hero lockup
 
 **Purpose:** the event's name on Home (DECISIONS #47).

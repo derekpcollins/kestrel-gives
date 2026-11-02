@@ -19,6 +19,14 @@ export interface TileItem {
   viewerHasBid?: boolean;
 }
 
+/** A tile's data plus what it links to. */
+export interface TileView extends TileItem {
+  title: string;
+  href: string;
+  /** Cover photo URL; omitted for the placeholder. */
+  photo?: string;
+}
+
 export interface TileContext {
   phase: Phase;
   now: Date;

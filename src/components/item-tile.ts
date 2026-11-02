@@ -1,13 +1,8 @@
 // Builds an item tile (DESIGN-SYSTEM.md › Item tile) from data. Every word on it comes from
 // tileText(), so tiles can't drift from the rules.
-import { tileText, type TileContext, type TileItem } from "./item-tile-rules.ts";
+import { tileText, type TileContext, type TileView } from "./item-tile-rules.ts";
 
-export interface TileView extends TileItem {
-  title: string;
-  href: string;
-  /** Cover photo URL; omitted for the placeholder. */
-  photo?: string;
-}
+export type { TileView };
 
 export function renderItemTile(item: TileView, ctx: TileContext): HTMLLIElement {
   const text = tileText(item, ctx);
