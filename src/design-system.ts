@@ -70,13 +70,13 @@ const tiles: Record<string, [TileView, TileContext][]> = {
   "live-instant": [
     [{ type: "instant", title: "Hand-knit scarf", href: "#item-tiles", price: 45, remaining: 6 }, phases.live!],
     [{ type: "instant", title: "Homemade hot sauce trio", href: "#item-tiles", price: 20, remaining: 2 }, phases.live!],
-    [{ type: "instant", title: "Lemon bars, a dozen", href: "#item-tiles", price: 15, remaining: 0 }, phases.live!],
+    [{ type: "instant", title: "Lemon squares, a dozen", href: "#item-tiles", price: 15, remaining: 0 }, phases.live!],
   ],
   ended: [
     [{ type: "auction", title: "Guitar lessons, four weeks", href: "#item-tiles", startingBid: 50, topBid: 110, bidCount: 7, viewerIsTopBidder: true }, phases.ended!],
     [{ type: "auction", title: "Lakeside Cabin Weekend", href: "#item-tiles", startingBid: 100, topBid: 310, bidCount: 9, viewerHasBid: true }, phases.ended!],
     [{ type: "auction", title: "Custom pet portrait", href: "#item-tiles", startingBid: 40, bidCount: 0 }, phases.ended!],
-    [{ type: "instant", title: "Lemon bars, a dozen", href: "#item-tiles", price: 15, remaining: 0 }, phases.ended!],
+    [{ type: "instant", title: "Lemon squares, a dozen", href: "#item-tiles", price: 15, remaining: 0 }, phases.ended!],
   ],
   cancelled: [
     [{ type: "auction", title: "Concert tickets", href: "#item-tiles", startingBid: 60, topBid: 75, bidCount: 2, viewerHasBid: true, cancelled: true }, phases.live!],

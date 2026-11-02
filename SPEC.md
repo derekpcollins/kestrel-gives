@@ -1,6 +1,6 @@
 # Kestrel Gives — Build Spec & Conformance Rules
 
-**Status:** v1.9 · Owner: Derek Collins · Last updated: Nov 1, 2026
+**Status:** v1.10 · Owner: Derek Collins · Last updated: Nov 2, 2026
 
 This document describes what to build and the rules every contribution must follow, whether a person or an AI agent writes it. Read it in full before writing any code. If something here conflicts with a request, stop and ask.
 
@@ -104,8 +104,8 @@ The Vercel CLI is installed globally, not as a project dependency. Node's built-
 - Two branches: **`main`** for the deployed demo, **`dev`** for local work and tests. Tests reseed `dev` before each run and MUST NOT touch `main`.
 
 ### File storage
-- **One public Vercel Blob store** on the deployed site, for item photos and proof images uploaded through the app. Production and Preview share it, each under its own path prefix (`production/`, `preview/`); the storage layer MUST refuse to delete anything outside the current environment's prefix.
-- **Seed photos** are committed to the repo as static files, never stored in Blob, so restoring demo data costs no Blob operations and works the same everywhere.
+- **One public Vercel Blob store** on the deployed site, for item photos and proof images uploaded through the app. Production and Preview share it, each under its own path prefix (`production/`, `preview/`); the storage layer MUST refuse to delete anything outside the current environment's prefix, and MUST refuse anything under `seed/`.
+- **Seed photos** (v1.10) MUST NOT be committed to git; a check fails if any image file appears under a seed or photo path (the committed placeholders excepted). They live in the same Blob store under `seed/`, shared by Production and Preview, uploaded once by a script and never deleted by the app (Restore demo data only rewrites database rows, so it costs no Blob operations). The database stores relative keys (`seed/<slug>-<n>.jpg`), never URLs, and a key is resolved when shown: on Production and Preview to `SEED_PHOTOS_BASE_URL` plus the key; locally to the gitignored copy in `public/seed/` if present, otherwise the placeholder. On Production and Preview a missing or malformed `SEED_PHOTOS_BASE_URL` MUST fail the build, and `/api/health` reports it as `"seedPhotos": false`; the URL itself is never printed. Tests MUST NOT need network access or Blob for seed photos.
 - Local dev and tests store uploads in a local folder (ignored by git), so tests don't use up Blob's monthly operation allowance.
 - Upload limits: images only (JPEG, PNG, WebP), size-capped, validated on the server.
 
@@ -279,7 +279,7 @@ The agent proposes the final schema in Milestone 2. Expected tables: `events`, `
 - **7 users:** 2 admins and 5 employees, with invented names.
 - **16 items:** 10 silent auction and 6 instant sale, the kind of thing coworkers actually donate (a pottery class for two, a sourdough starter, a custom pet portrait, a weekend at a lake cabin, guitar lessons…). All invented; no real businesses.
 - **States covered**, so every screen state appears in the visual review: no bids yet, the current viewer outbid, the current viewer winning, ending soon, won, sold out, low stock, cancelled, and proofs pending, approved, and rejected. "Ending soon" means bidding closes within 24 hours; "low stock" means an instant-sale item has 3 or fewer left. Both numbers live in one module, `src/components/thresholds.ts` (DECISIONS #61). (Added v1.7.)
-- **Photos** (committed as static files; see section 4): real free, royalty-free stock photos (the Unsplash and Pexels licenses qualify) with no recognizable faces, brands, logos, or real places. The owner approves a contact sheet of candidates, with links and licenses, before anything is downloaded. Every photo is credited, even when its license doesn't require it (v1.8). Most items get one photo, three get three, and one gets five. Every photo is logged in `CREDITS.md` with its source link, photographer, and license, checked when downloaded. The owner approves the photos in Milestone 2.
+- **Photos** (stored in Blob, never in git; see section 4, v1.10): real free, royalty-free stock photos (the Unsplash, Pexels and Pixabay licenses qualify) with no recognizable faces, brands, logos, or real places, checked at full size after download. The owner approves a contact sheet of candidates, with links and licenses, before anything is downloaded. Every photo is credited, even when its license doesn't require it (v1.8). Most items get one photo, three get three, and one gets five. Every photo is logged in `CREDITS.md` with its source link, photographer, and license, checked when downloaded. The owner approves the photos in Milestone 2.
 - No past events.
 
 ## 11. Code conventions
@@ -301,6 +301,7 @@ These run before any change counts as done. Each is a script in `package.json`.
 5. **Business rules:** `node:test` tests cover section 7: bid minimums and increments, no self-outbidding, time windows for every phase, the inventory floor, simultaneous bids and purchases (against real Postgres on the `dev` branch), edit locks, delete and cancel rules, the reset lock, and template variable validation.
 6. **Visual review:** Playwright screenshots of every screen in every seeded state, in light and dark mode, at 390px and 1280px wide, with `?demo=off`, for a human to review.
 7. **Reflow:** Playwright loads every screen at 320px wide and fails if the page scrolls sideways or any element cuts off content sideways. Regions meant to scroll (overflow auto or scroll) and text truncated with an ellipsis are allowed.
+8. **No seed images in git** (added v1.10): a short Node script fails if git tracks or has staged any `.jpg`, `.jpeg`, `.png` or `.webp` under a seed or photo path, except the three committed placeholders. The pre-commit hook runs it too.
 
 ## 13. How the agent works
 

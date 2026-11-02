@@ -25,6 +25,12 @@ if [ -n "$db_urls" ]; then
   status=1
 fi
 
+# Seed photos never go in git (DECISIONS #77). The check reads the index, so staged files count.
+# Its error lines go to stderr; the success line is silenced.
+if ! node scripts/check-no-seed-images.ts >/dev/null; then
+  status=1
+fi
+
 if [ $status -ne 0 ]; then
   echo "Commit blocked. Unstage the files above and try again." >&2
 fi

@@ -52,15 +52,16 @@ npm run db:seed          # loads demo data (placeholder until Milestone 2); safe
 
 ### Uploads
 
-On the deployed site, uploads go to one public Vercel Blob store under a per-environment prefix (`production/`, `preview/`). Locally and in tests they go to `.local-uploads/` (ignored by git). Seed photos are static files in the repo.
+On the deployed site, uploads go to one public Vercel Blob store under a per-environment prefix (`production/`, `preview/`). Locally and in tests they go to `.local-uploads/` (ignored by git). Seed photos never go in git: the deployed site reads them from the same Blob store under `seed/`, and local dev from gitignored copies in `public/seed/` (or the placeholder when those aren't there). To make the local copies, put the Pixabay originals listed in `lib/seed/photos.ts` in `.seed-photos/originals/` and run `npm run seed:photos:process` (macOS, uses `sips`). `npm run seed:photos:upload` puts them in Blob; it needs `BLOB_READ_WRITE_TOKEN` set for that one command (DECISIONS #77).
 
 ## Checks
 
-Every change must pass the seven conformance checks in SPEC.md section 12. `npm run check` runs them all, in this order:
+Every change must pass the eight conformance checks in SPEC.md section 12. `npm run check` runs them all, in this order:
 
 | Script | Check |
 |---|---|
 | `npm run check:deps` | `package.json` lists only the packages in SPEC.md's approved table (read from the spec itself) |
+| `npm run check:seed-images` | No `.jpg`/`.jpeg`/`.png`/`.webp` tracked under a seed or photo path, except the three placeholders (also run by the pre-commit hook) |
 | `npm run check:tokens` | No raw colors or lengths in `public/` or `src/` outside `public/styles/tokens.css` (except the two named breakpoints, inside `@media`/`@container` conditions); type set with `--type-*` roles, not `--text-*` steps; every color token has a light and a dark value |
 | `npm run check:types` | `tsc --noEmit` for server and browser code |
 | `npm run test:rules` | `node:test` unit tests; SPEC §7 rules not yet built are listed as todos |

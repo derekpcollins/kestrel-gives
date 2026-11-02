@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { after, before, describe, test } from "node:test";
 import { storageFor } from "../../lib/storage/index.ts";
+import { blobStorage } from "../../lib/storage/blob.ts";
 import { localStorage } from "../../lib/storage/local.ts";
 import { assertOwned } from "../../lib/storage/paths.ts";
 
@@ -23,7 +24,6 @@ describe("storage prefixes: a preview can never delete the live demo's files", (
     ["preview/", "preview/"],
     ["/preview/items/a.jpg", "preview/"],
     ["https://store.public.blob.vercel-storage.com/production/items/a.jpg", "production/"],
-    ["seed/items/a.jpg", "preview/"],
     ["", "preview/"],
   ];
   for (const [pathname, prefix] of outside) {
@@ -35,6 +35,38 @@ describe("storage prefixes: a preview can never delete the live demo's files", (
   test("rejects malformed prefixes", () => {
     assert.throws(() => assertOwned("a/b.jpg", ""), /Invalid storage prefix/);
     assert.throws(() => assertOwned("a/b.jpg", "a"), /Invalid storage prefix/);
+    assert.throws(() => assertOwned("other/b.jpg", "other/"), /Invalid storage prefix/);
+  });
+});
+
+describe("seed photos (seed/) can never be deleted by the app (DECISIONS #77)", () => {
+  for (const prefix of ["production/", "preview/", "development/", "test/"]) {
+    test(`${prefix} can't touch seed/ keys`, () => {
+      assert.throws(() => assertOwned("seed/candles-1.jpg", prefix), /seed photos are never deleted/);
+      assert.throws(() => assertOwned("seed/items/a.jpg", prefix), /seed photos are never deleted/);
+    });
+  }
+
+  test("no storage, Blob or local, can be made for the seed/ prefix", () => {
+    assert.throws(() => blobStorage("seed/"), /Invalid storage prefix/);
+    assert.throws(() => localStorage("seed/"), /Invalid storage prefix/);
+    assert.throws(() => assertOwned("seed/candles-1.jpg", "seed/"), /Invalid storage prefix/);
+  });
+
+  test("a batch with one seed key deletes nothing", async () => {
+    const root = await mkdtemp(join(tmpdir(), "kestrel-seed-"));
+    try {
+      const seedFile = join(root, "seed/candles-1.jpg");
+      await mkdir(dirname(seedFile), { recursive: true });
+      await writeFile(seedFile, "seed");
+      const preview = localStorage("preview/", root);
+      const own = await preview.put("items", new Uint8Array([1]), "image/jpeg");
+      await assert.rejects(preview.delete([own.pathname, "seed/candles-1.jpg"]), /seed photos are never deleted/);
+      await access(seedFile);
+      await access(join(root, own.pathname));
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
   });
 });
 

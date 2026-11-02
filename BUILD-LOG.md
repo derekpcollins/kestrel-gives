@@ -393,3 +393,24 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 - **Hard / caught:**
   - **Parameter types:** reusing `$11` in a value and a `COALESCE` made Postgres deduce two types; explicit `::timestamptz` casts fixed it.
   - **TRUNCATE vs deferred checks:** the seed-twice test hit "cannot TRUNCATE items because it has pending trigger events". The deferred winner key queues checks for earlier changes in the transaction, so the seed checks that one key immediately before truncating and defers it again after. Restore demo data would have hit the same thing.
+
+### 2026-11-02 — Stage 2D: seed photos (to 11:57 EST; awaiting the upload and checkpoint)
+- **Owner stepped in:**
+  - Chose Pixabay once Unsplash and Pexels turned out to block automated reads and Pexels had paused new keys, and supplied the API key in a gitignored file.
+  - Approved the contact sheet, and fitted the item text to the photos instead of swapping them: hot sauce flavors, "Lemon squares", a hand-glazed pot. Accepted the cabin set spanning several weeks.
+  - Chose Blob over git after I flagged the license's "Standalone basis" clause against a public repo, which reverses SPEC §4/§10 and #32 (SPEC v1.10, #77).
+  - Picked display-time resolution, the base URL as a Vercel variable, and running the upload in their own terminal. Then amended: relative keys only, and a loud build failure plus a health flag for a bad base URL.
+  - Approved the candle swap.
+- **Built:**
+  - `lib/seed/photos.ts` (the manifest) and `lib/seed/photo-url.ts`: `photoUrl`, the base URL check, the build check `scripts/check-seed-base.ts`, and `"seedPhotos"` in `/api/health`.
+  - `scripts/seed-photos.ts` (process, upload), `scripts/jpeg-metadata.ts` (a dependency-free metadata stripper and quality estimate), and `scripts/check-no-seed-images.ts`, run by `npm run check` and the pre-commit hook.
+  - Storage prefixes became an allowlist with `seed/` refused.
+  - `CREDITS.md`, SPEC v1.10, DECISIONS #77 and #78. `PHOTOS_INSTALLED` is on.
+  - Tests: 95 unit and 33 database tests pass. New: the manifest matches the items and credits, resolution in every environment, the base URL check never echoes the value, the git check, the delete guard for `seed/`, metadata stripping, and the seed never writing an absolute URL.
+- **Hard / caught:**
+  - **The license:** Pixabay's terms forbid standalone redistribution, and say resizing or cropping doesn't change that, so committing the files to the public repo would have been a problem. Raised before anything was downloaded.
+  - **The shared `dev` database:** local dev and Preview read the same rows, so the seed couldn't write environment-specific URLs. Paths are resolved at display time instead.
+  - **sips' quality scale isn't JPEG's:** "80" came out at about IJG 93, larger than Pixabay's own files. Calibrated by estimating quality from the quantization tables: setting 55 gives about 81. The script now checks every file falls within 75–85. The set went from 7.5 MB to 4.6 MB.
+  - **A brand at full size:** the approved candle photo had "PATAK'S" embossed on a jar, invisible in the 340px thumbnails and readable at 1280px. Zoomed crops of anything that looked like lettering caught it; swapped with the owner's approval.
+  - **Pixabay's API returned 403 to Python's default user agent**; a descriptive User-Agent fixed it. Its undocumented `user:` search found each photographer's other shots for the multi-photo sets.
+- **AI did well:** checked the license text before downloading, spotted the shared-database problem before writing seed URLs, and didn't trust an encoder setting it could measure.

@@ -2,9 +2,15 @@
 // from "now", so the demo always opens live, with bidding closing in about two days. All
 // people, items and charities are invented. Amounts are whole dollars here; the seed stores
 // cents. tests/unit/seed-data.test.ts checks the rules this data must follow.
+import { seedPhotoKey } from "./photos.ts";
 
-/** Real photos land in 2D. Until then every item photo is the placeholder image. */
-export const PHOTOS_INSTALLED = false;
+/**
+ * True once the seed photos are in Blob (DECISIONS #77). Until then every item photo is the
+ * placeholder image, and the production build won't seed. Once true, item photos are stored
+ * as relative keys (`seed/<slug>-<n>.jpg`, lib/seed/photos.ts) and resolved at display time
+ * (lib/seed/photo-url.ts).
+ */
+export const PHOTOS_INSTALLED = true;
 export const PLACEHOLDER_PHOTO = "/seed/placeholder-photo.png";
 export const PLACEHOLDER_LOGO = "/seed/charities/placeholder-logo.png";
 export const PLACEHOLDER_PROOF = "/seed/proofs/placeholder-proof.png";
@@ -47,7 +53,7 @@ interface BaseItem {
   title: string;
   description: string;
   submitter: Person;
-  /** How many photos; files are `${slug}-${n}.jpg` once PHOTOS_INSTALLED. */
+  /** How many photos; keys are `seed/${slug}-${n}.jpg` once PHOTOS_INSTALLED. */
   photos: number;
   /** Hours after submissions opened that it was submitted. */
   submittedAfterHours: number;
@@ -134,7 +140,7 @@ export const ITEMS: readonly SeedItem[] = [
   },
   {
     slug: "hot-sauce-trio", type: "instant", title: "Homemade hot sauce trio", submitter: "dev", photos: 3, submittedAfterHours: 10,
-    description: "Three small bottles: a mild green, a smoky red and a very hot habanero. Made in small batches in Dev's kitchen.",
+    description: "Three small bottles: a mild mango, a smoky red and a fiery hibiscus-habanero. Made in small batches in Dev's kitchen.",
     price: 20, quantity: 12,
     purchases: [["rosa", 47], ["owen", 46], ["jules", 44], ["maya", 40], ["priya", 36], ["theo", 30], ["rosa", 22], ["jules", 18], ["priya", 9], ["theo", 4]],
   },
@@ -145,20 +151,20 @@ export const ITEMS: readonly SeedItem[] = [
     purchases: [["dev", 42], ["jules", 13]],
   },
   {
-    slug: "lemon-bars", type: "instant", title: "Lemon bars, a dozen", submitter: "priya", photos: 1, submittedAfterHours: 60,
-    description: "Twelve tangy lemon bars on a shortbread base, delivered to your desk on a day you choose.",
+    slug: "lemon-squares", type: "instant", title: "Lemon squares, a dozen", submitter: "priya", photos: 1, submittedAfterHours: 60,
+    description: "Twelve lemon squares on a light sponge, with lemon curd, a ring of whipped cream and yellow sprinkles, each topped with a slice of lemon. Delivered to your desk on a day you choose.",
     price: 15, quantity: 6,
     purchases: [["dev", 47], ["owen", 45], ["maya", 38], ["jules", 26], ["theo", 16], ["dev", 6]],
   },
   {
     slug: "candles", type: "instant", title: "Hand-poured candles, set of three", submitter: "owen", photos: 1, submittedAfterHours: 80,
-    description: "Three soy candles in reused jars: cedar, orange peel and unscented.",
+    description: "Three soy candles in reused jars, each finished with a strip of lace: cedar, orange peel and unscented.",
     price: 25, quantity: 10,
     purchases: [["rosa", 39], ["jules", 28], ["theo", 11]],
   },
   {
-    slug: "desk-plant", type: "instant", title: "Desk plant in a hand-painted pot", submitter: "theo", photos: 1, submittedAfterHours: 100,
-    description: "An easy-care pothos in a small pot Theo painted by hand. Happy in low light.",
+    slug: "desk-plant", type: "instant", title: "Desk plant in a hand-glazed pot", submitter: "theo", photos: 1, submittedAfterHours: 100,
+    description: "An easy-care pothos in a small blue pot Theo glazed by hand. Happy in low light.",
     price: 30, quantity: 5,
     purchases: [["dev", 35], ["priya", 21]],
   },
@@ -190,6 +196,7 @@ export const PROOFS: ReadonlyArray<{
 export const PROOF_REVIEWER: Person = "maya";
 export const REVIEW_AFTER_HOURS = 1;
 
+/** What the seed stores for an item photo: a relative key, never an absolute URL. */
 export function photoPath(slug: string, n: number): string {
-  return PHOTOS_INSTALLED ? `/seed/photos/${slug}-${n}.jpg` : PLACEHOLDER_PHOTO;
+  return PHOTOS_INSTALLED ? seedPhotoKey(slug, n) : PLACEHOLDER_PHOTO;
 }

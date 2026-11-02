@@ -6,6 +6,8 @@ import { Pool, type PoolClient } from "@neondatabase/serverless";
 import { databaseUrl } from "../../scripts/db-target.ts";
 import { directUrl } from "../../scripts/migrate-lib.ts";
 import { finalizeWinnersIn } from "../../lib/data/winners.ts";
+import { PHOTOS_INSTALLED } from "../../lib/seed/data.ts";
+import { SEED_PHOTO_KEY } from "../../lib/seed/photos.ts";
 import { hasNoEventIn, seedIfEmptyIn, seedIn } from "../../lib/seed/seed.ts";
 import { tileText, type Phase } from "../../src/components/item-tile-rules.ts";
 
@@ -99,6 +101,20 @@ describe("seed", () => {
     await db.query(`INSERT INTO events (name) VALUES ('Someone else''s event')`);
     assert.equal(await seedIfEmptyIn(db, new Date()), false);
     assert.equal(await count("users"), 0);
+  });
+
+  test("the seed never writes an absolute URL: item photos are relative keys (DECISIONS #77)", async () => {
+    await seedIn(db, new Date());
+    const { rows } = await db.query<{ path: string }>(
+      `SELECT path FROM item_photos UNION ALL SELECT logo_path FROM charities UNION ALL SELECT image_path FROM proofs`,
+    );
+    assert.ok(rows.length >= 26 + 3 + 3);
+    for (const { path } of rows) {
+      assert.doesNotMatch(path, /^([a-z][a-z0-9+.-]*:|\/\/)/i, path);
+      assert.ok(path.startsWith("/seed/") || SEED_PHOTO_KEY.test(path), path);
+    }
+    const photos = (await db.query<{ path: string }>(`SELECT path FROM item_photos ORDER BY id`)).rows.map((r) => r.path);
+    if (PHOTOS_INSTALLED) for (const path of photos) assert.match(path, SEED_PHOTO_KEY);
   });
 
   test("running the seed twice gives the same result", async () => {
