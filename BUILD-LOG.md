@@ -518,9 +518,10 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 ### 2026-11-02 — 3C checkpoint: owner review
 - **Owner stepped in:** approved the 3B fixes and 3C. Asked for 3D, with a final checkpoint before anything goes to main. The owner will review the Home contact sheets visually before approving the push.
 
-### 2026-11-02 — Stage 3D: one-off deploy steps; land the live demo (awaiting the final checkpoint)
+### 2026-11-02 — Stage 3D: one-off deploy steps; land the live demo (to 14:30 EST; awaiting the final checkpoint)
 - **Built:**
   - `migrations/005_deploy_steps.sql`, applied to `dev`.
   - `scripts/deploy-steps.ts`: an append-only list, plus `runDeploySteps`, which records each step in the same transaction as its work.
   - deploy-db runs the steps after migrations and seed-if-empty, inside the deploy lock. The first step, `m3-land-live-demo`, restores the demo once. DECISIONS #84.
 - **Tests:** 7 new database tests. They cover once, re-deploy skip, two builds at once, failure then retry, refused names, and the real step restoring to live (rolled back). They also run the real `deploy-db.ts` against dev as preview, development, local, and a production build pointed at dev; each skips or refuses and writes nothing. One new unit test checks the step list. 129 unit and 49 database tests pass; `npm run check` is green; `npm audit` shows only the accepted zod advisory.
+- **Preview (2026-11-02 14:30 EST):** deployment `kestrel-gives-p8fpmy5t5`, Ready. Build: 4 functions compile cleanly, unit tests 129 pass, `deploy-db: skipped, not a production build (VERCEL_ENV=preview)`. `/api/health` → `{"ok":true,"db":"dev","schema":"005","seedPhotos":true}`.
