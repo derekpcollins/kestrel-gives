@@ -35,6 +35,7 @@ The same pattern applies to every component below. Each entry's **Figma** line g
 - **Keep each variant matrix under about 30 combinations.** When a component would need more, split it into separate components and say so in its Figma line (as *Icon button* is split from *Button*).
 - **Layout-only modifiers aren't variants** when Figma can do the same with instance settings (Fill width for `--block`).
 - **Icons are instance-swapped**, not variants (see Icon).
+- **Variables** mirror `public/styles/tokens.css` (the source of truth) with matching names, `color/accent` ↔ `--color-accent`. As of Milestone 3 the library has **103**, including `color/banner-calm`, `color/banner-calm-border`, `color/on-banner-calm`, `size/charity-logo` and `size/step-number`.
 
 ---
 
@@ -333,7 +334,7 @@ How forms behave, for every component below:
   - The pressed button comes from the data (`currentJump()`), so it's right after a reload or someone else's jump.
 - **Accessibility:** a region named "Demo controls". Changing who you're viewing as is announced ("Now viewing as Dev Kapoor (employee)"). Moving the phase is announced too. All controls are 44px.
 - **Do:** keep it visually distinct from the app. **Don't:** make it sticky or overlay content.
-- **Figma:** *Demo bar* · State = Open / Collapsed (2); the jump buttons are *Button* (Secondary), with the pressed look drawn as an override.
+- **Figma:** *Demo bar* · State = Open / Collapsed (2); both include the Ending soon jump and the shared-demo line. The jump buttons are *Button* (Secondary), with the pressed look drawn as an override.
 
 ## Page layout and footer
 
@@ -423,7 +424,7 @@ How forms behave, for every component below:
 - **States:** the card link's default, hover (lift), active and focus (ring). **Muted** (`.item-tile--muted`, ended and cancelled): the photo fades and the amount turns muted; the pill keeps full contrast. **Cancelled** appears only in Your Items, never in browse grids. Disabled: N/A (a tile always opens its item). Loading: Milestone 3 decides whether grids need skeletons. Empty: the grid's *Empty state*, not the tile. Error: N/A.
 - **Accessibility:** the whole tile is one link, named by the title with the status appended as visually hidden text ("Sourdough starter and a loaf a month, Outbid"); the pill itself is `aria-hidden` so it isn't read twice. Status isn't shown by color alone: the pill has words.
 - **Do:** keep titles to two lines in the design; long ones wrap. **Don't:** show more than one status, or put buttons inside the tile.
-- **Figma:** *Item tile* · Type = Auction / Instant × Phase = Submission / Live / Ended (6), with Status as a nested *Status pill* instance (or hidden) and Muted as a boolean. The text is overridden per example.
+- **Figma:** *Item tile* · Type = Auction / Instant × Phase = Submission / Live / Ended (6), plus a *Muted* boolean and a *Title* text property. The status is a nested *Pill* instance (or hidden).
 
 ## Photo carousel
 
@@ -433,7 +434,7 @@ How forms behave, for every component below:
 - **States:** arrows and thumbnails have hover, active and focus (ring). **Current** thumbnail: a strong border and `aria-current`. At either end the arrow is **inactive** (`aria-disabled="true"`, faded) but stays focusable, so focus never vanishes. Loading: Milestone 5 decides (real photos replace the placeholders then); no spinner. Error and empty: N/A (an item always has at least one photo, SPEC §7).
 - **Accessibility:** no autoplay and no swipe-only control. Every change is announced through the count. Arrows and thumbnails are 44px tall. Each photo has alt text from the submitter's title ("Photo 2 of 5" until real photos land).
 - **Do:** keep the cover photo first. **Don't:** add autoplay or arrow-key shortcuts on the page.
-- **Figma:** *Photo carousel* · Photos = Single / Multiple × Position = First / Middle / Last (4; Single has no position). *Carousel thumbnail* · State = Default / Hover / Focus / Current (4).
+- **Figma:** *Photo carousel* · Photos = Single with Position = Only, plus Photos = Multiple × Position = First / Middle / Last (4 variants). *Carousel thumbnail* · State = Default / Hover / Focus / Current (4).
 
 ## Table
 
@@ -444,4 +445,4 @@ How forms behave, for every component below:
 - **States:** rows have a hover fill. Row actions are *Button* Small (`--size-target-sm`, allowed in dense rows by SPEC §6) with the row's name in their label (visible "View bids", read as "View bids by Maya Okafor"). **Empty:** the message row, and the headers wrap so the message stays in view. Loading and error: Milestone 3 (an error uses a danger banner above the table). Disabled: N/A.
 - **Accessibility:** the caption names the table and the region. Column and row headers are real `th` elements. No sorting until a screen needs it.
 - **Do:** keep row actions to one or two. **Don't:** hide columns on small screens; scroll instead.
-- **Figma:** *Table* · Rows = Filled / Empty (2), built from *Table row* · Kind = Header / Body × State = Default / Hover (3; Header has Default only) and *Table cell* · Align = Start / End × Content = Text / Actions (4).
+- **Figma:** *Table* · Rows = Filled / Empty (2), built from *Table row* · State = Header / Default / Hover (3) and *Table cell* · Kind = Header / Text / Number / Link (4), with a *Value* text property.

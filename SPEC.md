@@ -1,6 +1,6 @@
 # Kestrel Gives — Build Spec & Conformance Rules
 
-**Status:** v1.11 · Owner: Derek Collins · Last updated: Nov 2, 2026
+**Status:** v1.12 · Owner: Derek Collins · Last updated: Nov 2, 2026
 
 This document describes what to build and the rules every contribution must follow, whether a person or an AI agent writes it. Read it in full before writing any code. If something here conflicts with a request, stop and ask.
 
@@ -192,6 +192,7 @@ Each has a name, a one-sentence description, and an original logo. The owner sup
 - Copy that states a minimum bid or the increment ("At least $50. Bids go up by $5.") MUST be computed from the event settings and the item's current high bid, never hard-coded.
 - Bidding MUST be blocked outside the live phase.
 - The current high bidder MUST NOT bid again on that item ("You're already the high bidder").
+- No one bids on their own item; its page shows "This is your item." in place of the form (v1.12). Admins otherwise bid like anyone.
 - Placing a bid shows a confirmation dialog with the amount and item.
 - **Simultaneous bids:** each bid locks the item's row, checks it against the current high bid, and saves it in one transaction. The first saved wins. The other is rejected with the new minimum ("Someone just bid $55. The minimum is now $60."). Timestamps come from the database, never the browser.
 - Bidders cannot retract bids. **Admins can remove a bid**, and the high bid recalculates.
@@ -202,6 +203,7 @@ Each has a name, a one-sentence description, and an original logo. The owner sup
 ### 7.5 Buying (instant sale)
 - Buying MUST be blocked outside the live phase.
 - Each purchase buys one unit, behind a confirmation dialog. People MAY buy again while stock lasts. No per-person limit.
+- No one buys their own item; its page shows "This is your item." in place of the button (v1.12). Admins otherwise buy like anyone.
 - Inventory MUST NOT go below zero, even with simultaneous purchases. Use a transaction with a row lock.
 
 ### 7.6 Donation proof and statuses

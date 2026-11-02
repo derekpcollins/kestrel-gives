@@ -1,6 +1,7 @@
 // Shared bits for Vercel Functions: JSON responses that are never cached, and a database
 // pool per request (Neon's serverless Pool over WebSocket; ended when the request is done).
 import { Pool } from "@neondatabase/serverless";
+import { isJsonRequest } from "../demo/requests.ts";
 
 export const NO_STORE = { "Cache-Control": "no-store" } as const;
 
@@ -8,8 +9,19 @@ export function json(body: unknown, status = 200, headers: Record<string, string
   return Response.json(body, { status, headers: { ...NO_STORE, ...headers } });
 }
 
-export function problem(status: number, error: string, headers: Record<string, string> = {}): Response {
-  return json({ ok: false, error }, status, headers);
+/** An error answer. `details` adds fields the page can act on (a refusal code, a new minimum). */
+export function problem(status: number, error: string, headers: Record<string, string> = {}, details: Record<string, unknown> = {}): Response {
+  return json({ ...details, ok: false, error }, status, headers);
+}
+
+/** Reads a JSON request body, or answers 415 or 400. */
+export async function readJson(request: Request): Promise<{ body: unknown } | { response: Response }> {
+  if (!isJsonRequest(request.headers.get("content-type"))) return { response: problem(415, "Send JSON (Content-Type: application/json).") };
+  try {
+    return { body: await request.json() };
+  } catch {
+    return { response: problem(400, "The request body isn't valid JSON.") };
+  }
 }
 
 /** Cookies get Secure on https (deployed), not on plain http (vercel dev on localhost). */

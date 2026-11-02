@@ -545,3 +545,18 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 
 **Milestone 3 ended:** 2026-11-02 15:00 EST · about 1 hour 45 minutes from the plan review.
 
+
+## Milestone 4: Browsing and buying
+
+**Milestone 4 started:** 2026-11-02 16:29 EST, when the owner gave the go to start 4A without waiting for the cron check (that check is still scheduled for 2026-11-03 04:12 EST and will be logged separately).
+
+### 2026-11-02 — Plan approved; Stage 4A: rules, data and API (16:29–16:52 EST)
+- **Owner stepped in:** approved the plan and answered its four questions: no bidding on or buying your own item ("This is your item."); `/items/12` URLs; price sorted low to high only; the bid field starts at the minimum. Added three things: one unit per purchase, live-region announcements (with the 30-second refresh silent unless the viewer's own status changes), and `inputmode="numeric"`. Changed the order: start 4A now rather than after the cron check. Also sent Figma-line updates for DESIGN-SYSTEM.md (carousel, thumbnail, table, item tile, demo bar, 103 variables), folded in as docs only.
+- **Built:**
+  - `src/components/sale-rules.ts`: the shared rules for the minimum bid, its hint, the high-bidder and own-item blocks, phases, cancelled items, whole dollars, lost races and sold out. The API and (in 4D) the page both use it.
+  - `lib/data/items.ts` (browse lists with three sorts; item detail with photos and public bid history) and `lib/data/sales.ts` (`placeBidIn` and `buyIn`: lock the item row, read `clock_timestamp()` after the lock, check the rules, write; a purchase re-checks the buyer's proof).
+  - `api/items.ts`, `api/bids.ts` and `api/purchases.ts`: 7 of 12 functions. DECISIONS #86–#88; SPEC v1.12 adds the own-item rule to §7.4 and §7.5.
+- **Tests:** 20 new unit tests (rules and input parsing; four business-rule todos retired) and 10 new database tests. Those include two bids at once (exactly one saved, the other told "Someone just bid $40. The minimum is now $45.") and five buyers for the last two units (two succeed, stock stops at 0, 12 purchases in all). 146 unit and 59 database tests pass; all browser checks pass; `npm audit` shows only the accepted zod advisory.
+- **Caught:** a bid's time is now `clock_timestamp()`, not `now()`. `now()` is when the transaction *started*, so a bid that waited on the row lock would have been stamped before the bid it lost to, and could have slipped in after the close.
+- **What AI did well / where it slipped:** two test failures were my own test data: Priya donated the lemon squares and Dev the hot sauce, so the own-item rule refused them, as it should.
+- **Blocked:** pushing `m4-browse-buy` to GitHub for the Preview was refused by Claude Code's permission check. Waiting for the owner.
