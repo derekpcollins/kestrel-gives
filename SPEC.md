@@ -1,6 +1,6 @@
 # Kestrel Gives — Build Spec & Conformance Rules
 
-**Status:** v1.10 · Owner: Derek Collins · Last updated: Nov 2, 2026
+**Status:** v1.11 · Owner: Derek Collins · Last updated: Nov 2, 2026
 
 This document describes what to build and the rules every contribution must follow, whether a person or an AI agent writes it. Read it in full before writing any code. If something here conflicts with a request, stop and ask.
 
@@ -41,6 +41,7 @@ A slim bar pinned to the top of every page, in the normal page flow (it never ov
 - **Viewing as:** a select listing every seeded user with their role. The choice is stored in a cookie; the API reads it to know who is acting. Changes are announced ("Now viewing as …, admin").
 - **Jump to:** submission window / live / ending soon / ended / 30+ days after. Moves the stored event dates relative to now. "Ending soon" is live with bidding closing in under 24 hours (the threshold in section 10). (Ending soon added v1.8.) It MUST NOT fake the clock; the real time-window rules are what get exercised.
 - **Restore demo data:** resets everything to the seeded state (including email templates), behind a confirmation dialog.
+- **Shared and self-repairing** (v1.11): anyone can use Jump to and Restore demo data, and everyone sees the same data. A short global cooldown (about 10 seconds) stops repeated Restores. A daily scheduled job (Vercel cron) runs the same Restore, so the demo returns to the live phase every day; the bar says the demo is shared and resets daily. This is the only scheduled job (section 7.1).
 - Collapsible to a thin strip using `<details>`; collapsed state is remembered.
 - Exposed to assistive tech as a region labeled "Demo controls."
 - Hidden when the URL includes `?demo=off` (used for clean case-study screenshots).
@@ -159,7 +160,7 @@ Each year is one **event** record ("Kestrel Gives 2026," etc.) with its own sett
 2. **Live** (bidding opens → bidding closes): bidding and buying are open. Submissions are closed to employees. Admins MAY still add items.
 3. **Ended** (after bidding closes): winners are determined automatically and the proof deadline starts.
 
-Winners are finalized on the first request after the close time, exactly once, even if two requests arrive together. No scheduled jobs.
+Winners are finalized on the first request after the close time, exactly once, even if two requests arrive together. App rules MUST NOT rely on scheduled jobs (v1.11: the demo's daily Restore in section 3.1 is the one scheduled job, and it is demo tooling, not an app rule).
 
 **Event time zone:** each event stores an IANA time zone, default **America/New_York**. (The original defaulted to Pacific because the event was held in San Francisco.) Admins enter dates in the event's zone. All times MUST be stored in UTC and shown in the viewer's local time zone, with the zone labeled.
 

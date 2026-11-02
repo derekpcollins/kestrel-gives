@@ -453,3 +453,28 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 - **Hard / caught:** the error appeared only on Vercel. Reading the builder's source (via the web, not the globally installed CLI, which is outside this folder) showed it compiles through a temporary tsconfig in the system temp folder, so TypeScript looked for type definitions from there. Mirroring that locally reproduced the exact message; the check was confirmed to fail without the fix.
 - **Production run (2026-11-02 13:14 EST):** owner approved; pushed `a5ecc63` and `4f6ed4d`. Build log: `check-seed-base: ok.`, `✓ 1 Vercel Function(s) compile cleanly the way Vercel builds them.`, unit tests 95 pass / 0 fail, deploy-db confirmed `main`, `applied 003_drop_app_meta.sql`, `1 applied.`, `an event exists; not seeding.` No error lines. `/api/health` → `{"ok":true,"db":"main","schema":"003","seedPhotos":true}` on `kestrel-gives-derek-p-collins-projects.vercel.app` (via `vercel curl`) and `kestrel-gives.vercel.app`. Milestone 2 is closed apart from the #68 details.
 
+
+---
+
+## Milestone 3: App shell and Home
+
+**Started:** 2026-11-02, right after Milestone 2 closed (13:15 EST), with the plan review. Working on branch `m3-app-shell`; Preview deploys use `dev`, and `main` gets 3B–3D together after the final checkpoint.
+
+### 2026-11-02 — Milestone 3 plan: owner review
+- **Owner stepped in:** approved the four stages (3A event state and demo API, 3B app shell, 3C Home, 3D land the live demo). Answers: backward jumps clear winners and re-check proofs; "30+ days after" means closed 31 days ago; anyone can Jump or Restore, with a global ~10-second Restore cooldown and a **daily scheduled restore**; placeholder pages say "built in a later milestone of this demo"; screenshots at each checkpoint.
+- **SPEC conflict caught and asked, not resolved:** SPEC §7.1 said "No scheduled jobs." The owner chose to allow the demo cron only: SPEC v1.11 (§3.1, §7.1), DECISIONS #80 narrows #11b. Schedule `0 8 * * *` UTC. The owner approved creating `CRON_SECRET`.
+- **Researched:** Hobby cron and function limits, recorded in #80 and #81 (once a day, within the hour, no retries, possible duplicates; 12 functions per deployment without a framework).
+
+### 2026-11-02 — Stage 3A: event state and the demo API (to 13:35 EST; awaiting checkpoint)
+- **Built:**
+  - `lib/data/event.ts`: pure `phaseOf`, `proofDeadlineOf`, and `currentEventIn`, which finalizes winners on the first read after close.
+  - `lib/demo/`: `jump.ts` (`jumpDates`, `jumpIn`), `restore.ts` (`restoreIn`, `tryRestore`, transaction-level lock, cooldown, cron dedupe), `viewer.ts` (the `kg_viewer` cookie) and `requests.ts` (body parsing, JSON content type, constant-time cron auth).
+  - Functions `GET /api/app`, `POST /api/demo` and `GET /api/cron-restore` (4 of 12), plus the cron in `vercel.json`.
+  - `migrations/004_demo_restores.sql`, applied to `dev`. The schema lock key moved to `lib/data/locks.ts` so functions don't import scripts.
+  - DECISIONS #80, #81, and the Hobby rollback line in #79.
+- **Tests:** 20 new unit tests (115 pass, 9 todo) and 8 new database tests (42 pass). These cover each jump landing in its phase by the real clock, winners cleared and an approved proof reopened on a backward jump, the cooldown and cron dedupe, two concurrent reads after close finalizing exactly once (committed, then dev reseeded), and the lock refusing a second Jump or Restore. A smoke run of the three handlers against `dev` over the pooled URL returned the expected 200 / 404 / 415 / 429 / 401 responses. `npm run check` is green; `npm audit` shows only the accepted zod advisory (#27).
+- **Hard / caught:**
+  - Session advisory locks don't survive Neon's pooled connection in transaction mode, so Jump and Restore take `pg_try_advisory_xact_lock` on the same key deploy-db uses. Restore's core (`restoreIn`) takes no lock, because the deploy step (3D) already holds the session lock on another connection.
+  - The first version of `currentEventIn` returned stale data to the request that lost the finalize race. It now re-reads after trying, and the concurrency test checks that both requests see the same finalized time.
+- **Secret:** `CRON_SECRET` is in Production, Secret type. It was generated with `openssl rand` and piped straight into `vercel env add`, never printed or saved. A mistaken attempt to add a throwaway probe variable to learn the CLI's prompts was blocked by the permission check before it ran, so nothing extra was created. Lesson: read `--help` instead.
+- **Speed note:** a full reseed takes about 6–7 seconds from this laptop (about 100 sequential inserts over WebSocket). From Vercel's region next to Neon it should be far faster; I'll measure it on the Preview.

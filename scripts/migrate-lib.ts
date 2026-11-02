@@ -9,8 +9,9 @@ import { endpointOf } from "../lib/db-endpoint.ts";
 export const MIGRATIONS_DIR = new URL("../migrations/", import.meta.url);
 const FILE_NAME = /^\d{3}_[a-z0-9_]+\.sql$/;
 
-/** One key for every process that changes the schema or seeds: migrate, deploy-db, seed. */
-export const SCHEMA_LOCK_KEY = 74_012_026;
+/** One key for every process that changes the schema or seeds: migrate, deploy-db, seed, and the demo's Jump and Restore (lib/data/locks.ts). */
+import { SCHEMA_LOCK_KEY } from "../lib/data/locks.ts";
+export { SCHEMA_LOCK_KEY };
 
 // ---- Pure helpers (unit-tested in tests/unit/migrate-lib.test.ts) ----
 
