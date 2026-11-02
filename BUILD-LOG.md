@@ -535,3 +535,13 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   5. the placeholder logo redrawn as just "Logo", with `alt="Placeholder logo"`.
 - **Caught:** top-aligning the labels exposed a second offset. A `<legend>` isn't a grid item, so the fieldset's gap never reached it, and the jump buttons sat 8px above the select. Fixed with a matching margin; the test now checks that both the labels and the controls line up.
 - `npm run check` green (130 unit, 49 database, all browser checks); `npm audit` shows only the accepted zod advisory.
+
+### 2026-11-02 — Milestone 3 production run (14:49–15:00 EST)
+- **Pushed:** `main` fast-forwarded `4f6ed4d..7b13109` (3A–3D, the review fixes, BUILD-LOG and DECISIONS #80–#85). Deployment `kestrel-gives-5h4zj8w5u`, production, Ready.
+- **Build log:** `check-seed-base: ok.`, `✓ 4 Vercel Function(s) compile cleanly the way Vercel builds them.`, unit tests 130 pass / 0 fail, deploy-db confirmed `main`, `applied 004_demo_restores.sql`, `applied 005_deploy_steps.sql`, `2 applied.`, `an event exists; not seeding.`, `step m3-land-live-demo: restored the demo data (bidding live).` No errors; only Vercel's known `npm warn Unknown env config "cache-dir"`.
+- **Health:** `{"ok":true,"db":"main","schema":"005","seedPhotos":true}` on `kestrel-gives-derek-p-collins-projects.vercel.app` (via `vercel curl`) and `kestrel-gives.vercel.app`.
+- **Live Home** (read-only look, no demo actions): bidding open, closing Wednesday, November 4 at 2:00 PM EST; three charities; no page errors or failed requests at 390 and 1280, light and dark. The demo bar starts collapsed at 390.
+- **Cron:** `vercel crons ls` lists `/api/cron-restore` at `0 8 * * *`; the first run is due 2026-11-03 between 08:00 and 08:59 UTC.
+
+**Milestone 3 ended:** 2026-11-02 15:00 EST · about 1 hour 45 minutes from the plan review.
+
