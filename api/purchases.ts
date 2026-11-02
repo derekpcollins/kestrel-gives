@@ -29,7 +29,7 @@ export async function POST(request: Request): Promise<Response> {
       }
       console.log(`purchases: bought one of item ${buy.itemId}`);
       const answer = await itemAnswerIn(tx, buy.itemId, viewer.id);
-      const body: ActionAnswer = { ...answer!, message: `You bought one for ${formatDollars(outcome.priceCents / 100)}.` };
+      const body: ActionAnswer = { ...answer!, message: `You bought the ${answer!.item.title} for ${formatDollars(outcome.priceCents / 100)}.` };
       return json(body, 201);
     }),
   );
