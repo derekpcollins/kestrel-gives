@@ -6,6 +6,16 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 
 ---
 
+## To-do
+
+- **Milestone 3: land the live demo in the intended phase (added 2026-11-02, owner).** `main` was seeded once, on the 2C/2D push (2026-11-02), with dates relative to that moment, so bidding there closes about Nov 4 and the dates stay frozen. By the time the pages first read the database, `main` will be past close, and the first look at the live site would be stuck in "ended". **Proposal (to decide at the Milestone 3 plan):** the deploy that switches the pages to the database runs Restore demo data on `main` once, inside deploy-db under the existing advisory lock, as a one-shot data step recorded by name (like a migration) so it never runs twice. It reuses `seedIn`, writes rows only, and makes no Blob calls (#77). After that, Jump to and Restore demo data in the demo bar keep the phase in reach for visitors. Alternatives: rely on Jump to and Restore only (simplest, but the first impression is "ended" until someone clicks); shift all dates at read time (seed stays fresh forever, but every query and test has to know the offset); a scheduled daily restore (always fresh, but wipes visitors' demo changes on a timer and adds a cron). Recommended: the one-shot restore, plus the demo bar.
+- **Preview health:** the next time a preview deploys in normal work, check that `/api/health` shows `"db":"dev"` and `"seedPhotos":true`, and note it here (#34/#35, #77).
+- **Neon manual snapshot of `main`** after the 2C/2D push; record it in DECISIONS (#68).
+- **Drop `app_meta`** in its own migration, with its own checkpoint (#74).
+- **Milestone 6:** whether an admin-cancelled purchase returns the unit to stock (owner's lean: yes while the sale is open, not after close; #74).
+
+---
+
 ## Milestone 0: Local infrastructure
 
 **Started:** 2026-10-31 12:07 EDT
