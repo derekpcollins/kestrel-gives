@@ -10,9 +10,9 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 
 - **Milestone 3: land the live demo in the intended phase (added 2026-11-02, owner).** `main` was seeded once, on the 2C/2D push (2026-11-02), with dates relative to that moment, so bidding there closes about Nov 4 and the dates stay frozen. By the time the pages first read the database, `main` will be past close, and the first look at the live site would be stuck in "ended". **Proposal (to decide at the Milestone 3 plan):** the deploy that switches the pages to the database runs Restore demo data on `main` once, inside deploy-db under the existing advisory lock, as a one-shot data step recorded by name (like a migration) so it never runs twice. It reuses `seedIn`, writes rows only, and makes no Blob calls (#77). After that, Jump to and Restore demo data in the demo bar keep the phase in reach for visitors. Alternatives: rely on Jump to and Restore only (simplest, but the first impression is "ended" until someone clicks); shift all dates at read time (seed stays fresh forever, but every query and test has to know the offset); a scheduled daily restore (always fresh, but wipes visitors' demo changes on a timer and adds a cron). Recommended: the one-shot restore, plus the demo bar.
 - **Preview health:** the next time a preview deploys in normal work, check that `/api/health` shows `"db":"dev"` and `"seedPhotos":true`, and note it here (#34/#35, #77).
-- **Neon manual snapshot of `main`** after the 2C/2D push; record it in DECISIONS (#68).
-- **Drop `app_meta`** in its own migration, with its own checkpoint (#74). *In progress: migration 003, awaiting checkpoint (#79).*
-- **`error TS2688` in Vercel's function compile:** *fixed, awaiting checkpoint (#79).*
+- **DECISIONS #68 details from the owner:** role audit on `dev` and `main-seeded-2026-11-02` (`main` shows only `neondb_owner`), and the restore branch's creation time.
+- ~~**Drop `app_meta`**~~ done: migration 003, live 2026-11-02 (#79).
+- ~~**`error TS2688` in Vercel's function compile**~~ fixed, live 2026-11-02 (#79).
 - **Milestone 6:** whether an admin-cancelled purchase returns the unit to stock (owner's lean: yes while the sale is open, not after close; #74).
 
 ---
@@ -345,7 +345,7 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 ## Milestone 2: Data
 
 **Started:** 2026-11-01 16:37 EST (first 2A file; the owner's go on the plan came a few minutes earlier)
-**Ended:** —
+**Ended:** 2026-11-02 13:15 EST (2E live), apart from DECISIONS #68 details the owner is sending (role audit on `dev` and the restore branch, the restore branch's creation time) · about 20.5 hours of calendar time across two days
 
 ### 2026-11-01 — Plan review
 - **Owner stepped in:**
@@ -451,4 +451,5 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   - `"typeRoots"` in `tsconfig.json`, and `scripts/check-vercel-ts.ts`, which compiles the functions exactly the way Vercel's builder does; it now runs in `check:types`.
   - Recorded in DECISIONS #79.
 - **Hard / caught:** the error appeared only on Vercel. Reading the builder's source (via the web, not the globally installed CLI, which is outside this folder) showed it compiles through a temporary tsconfig in the system temp folder, so TypeScript looked for type definitions from there. Mirroring that locally reproduced the exact message; the check was confirmed to fail without the fix.
+- **Production run (2026-11-02 13:14 EST):** owner approved; pushed `a5ecc63` and `4f6ed4d`. Build log: `check-seed-base: ok.`, `✓ 1 Vercel Function(s) compile cleanly the way Vercel builds them.`, unit tests 95 pass / 0 fail, deploy-db confirmed `main`, `applied 003_drop_app_meta.sql`, `1 applied.`, `an event exists; not seeding.` No error lines. `/api/health` → `{"ok":true,"db":"main","schema":"003","seedPhotos":true}` on `kestrel-gives-derek-p-collins-projects.vercel.app` (via `vercel curl`) and `kestrel-gives.vercel.app`. Milestone 2 is closed apart from the #68 details.
 
