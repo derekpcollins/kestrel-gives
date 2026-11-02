@@ -131,7 +131,7 @@ describe("seed", () => {
     await seedIn(db, new Date());
     const live = await tileWords("Jules", "live");
     const statuses = [...live.values()].map((w) => w.status);
-    assert.ok([...live.values()].some((w) => w.detail === "No bids yet"), "no bids yet");
+    assert.ok([...live.values()].some((w) => w.detail === "Starting bid · No bids yet"), "no bids yet");
     assert.ok(statuses.includes("Outbid"), "the current viewer outbid");
     assert.ok(statuses.includes("You're winning"), "the current viewer winning");
     assert.ok(statuses.includes("Sold out"), "sold out");

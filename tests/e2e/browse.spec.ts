@@ -67,3 +67,18 @@ test("Viewing as someone else redraws the tiles for them without announcing anyt
   await page.getByLabel("Viewing as").selectOption({ label: "Jules Ferreira (employee)" });
   await expect(page.locator(".demo-bar__who")).toContainText("Jules Ferreira");
 });
+
+test("Tiles in a row share one height, with the amount just under the title", async ({ page }) => {
+  await page.goto("/silent-auction");
+  await loaded(page);
+  const boxes = await grid(page).locator(".item-tile").evaluateAll((tiles) =>
+    tiles.map((t) => { const r = t.getBoundingClientRect(); return { top: Math.round(r.top), height: Math.round(r.height) }; }));
+  const rows = new Map<number, number[]>();
+  for (const b of boxes) rows.set(b.top, [...(rows.get(b.top) ?? []), b.height]);
+  expect(rows.size).toBeGreaterThan(1);
+  for (const heights of rows.values()) expect(new Set(heights).size).toBe(1);
+  // Only the number takes the amount style; the label is on the detail line.
+  const cabin = grid(page).locator(".item-tile").filter({ hasText: "Lakeside Cabin Weekend" });
+  await expect(cabin.locator(".item-tile__amount")).toHaveText("$240");
+  await expect(cabin.locator(".item-tile__detail")).toHaveText(/^(Top|Winning) bid · 6 bids$/);
+});

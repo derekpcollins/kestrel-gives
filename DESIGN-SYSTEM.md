@@ -429,11 +429,13 @@ How forms behave, for every component below:
 
 - **Markup:** `ul.item-grid` (wraps at `--size-tile-min`, no breakpoints) of `li` > `.card.card--link.item-tile` with `.card__media` (photo, and the status pill `.pill.item-tile__status` over it), `h3` > the title link, `.item-tile__amount` and `.item-tile__detail`. Built by `renderItemTile()` in `src/components/item-tile.ts`.
 - **Words come from data:** `tileText()` in `src/components/item-tile-rules.ts` computes the amount line and the one status from the item, the viewer and the phase; nothing on a tile is typed in. Unit tests: `tests/unit/item-tile-rules.test.ts`.
-  - Silent auction: "Starts at $40 / No bids yet", "Top bid $240 / 6 bids"; after close "Winning bid $310 / 9 bids" or "Starting bid $40 / No bids".
-  - Instant sale: "$20 / 2 left"; "12 available" during submissions; "None left".
+  - Only the number takes the amount style (`.item-tile__amount`, "$240"); its label goes on the detail line.
+  - Silent auction: "$40 / Starting bid · No bids yet", "$240 / Top bid · 6 bids"; after close "$310 / Winning bid · 9 bids" or "$40 / Starting bid · No bids".
+  - Instant sale: "$20 / 2 left"; "12 available" during submissions; "None left"; after close "Sale ended" for unsold stock (sold out stays "None left" with the Sold out pill).
 - **Status (one, most important first):** Cancelled (danger) › after close: You won (success), Ended, Sold out › during submissions: "Opens Nov 17" › live silent auction: You're winning (success), Outbid (danger) › live instant sale: Sold out, "2 left" (warning, at 3 or fewer) › Ending soon (warning, within 24 hours of close). No status if none applies. Both thresholds live in `src/components/thresholds.ts` (SPEC §10, DECISIONS #61).
 - **States:** the card link's default, hover (lift), active and focus (ring). **Muted** (`.item-tile--muted`, ended and cancelled): the photo fades and the amount turns muted; the pill keeps full contrast. **Cancelled** appears only in Your Items, never in browse grids. Disabled: N/A (a tile always opens its item). Loading: Milestone 3 decides whether grids need skeletons. Empty: the grid's *Empty state*, not the tile. Error: N/A.
 - **Accessibility:** the whole tile is one link, named by the title with the status appended as visually hidden text ("Sourdough starter and a loaf a month, Outbid"); the pill itself is `aria-hidden` so it isn't read twice. Status isn't shown by color alone: the pill has words.
+- **Layout:** tiles in a row stretch to the tallest one, with their content top-aligned, so a two-line title doesn't leave a ragged row.
 - **Do:** keep titles to two lines in the design; long ones wrap. **Don't:** show more than one status, or put buttons inside the tile.
 - **Figma:** *Item tile* · Type = Auction / Instant × Phase = Submission / Live / Ended (6), plus a *Muted* boolean and a *Title* text property. The status is a nested *Pill* instance (or hidden).
 

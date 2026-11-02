@@ -37,8 +37,8 @@ export interface TileContext {
 }
 
 export interface TileText {
-  amount: string; // "Top bid $240"
-  detail: string; // "6 bids"
+  amount: string; // "$240"
+  detail: string; // "Top bid · 6 bids"
   status?: { label: string; tone: Tone };
 }
 
@@ -46,18 +46,22 @@ export function tileText(item: TileItem, ctx: TileContext): TileText {
   return { ...amountLine(item, ctx.phase), status: tileStatus(item, ctx) };
 }
 
+/** Only the number takes the amount style; its label goes on the detail line ("Top bid · 2 bids"). */
 function amountLine(item: TileItem, phase: Phase): Pick<TileText, "amount" | "detail"> {
   if (item.type === "auction") {
     const bids = item.bidCount ?? 0;
     if (item.topBid === undefined || bids === 0) {
-      const start = formatDollars(item.startingBid ?? 0);
-      return phase === "ended" ? { amount: `Starting bid ${start}`, detail: "No bids" } : { amount: `Starts at ${start}`, detail: "No bids yet" };
+      return { amount: formatDollars(item.startingBid ?? 0), detail: phase === "ended" ? "Starting bid · No bids" : "Starting bid · No bids yet" };
     }
     const label = phase === "ended" ? "Winning bid" : "Top bid";
-    return { amount: `${label} ${formatDollars(item.topBid)}`, detail: bids === 1 ? "1 bid" : `${bids} bids` };
+    return { amount: formatDollars(item.topBid), detail: `${label} · ${bids === 1 ? "1 bid" : `${bids} bids`}` };
   }
   const remaining = item.remaining ?? 0;
-  const detail = remaining === 0 ? "None left" : phase === "submission" ? `${remaining} available` : `${remaining} left`;
+  const detail =
+    remaining === 0 ? "None left"
+    : phase === "ended" ? "Sale ended"
+    : phase === "submission" ? `${remaining} available`
+    : `${remaining} left`;
   return { amount: formatDollars(item.price ?? 0), detail };
 }
 

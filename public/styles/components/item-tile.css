@@ -1,6 +1,9 @@
 /* Item tile (DESIGN-SYSTEM.md; SPEC §8): one item in a browse grid or Your Items. Built on
    .card.card--link; the amount line and status come from src/components/item-tile-rules.ts. */
 .item-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--size-tile-min)), 1fr)); gap: var(--space-4); }
+/* Each li fills its grid row, and the card fills the li, so a row of tiles shares one height;
+   content stays top-aligned (.card__body grows, its rows start at the top). */
+.item-grid > li { display: grid; }
 .item-tile .card__media { position: relative; }
 .item-tile__status { position: absolute; top: var(--space-2); left: var(--space-2); box-shadow: var(--shadow-sm); }
 .item-tile__amount { font: var(--type-amount); color: var(--color-price); font-variant-numeric: var(--figures-amount); }

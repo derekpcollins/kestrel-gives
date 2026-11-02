@@ -302,8 +302,10 @@ test("item tiles: words come from the rules; cancelled only in Your Items", asyn
   await page.goto("/design-system/#item-tiles");
   const live = page.locator('[data-tiles="live-auction"]').first();
   await expect(live.getByRole("link", { name: "Lakeside Cabin Weekend" })).toBeVisible();
-  await expect(live).toContainText("Top bid $240");
-  await expect(live).toContainText("Starts at $40");
+  const cabin = live.locator(".item-tile").filter({ hasText: "Lakeside Cabin Weekend" });
+  await expect(cabin.locator(".item-tile__amount")).toHaveText("$240"); // only the number takes the amount style
+  await expect(cabin.locator(".item-tile__detail")).toHaveText(/^Top bid · \d+ bids$/);
+  await expect(live).toContainText("Starting bid · No bids yet");
   // Chrome's name computation puts a space before the visually hidden ", Status"; speech is the same.
   await expect(live.getByRole("link", { name: /^Sourdough starter and a loaf a month ?, Outbid$/ })).toBeVisible();
   await expect(live.getByRole("link", { name: /^Bike tune-up at your desk ?, Ending soon$/ })).toBeVisible();

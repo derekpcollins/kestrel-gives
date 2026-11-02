@@ -11,22 +11,28 @@ const instant = (over: Partial<TileItem> = {}): TileItem => ({ type: "instant", 
 
 describe("item tile: amount line comes from the data", () => {
   test("auction with no bids shows its own starting bid", () => {
-    assert.deepEqual(tileText(auction({ startingBid: 35 }), ctx("live")), { amount: "Starts at $35", detail: "No bids yet", status: undefined });
+    assert.deepEqual(tileText(auction({ startingBid: 35 }), ctx("live")), { amount: "$35", detail: "Starting bid · No bids yet", status: undefined });
   });
   test("auction with bids shows the top bid and the count", () => {
     const t = tileText(auction({ topBid: 240, bidCount: 6 }), ctx("live"));
-    assert.equal(t.amount, "Top bid $240");
-    assert.equal(t.detail, "6 bids");
-    assert.equal(tileText(auction({ topBid: 30, bidCount: 1 }), ctx("live")).detail, "1 bid");
+    assert.equal(t.amount, "$240");
+    assert.equal(t.detail, "Top bid · 6 bids");
+    assert.equal(tileText(auction({ topBid: 30, bidCount: 1 }), ctx("live")).detail, "Top bid · 1 bid");
   });
   test("ended auctions say winning bid, or no bids", () => {
-    assert.equal(tileText(auction({ topBid: 1200, bidCount: 9 }), ctx("ended")).amount, "Winning bid $1,200");
-    assert.deepEqual([tileText(auction(), ctx("ended")).amount, tileText(auction(), ctx("ended")).detail], ["Starting bid $25", "No bids"]);
+    assert.deepEqual([tileText(auction({ topBid: 1200, bidCount: 9 }), ctx("ended")).amount, tileText(auction({ topBid: 1200, bidCount: 9 }), ctx("ended")).detail], ["$1,200", "Winning bid · 9 bids"]);
+    assert.deepEqual([tileText(auction(), ctx("ended")).amount, tileText(auction(), ctx("ended")).detail], ["$25", "Starting bid · No bids"]);
   });
   test("instant sale shows price and stock", () => {
     assert.deepEqual([tileText(instant(), ctx("live")).amount, tileText(instant(), ctx("live")).detail], ["$40", "8 left"]);
     assert.equal(tileText(instant({ remaining: 10 }), ctx("submission")).detail, "10 available");
     assert.equal(tileText(instant({ remaining: 0 }), ctx("live")).detail, "None left");
+  });
+  test("ended instant sale: unsold stock says Sale ended, not N left; sold out stays sold out", () => {
+    const unsold = tileText(instant({ remaining: 7 }), ctx("ended"));
+    assert.deepEqual([unsold.amount, unsold.detail, unsold.status?.label], ["$40", "Sale ended", "Ended"]);
+    const soldOut = tileText(instant({ remaining: 0 }), ctx("ended"));
+    assert.deepEqual([soldOut.detail, soldOut.status?.label], ["None left", "Sold out"]);
   });
 });
 
