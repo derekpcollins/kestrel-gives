@@ -12,6 +12,7 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 - **Preview health:** the next time a preview deploys in normal work, check that `/api/health` shows `"db":"dev"` and `"seedPhotos":true`, and note it here (#34/#35, #77).
 - **Neon manual snapshot of `main`** after the 2C/2D push; record it in DECISIONS (#68).
 - **Drop `app_meta`** in its own migration, with its own checkpoint (#74).
+- **`error TS2688: Cannot find type definition file for 'node'`** appears in Vercel's own TypeScript step for the functions, after our build finishes. It's in the 2B deploy log too and doesn't fail the deploy. Look into it (likely the `types` setting in `tsconfig.json` as Vercel's function compiler sees it) before it hides a real error.
 - **Milestone 6:** whether an admin-cancelled purchase returns the unit to stock (owner's lean: yes while the sale is open, not after close; #74).
 
 ---
@@ -425,3 +426,4 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   - **Pixabay's API returned 403 to Python's default user agent**; a descriptive User-Agent fixed it. Its undocumented `user:` search found each photographer's other shots for the multi-photo sets.
 - **AI did well:** checked the license text before downloading, spotted the shared-database problem before writing seed URLs, and didn't trust an encoder setting it could measure.
 - **Upload and variable (2026-11-02):** the owner ran `npm run seed:photos:upload` with the token set for that one command: 26 photos under `seed/`, all publicly readable. I checked the saved base URL without printing it (valid; a sample photo serves `image/jpeg`, the same size as the local file) and piped it into `vercel env add SEED_PHOTOS_BASE_URL` for Production and Preview (stored as Secret, hidden).
+- **Production run (2026-11-02 12:35 EST):** owner approved 2C + 2D; pushed `9a27f63`..`30f2b8e`. Build log: `check-seed-base: ok.`; unit tests 95 pass / 0 fail; `deploy-db: production build; DATABASE_URL_UNPOOLED confirmed as the main branch (direct connection).`, `Up to date.`, `deploy-db: no event found; seeded the demo.` `/api/health` → `{"ok":true,"db":"main","schema":"002","seedPhotos":true}`. Stages 2C and 2D are complete; `main` is seeded with real photos. Bidding on `main` closes about Nov 4 (see the to-do list).
