@@ -438,3 +438,8 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   - `/api/health` returns `{"ok":true,"db":"main","schema":"002","seedPhotos":true}` on `kestrel-gives-derek-p-collins-projects.vercel.app` (via `vercel curl`, because Vercel Authentication protects it) and on the public alias. The previous deployment now reports `"Database unreachable."`, which shows the old password is dead.
   - Downtime: only database-backed endpoints, from the reset until the redeploy went live, a few minutes. The pages don't read the database yet.
 - **Step 2, `main-seeded-2026-11-02` (done):** the owner reset `neondb_owner` on the restore branch in the Neon console. Nothing connects to it, so nothing else changed; the leaked password no longer opens it, so the restore point can't be damaged with it.
+- **Step 3, `dev` (done):**
+  - The owner reset `neondb_owner` on `dev` and pasted the new pooled URL straight from Neon into Vercel's `DATABASE_URL` for Development and Preview (Preview kept Secret), never through the chat.
+  - `vercel env pull .env.local` rewrote the file (same four names, mode 600) with nothing printed. `npm run db:check` confirmed it points at `dev`, and `npm run test:db` passed 33 of 33 against `dev` with the new password.
+  - The pull also appended `.env*` to `.gitignore`. That's redundant with the existing `.env` and `.env.*` rules, so I reverted it.
+  - Existing preview deployments still have the old `dev` password and fail until the next preview deploy.
