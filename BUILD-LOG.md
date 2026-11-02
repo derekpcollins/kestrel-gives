@@ -504,7 +504,7 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   The branch ID stays out of DECISIONS.
 
 
-### 2026-11-02 — Stage 3C: Home (awaiting checkpoint)
+### 2026-11-02 — Stage 3C: Home (to 14:20 EST; awaiting checkpoint)
 - **Built:**
   - Home has a hero (the lockup as the h1, the event's name from the data, a lead and a one-line outline), How to participate as a four-step ordered list, and Where donations go ("split equally among these three charities" plus the three charities from `/api/app`).
   - The proof window in step 4 is computed from the event's dates.
@@ -513,3 +513,4 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 - **Hard / caught:**
   - `vercel dev` doesn't serve a folder created after it started (`public/js/pages/`); a restart fixed it.
   - The avatar test I added in the 3B fixes passed vacuously at first: a function written as a string and passed to `locator.evaluate` isn't run as a function, so both sides of the hover comparison were `undefined`. The full check caught the cursor half. Both checks now run as page expressions, and the test asserts that real styles were read.
+- **Preview (2026-11-02 14:20 EST):** deployment `kestrel-gives-h7m81h8tl`, Ready. `/api/health` → `{"ok":true,"db":"dev","schema":"004","seedPhotos":true}`; Home's script is served, and `/api/app` reports the live phase and the three charities.
