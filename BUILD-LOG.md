@@ -483,7 +483,7 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 ### 2026-11-02 — 3A checkpoint: owner review
 - **Owner stepped in:** approved 3A. Asked to keep requiring JSON on `POST /api/demo` (it also blocks cross-site form posts; kept), to confirm the `kg_viewer` flags (Secure on https, SameSite=Lax, Path=/; confirmed by unit tests and, without Secure on local http, an e2e test), and to mark the preview health check done (done). Sent the #68 details: the role audit and the restore branch's creation time, plus a new rule, never "Reset from parent" on that branch. All recorded in #68; the branch ID stays out of the repo.
 
-### 2026-11-02 — Stage 3B: the app shell (to 14:20 EST; awaiting checkpoint)
+### 2026-11-02 — Stage 3B: the app shell (to 14:00 EST; awaiting checkpoint)
 - **Built:**
   - `src/shell.ts` fills each page's slots from `/api/app`: the demo bar (`renderDemoBar`, wired to `POST /api/demo` with loading and error states, plus the "Shared demo · resets daily" note), the site header and profile menu (`site-header.ts`), and the phase banner (`phase-banner.ts`).
   - Pure rules in `phase-banner-rules.ts` and `shell-rules.ts`; the shared `AppState` type in `src/app-state.ts`.
@@ -494,3 +494,4 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   - The new e2e test caught `display: flex` on `.banner` overriding the `hidden` attribute. Fixed for every component with `[hidden] { display: none !important }` in the base layer.
   - A type-only import of the icon names pulled a DOM file into the server's type check and broke `vercel dev`'s build. The banner rules now carry their own small union.
   - My first checkpoint screenshots caught chevrons mid-rotation and swapped the open and collapsed demo bar shots (the remembered state hadn't saved yet). Re-shot with reduced motion and the collapsed state set directly.
+- **Preview (2026-11-02 14:00 EST):** deployment `kestrel-gives-nz7d04tsi`, Ready. `/api/health` → `{"ok":true,"db":"dev","schema":"004","seedPhotos":true}`; `/`, `/silent-auction`, `/admin` and `/submit` serve their pages through the clean URLs.
