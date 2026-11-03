@@ -577,3 +577,25 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 - **Tests:** 6 new unit tests and 4 new e2e tests. The e2e tests don't depend on the phase, because the shell spec jumps phases in parallel. 152 unit, 59 database and 57 browser tests pass; reflow and visual pass.
 - **Preview (17:30 EST):** `kestrel-gives-bnnsfju23`, Ready. Health is OK. Both pages and their scripts are served, the card fix is in the deployed CSS, and the browse API returns the same orders as locally (`.review/m4-4b/preview-checks.txt`).
 - **Still to check on the Preview:** the browse pages *in a browser*. Deployment protection blocks a headless browser and I won't turn it off or create a bypass secret, so the owner will look in their own logged-in browser. Everything else for 4A and 4B is checked there.
+
+### 2026-11-02/03 — 4B fixes and Stage 4C: the read-only item page (2026-11-02 17:40 – 2026-11-03 08:58 EST, with an overnight pause)
+- **Owner stepped in:** approved 4B with three fixes, all done in `662f552`:
+  - the tile amount is only the number, with its label on the detail line ("Top bid · 2 bids", "Starting bid · No bids yet");
+  - tiles in a row share one height;
+  - ended instant sale says "Sale ended", not "N left" (with a unit test).
+  The 4B screenshots were retaken. The owner then gave the go for 4C.
+- **Built:** `/items/<id>` (a `vercel.json` rewrite to `item.html`; DECISIONS #86) drawn by `src/pages/item.ts`:
+  - a back link, the title and "Donated by …";
+  - the carousel beside an amount panel. The amount, detail and pill come from the tile rules, so a page and its tile agree. The note covers each state: the computed minimum, high bidder, own item, sold out, opens when, who won, sale ended.
+  - a cancelled banner, the description, and the public bid history with the crown. Times are in the viewer's zone with the zone labeled.
+  - not-found and error states.
+  - a 30-second refresh while the tab is visible. It keeps the photo the visitor is on and announces only the viewer's own standing ("You've been outbid. The top bid is now $300."). `renderAvatar()` now builds the crown in code. DESIGN-SYSTEM.md gains an *Item page* entry.
+- **Caught:**
+  - (1) The item sections ran into each other: the content wrapper wasn't a grid, so the page's gap never reached it.
+  - (2) On phones the bid times were cut off; the bidder and time now wrap.
+  - (3) The a11y check timed out on the 404 page. Its unread error body kept the response open, so the page never went idle. Both pages now read error bodies.
+  - (4) Reflow flagged the visually hidden table caption. A `<caption>` ignores `width: 1px` and keeps a line of height, which also left a blank strip above the table. The table is now named by its visible heading instead (`aria-labelledby`).
+- **Tests:** 12 new unit tests and 5 new e2e tests. The refresh tests rewrite the API's answer in the browser with a fake clock, so they never write bids to dev while other specs run. Four item screens were added to a11y, reflow and visual. 165 unit, 59 database and 79 browser tests pass; reflow and visual pass; `npm audit` shows only the accepted zod advisory.
+- **Preview (08:57 EST):** `kestrel-gives-nwcwnadl9`, Ready. Health is OK, `/items/1` serves the item page through the rewrite, and the item API answers match local, including the 404 (`.review/m4-4c/preview-checks.txt`).
+- **Still to check on the Preview, by the owner in a logged-in browser:** the browse pages (4B) and item pages (4C) as rendered. Deployment protection blocks a headless browser.
+
