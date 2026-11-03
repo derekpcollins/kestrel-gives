@@ -53,3 +53,23 @@ export function amountCents(raw: string): number | null {
   const parsed = parseWholeDollars(raw);
   return parsed === null ? null : dollarsToCents(parsed);
 }
+
+/** The blocked state's icon: a check mark only for an approved proof (owner, 5D review). */
+export function blockedIcon(code: string): "check" | "info" {
+  return code === "approved" ? "check" : "info";
+}
+
+export interface GivingView {
+  /** "Your total: $35", or null while it's loading or couldn't load. */
+  total: string | null;
+  /** Nothing owed yet: no Upload proof button, and the line below says why. */
+  owesNothing: boolean;
+}
+
+export const OWES_NOTHING = "You don't owe anything yet. Bid or buy to have a total.";
+
+/** The giving stub's personal part, from the viewer's proof view (5D review). */
+export function givingView(proof: ProofView | null): GivingView {
+  if (!proof) return { total: null, owesNothing: false };
+  return { total: `Your total: ${dollars(proof.totalCents)}`, owesNothing: proof.blocked?.code === "nothing-owed" || proof.totalCents === 0 };
+}

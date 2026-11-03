@@ -284,7 +284,7 @@ How forms behave, for every component below:
 - **States:**
   - First proof; **below the total**: a warning line under the amount ("That's less than your $35 donation total. You can still submit; an admin will review it.", `aria-live="polite"`) that never blocks submitting.
   - **Notes above the form:** rejected (danger, "Your last proof was rejected" with "Reason: …"), waiting ("A new upload replaces it."), approved for an older total, and a changed total (warning, first).
-  - **Blocked:** an *Empty state* with the server's reason (nothing owed yet; proof approved for the current total).
+  - **Blocked:** an *Empty state* with the server's reason: nothing owed yet (info icon) or proof approved for the current total (check mark, the only place it means done; DECISIONS #104).
   - **Loading:** the body has `aria-busy`; on submit the button says "Uploading screenshot…", then "Sending proof…".
   - **Error:** browser and server field problems under their field with the error summary (amount, or a screenshot the server won't take); anything else in `.item-form__alert`. A failed load shows an *Empty state* with Try again.
   - **Success:** back to Your Items with the toast "Thanks. Your proof is in, and an admin will review it."
@@ -296,7 +296,7 @@ How forms behave, for every component below:
 
 **Purpose:** where "Go to the giving page" lands in the demo (`/giving`, the seeded giving platform URL; SPEC §3). It explains that the real event links out to one donation page whose funds are split equally among the three charities, and that no money moves here.
 
-- **Markup:** *Page header*, an info *Banner* ("This is a stand-in"), *Steps* (check your total, donate once, upload proof) with an "Upload proof" button to `/your-items/proof`, and the three *Charity card*s (filled by `showCharities()`, shared with Home). No nav link is current.
+- **Markup:** *Page header*, an info *Banner* ("This is a stand-in"), *Steps* (check your total, donate once, upload proof), then `.giving__you` (`aria-live="polite"`): the viewer's total ("Your total: $35", `.giving__total`) and an "Upload proof" button to `/your-items/proof`. When the viewer owes nothing, the button is hidden and `.giving__none` says "You don't owe anything yet. Bid or buy to have a total." Last, the three *Charity card*s (filled by `showCharities()`, shared with Home). Behavior: `startGivingPage()` in `src/pages/giving.ts`, from `/api/me`, redrawn when the demo bar changes the person; if it can't load, the total is left out and the button stays. No nav link is current (DECISIONS #104).
 - **Don't:** link a charity on its own (no charity choice, SPEC §7.2), or use words about paying in the app.
 - **Figma:** *Giving stub* page, built from *Banner*, *Steps*, *Button* and *Charity card*.
 

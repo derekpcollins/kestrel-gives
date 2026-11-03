@@ -3,7 +3,7 @@ import { strict as assert } from "node:assert";
 import { describe, test } from "node:test";
 import { uploaderWords } from "../../src/components/upload-rules.ts";
 import type { ProofView } from "../../src/me-api.ts";
-import { amountCents, amountNote, PROOF_PAGE_LINK, proofNotes, startingAmount, totalLine } from "../../src/pages/proof-rules.ts";
+import { amountCents, amountNote, blockedIcon, givingView, OWES_NOTHING, PROOF_PAGE_LINK, proofNotes, startingAmount, totalLine } from "../../src/pages/proof-rules.ts";
 import { PROOF_LINK } from "../../src/pages/your-items-rules.ts";
 
 const NOW = new Date("2026-11-28T15:00:00Z");
@@ -76,5 +76,19 @@ describe("uploader words", () => {
     assert.equal(w.count(2), "2 of 5 photos");
     assert.equal(w.added(1, 3), "1 photo added. 3 of 5.");
     assert.equal(w.required, "Add at least one photo.");
+  });
+});
+
+describe("blocked states and the giving stub (5D review)", () => {
+  test("a check mark only for an approved proof; nothing owed is information", () => {
+    assert.equal(blockedIcon("approved"), "check");
+    assert.equal(blockedIcon("nothing-owed"), "info");
+  });
+  test("the giving stub shows the total, and hides Upload proof when nothing is owed", () => {
+    assert.deepEqual(givingView(proof({ totalCents: 3_500 })), { total: "Your total: $35", owesNothing: false });
+    assert.deepEqual(givingView(proof({ totalCents: 0, blocked: { code: "nothing-owed", message: "" } })), { total: "Your total: $0", owesNothing: true });
+    assert.equal(givingView(proof({ totalCents: 3_500, blocked: { code: "approved", message: "" } })).owesNothing, false);
+    assert.deepEqual(givingView(null), { total: null, owesNothing: false });
+    assert.equal(OWES_NOTHING, "You don't owe anything yet. Bid or buy to have a total.");
   });
 });

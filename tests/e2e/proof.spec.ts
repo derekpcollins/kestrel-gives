@@ -141,8 +141,20 @@ test("someone with nothing to prove sees why instead of the form", async ({ page
   await expect(blocked).toBeVisible();
   await expect(blocked.getByRole("heading")).toHaveText("You don't have a donation total yet.");
   await expect(page.locator("[data-proof-form]")).toBeHidden();
+  // The info icon (a circle), not a check mark: nothing is done yet.
+  await expect(blocked.locator(".empty__icon circle")).toHaveCount(1);
   const results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
   expect(results.violations).toEqual([]);
+});
+
+test("an approved proof for the current total gets the check mark", async ({ page }) => {
+  await as(page, "4", "ended");
+  await proof(page, (now) => ({ totalCents: 3_500, latest: { status: "approved", amountCents: 3_500, owedCents: 3_500, rejectionReason: null, createdAt: now, imageUrl: "/seed/proofs/placeholder-proof.png" }, deadline: null, totalChanged: false, blocked: { code: "approved", message: "Your proof is approved. Thank you!" } }));
+  await page.goto("/your-items/proof");
+  const blocked = page.locator("[data-proof-blocked]");
+  await expect(blocked.getByRole("heading")).toHaveText("Your proof is approved. Thank you!");
+  await expect(blocked.locator(".empty__icon path")).toHaveCount(1);
+  await expect(blocked.locator(".empty__icon circle")).toHaveCount(0);
 });
 
 test("a failed load says so and Try again recovers", async ({ page }) => {
@@ -159,13 +171,43 @@ test("a failed load says so and Try again recovers", async ({ page }) => {
 
 test("the giving stub explains the one donation page split three ways and links to proof", async ({ page }) => {
   await as(page, "7", "ended");
+  await proof(page, (now) => owes(now));
   await page.goto("/giving");
+  await expect(page.locator("[data-giving-total]")).toHaveText("Your total: $35");
+  await expect(page.locator("main")).toContainText("Give that total once on the donation page. There's no charity to choose.");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Giving page");
   await expect(page.locator("main")).toContainText("no money moves");
   await expect(page.locator("[data-charities]:not([aria-busy]) .charity-card")).toHaveCount(3);
   await expect(page.getByRole("main").getByRole("link", { name: "Upload proof" })).toHaveAttribute("href", "/your-items/proof");
   await expect(page.locator(".site-header [aria-current=page]")).toHaveCount(0);
   expect(await page.locator("main").innerText()).not.toMatch(/\b(pay|paid|payment|checkout)\b/i);
+  const results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
+  expect(results.violations).toEqual([]);
+});
+
+test("the giving stub follows the demo bar: nothing owed hides Upload proof and says why", async ({ page }) => {
+  await as(page, "7", "ended");
+  // Owen owes $35 here; anyone else owes nothing. Switching person in the demo bar changes the cookie.
+  await page.route(/\/api\/me$/, async (route) => {
+    const response = await route.fetch();
+    const body = await response.json();
+    const owen = /kg_viewer=7\b/.test(route.request().headers()["cookie"] ?? "");
+    body.proof = owen ? owes(body.now) : { totalCents: 0, latest: null, deadline: null, totalChanged: false, blocked: { code: "nothing-owed", message: "You don't have a donation total yet." } };
+    await route.fulfill({ response, json: body });
+  });
+  await page.goto("/giving");
+  const main = page.getByRole("main");
+  await expect(page.locator("[data-giving-total]")).toHaveText("Your total: $35");
+  await expect(main.getByRole("link", { name: "Upload proof" })).toBeVisible();
+  await expect(page.locator("[data-giving-none]")).toBeHidden();
+
+  const details = page.locator("[data-shell-demo] details");
+  if ((await details.getAttribute("open")) === null) await details.locator("summary").click(); // collapsed below 40rem
+  await page.getByLabel("Viewing as").selectOption({ label: "Dev Kapoor (employee)" });
+  await expect(page.locator(".demo-bar__who")).toContainText("Dev Kapoor");
+  await expect(page.locator("[data-giving-total]")).toHaveText("Your total: $0");
+  await expect(main).toContainText("You don't owe anything yet. Bid or buy to have a total.");
+  await expect(main.getByRole("link", { name: "Upload proof" })).toHaveCount(0);
   const results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
   expect(results.violations).toEqual([]);
 });

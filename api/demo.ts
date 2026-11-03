@@ -6,7 +6,7 @@
 import { appStateIn } from "../lib/api/app-state.ts";
 import { isHttps, json, problem, withDatabase } from "../lib/api/http.ts";
 import { hasLocalCopy } from "../lib/api/local-copy.ts";
-import { withTransaction } from "../lib/data/db.ts";
+import { withRetriedTransaction, withTransaction } from "../lib/data/db.ts";
 import { jumpIn } from "../lib/demo/jump.ts";
 import { isJsonRequest, parseDemoAction } from "../lib/demo/requests.ts";
 import { tryDemoLockIn, tryRestore } from "../lib/demo/restore.ts";
@@ -35,7 +35,7 @@ export async function POST(request: Request): Promise<Response> {
       viewerId = rows[0].id;
       headers["Set-Cookie"] = viewerCookie(viewerId, isHttps(request));
     } else if (parsed.action === "jump") {
-      const done = await withTransaction(pool, async (tx) => {
+      const done = await withRetriedTransaction(pool, async (tx) => {
         if (!(await tryDemoLockIn(tx))) return false;
         await jumpIn(tx, parsed.to, new Date());
         return true;

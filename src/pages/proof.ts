@@ -15,7 +15,7 @@ import { PROOF_DEMO_NOTE } from "../components/proof-rules.ts";
 import { flashToast } from "../components/toast.ts";
 import { createUploader } from "../components/uploader.ts";
 import type { MeAnswer } from "../me-api.ts";
-import { amountCents, amountNote, proofNotes, startingAmount, totalLine } from "./proof-rules.ts";
+import { amountCents, amountNote, blockedIcon, proofNotes, startingAmount, totalLine } from "./proof-rules.ts";
 import { requestFailure } from "./submit-rules.ts";
 
 type Answer = { ok: boolean; status: number | null; body: Record<string, unknown> };
@@ -75,7 +75,13 @@ export function startProofPage(): void {
     blocked.hidden = !why;
     body.hidden = !!why;
     $<HTMLElement>("[data-proof-blocked-text]").textContent = why?.message ?? "";
-    if (why) return;
+    if (why) {
+      // A check mark only means "done" for an approved proof; nothing owed is information.
+      const svg = icon(blockedIcon(why.code), { size: "lg" });
+      svg.classList.add("empty__icon");
+      blocked.querySelector(".empty__icon")?.replaceWith(svg);
+      return;
+    }
     $<HTMLElement>("[data-proof-notes]").replaceChildren(...notesFor(answer.proof));
     $<HTMLElement>("[data-proof-total]").textContent = totalLine(answer.proof, new Date(answer.now));
     const giving = $<HTMLAnchorElement>("[data-proof-giving]");

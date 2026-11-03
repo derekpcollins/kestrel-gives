@@ -2,7 +2,7 @@
 // run, then deletes the files people uploaded. Shared by the demo bar, the daily cron and
 // (Milestone 3D) the deploy step.
 import type { Pool } from "@neondatabase/serverless";
-import { withTransaction, type Tx } from "../data/db.ts";
+import { withRetriedTransaction, withTransaction, type Tx } from "../data/db.ts";
 import { seedIn } from "../seed/seed.ts";
 import { SCHEMA_LOCK_KEY } from "../data/locks.ts";
 import { recordBlobOpsIn } from "../data/blob-budget.ts";
@@ -34,7 +34,7 @@ export type RestoreOutcome =
  * transaction only (the same key deploy-db uses, so it never races a migration).
  */
 export async function tryRestore(pool: Pool, source: "manual" | "cron", now: Date, storage: Storage = storageFor()): Promise<RestoreOutcome> {
-  const outcome = await withTransaction(pool, (tx) => tryRestoreIn(tx, source, now));
+  const outcome = await withRetriedTransaction(pool, (tx) => tryRestoreIn(tx, source, now));
   if (outcome.status !== "restored") return outcome;
   const cleared = await clearUploads(storage, source, outcome.hadUploads);
   if (storage.kind === "blob" && cleared.lists > 0) {

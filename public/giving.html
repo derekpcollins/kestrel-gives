@@ -18,7 +18,7 @@
     <div data-shell-demo></div>
     <div data-shell-header></div>
     <div data-shell-banner></div>
-    <main class="page" id="main" tabindex="-1">
+    <main class="page" id="main" tabindex="-1" data-giving-page>
       <header class="page-header">
         <div class="page-header__row"><div class="page-header__text">
           <a class="link link--quiet page-header__back" href="/your-items"><span data-icon="chevron-left"></span>Back to Your Items</a>
@@ -32,10 +32,14 @@
         <h2 id="giving-how">How giving works</h2>
         <ol class="steps">
           <li class="steps__item"><h3 class="steps__title">Check your total</h3><p class="steps__text">Your Items shows one donation total: your winning bids plus everything you bought.</p></li>
-          <li class="steps__item"><h3 class="steps__title">Donate once</h3><p class="steps__text">Give that total once on the giving page. There's no charity to choose.</p></li>
+          <li class="steps__item"><h3 class="steps__title">Donate once</h3><p class="steps__text">Give that total once on the donation page. There's no charity to choose.</p></li>
           <li class="steps__item"><h3 class="steps__title">Upload proof</h3><p class="steps__text">Enter the amount and add a screenshot of the receipt. An admin reviews it.</p></li>
         </ol>
-        <p><a class="btn" href="/your-items/proof">Upload proof</a></p>
+        <div class="giving__you" aria-live="polite" data-giving-you>
+          <p class="giving__total" data-giving-total hidden></p>
+          <p class="giving__none" data-giving-none hidden></p>
+          <p data-giving-upload><a class="btn" href="/your-items/proof">Upload proof</a></p>
+        </div>
       </section>
 
       <section class="home-section" aria-labelledby="giving-split">

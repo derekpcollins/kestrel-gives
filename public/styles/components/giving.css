@@ -1,0 +1,6 @@
+/* Giving stub (DESIGN-SYSTEM.md › Giving stub): the viewer's total and what to do next, under the steps. */
+.giving__you { display: grid; gap: var(--space-3); justify-items: start; }
+.giving__you > [hidden] { display: none; }
+.giving__you > p { margin: 0; }
+.giving__total { font: var(--type-heading-3); color: var(--color-text); }
+.giving__none { font: var(--type-body); color: var(--color-text-muted); }
