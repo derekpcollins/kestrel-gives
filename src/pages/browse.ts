@@ -36,7 +36,10 @@ export function startBrowse(type: ItemType): void {
     let answer: BrowseAnswer;
     try {
       const response = await fetch(`/api/items?type=${type}&sort=${sort}`, { headers: { Accept: "application/json" } });
-      if (!response.ok) throw new Error(String(response.status));
+      if (!response.ok) {
+        await response.text().catch(() => ""); // an unread body keeps the response open
+        throw new Error(String(response.status));
+      }
       answer = (await response.json()) as BrowseAnswer;
     } catch {
       if (request !== latest) return;

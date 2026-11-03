@@ -4,6 +4,7 @@ import type { AppState } from "./app-state.ts";
 import { hydrateIcons } from "./components/icons.ts";
 import { startBrowse } from "./pages/browse.ts";
 import { showHome } from "./pages/home.ts";
+import { startItemPage } from "./pages/item.ts";
 import { startShell } from "./shell.ts";
 
 hydrateIcons();
@@ -20,5 +21,6 @@ if (document.body.dataset.page === "home") {
 
 const browseType = document.querySelector<HTMLElement>("[data-browse-type]")?.dataset.browseType;
 if (browseType === "auction" || browseType === "instant") startBrowse(browseType);
+if (document.body.dataset.page === "item") startItemPage();
 
 await startShell();

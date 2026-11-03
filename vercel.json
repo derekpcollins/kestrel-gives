@@ -9,5 +9,11 @@
       "path": "/api/cron-restore",
       "schedule": "0 8 * * *"
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/items/:id",
+      "destination": "/item"
+    }
   ]
 }

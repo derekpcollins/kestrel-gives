@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Item · Kestrel Gives</title>
+    <link rel="icon" href="/favicon-32.png" sizes="32x32">
+    <link rel="icon" href="/favicon-16.png" sizes="16x16">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="preload" href="/fonts/plus-jakarta-sans-latin-var.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/styles/tokens.css">
+    <link rel="stylesheet" href="/styles/base.css">
+    <link rel="stylesheet" href="/styles/components.css">
+    <script type="module" src="/js/main.js"></script>
+  </head>
+  <body data-page="item">
+    <a class="skip-link" href="#main">Skip to main content</a>
+    <div data-shell-demo></div>
+    <div data-shell-header></div>
+    <div data-shell-banner></div>
+    <main class="page" id="main" tabindex="-1" data-item-page>
+      <p class="visually-hidden" role="status" data-item-status></p>
+      <div class="item-page" data-item-content aria-busy="true"></div>
+      <section class="empty" aria-labelledby="missing-title" data-item-missing hidden>
+        <span class="empty__icon" data-icon="info" data-icon-size="lg"></span>
+        <h1 class="empty__title" id="missing-title">We couldn't find that item</h1>
+        <p class="empty__text">It may have been removed, or the link may be wrong.</p>
+        <div class="empty__actions"><a class="btn btn--secondary" href="/silent-auction">Silent Auction</a><a class="btn btn--secondary" href="/instant-sale">Instant Sale</a></div>
+      </section>
+      <section class="empty" aria-labelledby="item-error-title" data-item-error hidden>
+        <span class="empty__icon" data-icon="alert" data-icon-size="lg"></span>
+        <h1 class="empty__title" id="item-error-title">We couldn't load this item</h1>
+        <p class="empty__text">Check your connection and try again.</p>
+        <div class="empty__actions"><button type="button" class="btn btn--secondary">Try again</button></div>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <p>Kestrel is a fictional organization, and this is a demo. <a href="/design-system/">Design system</a></p>
+    </footer>
+    <noscript><p class="page">This demo needs JavaScript to load its data.</p></noscript>
+  </body>
+</html>

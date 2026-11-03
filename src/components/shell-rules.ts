@@ -2,7 +2,8 @@
 // button is pressed. Pure, with no DOM, so node:test covers them.
 import type { EventView } from "../app-state.ts";
 
-export type PageKey = "home" | "silent-auction" | "instant-sale" | "your-items" | "submit" | "admin";
+/** "item" is an item page: no nav link is the current page there. */
+export type PageKey = "home" | "silent-auction" | "instant-sale" | "your-items" | "submit" | "admin" | "item";
 
 export interface NavLink {
   key: PageKey;

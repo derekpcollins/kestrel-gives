@@ -8,7 +8,7 @@ import { icon } from "./components/icons.ts";
 import { updatePhaseBanner } from "./components/phase-banner.ts";
 import { renderSiteHeader, type PageKey } from "./components/site-header.ts";
 
-const PAGES: readonly PageKey[] = ["home", "silent-auction", "instant-sale", "your-items", "submit", "admin"];
+const PAGES: readonly PageKey[] = ["home", "silent-auction", "instant-sale", "your-items", "submit", "admin", "item"];
 
 export class RequestError extends Error {}
 

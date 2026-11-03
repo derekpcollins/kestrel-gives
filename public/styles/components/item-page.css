@@ -1,0 +1,21 @@
+/* Item page (DESIGN-SYSTEM.md › Item page; SPEC §7.3): photos beside the amount panel on wide
+   screens, stacked on phones; then the description and the bid history. */
+/* The page content is drawn into one wrapper; it spaces its sections like .page does. */
+.item-page { display: grid; gap: var(--space-6); }
+.item-layout { display: grid; gap: var(--space-6); align-items: start; }
+@media (min-width: 64rem) {
+  .item-layout { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
+}
+.item-panel { display: grid; gap: var(--space-2); justify-items: start; padding: var(--space-5); }
+.item-panel__amount { font: var(--type-amount); color: var(--color-price); font-variant-numeric: var(--figures-amount); }
+.item-panel__detail { font: var(--type-label); color: var(--color-text-muted); font-variant-numeric: var(--figures-amount); }
+.item-panel__note { max-width: var(--size-content-narrow); }
+.item-panel__actions:empty { display: none; }
+.item-panel--muted .item-panel__amount { color: var(--color-text-muted); }
+.item-section { display: grid; gap: var(--space-3); }
+.item-section__title { font: var(--type-heading-2); }
+.item-section__count { font: var(--type-body); color: var(--color-text-muted); font-variant-numeric: var(--figures-amount); }
+.item-section__text { max-width: var(--size-content-narrow); white-space: pre-line; }
+.bid-history__bidder { display: inline-flex; align-items: center; gap: var(--space-3); }
+/* On phones the bidder and the time wrap instead of making the table scroll sideways. */
+.bid-history th[scope="row"], .bid-history td:last-child { white-space: normal; }

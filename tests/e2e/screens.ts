@@ -14,5 +14,10 @@ export const SCREENS: readonly Screen[] = [
   { name: "your-items", path: "/your-items" },
   { name: "submit", path: "/submit" },
   { name: "admin", path: "/admin" },
+  // Milestone 4C: item pages (seeded ids are stable: the seed restarts identities).
+  { name: "item-auction", path: "/items/1" }, // five photos, six bids, the crown
+  { name: "item-instant", path: "/items/13" }, // sold out
+  { name: "item-cancelled", path: "/items/10" },
+  { name: "item-not-found", path: "/items/99999" },
   { name: "design-system", path: "/design-system/" }, // every component, every state
 ];

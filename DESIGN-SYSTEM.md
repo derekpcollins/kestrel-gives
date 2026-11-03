@@ -141,7 +141,7 @@ The same pattern applies to every component below. Each entry's **Figma** line g
 
 **Purpose:** a person's initials on a token-colored circle. The current high bidder wears the crown (SPEC §5).
 
-- **Classes:** `.avatar`, `--sm` (bid history), md default (header), `--lg` (profile menu); `.avatar__crown` (inline SVG with `__crown-shape` and `__crown-band`).
+- **Classes:** `.avatar`, `--sm` (bid history), md default (header), `--lg` (profile menu); `.avatar__crown` (inline SVG with `__crown-shape` and `__crown-band`). Built by `renderAvatar()` in `src/components/avatar.ts`.
 - **States:** default, and *crowned* (top bidder). Hover, focus and active: N/A (avatars sit inside buttons or rows that have their own states, such as the profile menu button in stage C). Disabled, loading, error and empty: N/A; with no name, show no avatar.
 - **Accessibility:** `aria-hidden="true"`, because it always sits next to the person's name. The name carries "(top bidder)" as visually hidden text. The crown edge passes 3:1 against the avatar and the page in both modes (BUILD-LOG, stage A part 1).
 - **Do:** show the crown everywhere that person's avatar appears in the item's bid history. **Don't:** use the crown for anything but the current high bid.
@@ -438,6 +438,18 @@ How forms behave, for every component below:
 - **Layout:** tiles in a row stretch to the tallest one, with their content top-aligned, so a two-line title doesn't leave a ragged row.
 - **Do:** keep titles to two lines in the design; long ones wrap. **Don't:** show more than one status, or put buttons inside the tile.
 - **Figma:** *Item tile* · Type = Auction / Instant × Phase = Submission / Live / Ended (6), plus a *Muted* boolean and a *Title* text property. The status is a nested *Pill* instance (or hidden).
+
+## Item page
+
+**Purpose:** one item (SPEC §7.3, §8; Milestone 4C): its photos, the amount, where the viewer stands, why they can or can't act, the description and the public bid history.
+
+- **Markup:** `/items/<id>` serves `item.html` (DECISIONS #86); `src/pages/item.ts` draws into `.item-page`: a *Page header* (back link to the item's browse page, title, "Donated by …"), a danger *Banner* when cancelled, `.item-layout` (the *Photo carousel* beside `section.card.card--flat.item-panel` from `--breakpoint-lg`, stacked below it), "About this item", and for auctions "Bid history" as a *Table* (`table.bid-history`, newest first). It has no caption: the visible "Bid history (6 bids)" heading names the table and its scroll region (`aria-labelledby`), because a visually hidden `<caption>` still takes a line of height and the table's full width. The panel has the status *Pill*, `.item-panel__amount` (only the number), `.item-panel__detail`, `.item-panel__note` and `.item-panel__actions` (the bid and buy forms, Stage 4D).
+- **Words come from data:** the amount, detail and status use the tile rules, so a tile and its page agree; the note comes from `panelText()` in `src/pages/item-rules.ts`: the minimum ("At least $245. Bids go up by $5."), "You're the high bidder.", "This is your item.", "Sold out.", "Bidding opens tomorrow at 9:00 AM EST.", "Won by Priya Natarajan for $240." or "The sale has ended."
+- **Bid history:** each row's header is the bidder (small *Avatar* and name); the top bid's avatar wears the crown and its name carries visually hidden "(top bidder)". Times are in the viewer's zone, zone labeled ("today at 2:00 PM EST", "Oct 31 at 8:00 PM EDT"). On phones the bidder and time wrap rather than scroll. No bids: one "No bids yet." row.
+- **States:** default. **Loading:** `aria-busy` on `.item-page`. **Muted** (ended, cancelled): the amount turns muted. **Not found:** an *Empty state* with links to both browse pages. **Error:** an *Empty state* with **Try again**; a failed refresh keeps the page as it was.
+- **Refresh:** every 30 seconds while the tab is visible (SPEC §7.4), and when it becomes visible again. The carousel is kept when the photos haven't changed, so the photo the visitor is on stays. Only a change in the viewer's own standing is announced, through a visually hidden `role="status"` ("You've been outbid. The top bid is now $300."); redraws after view-as or a jump are silent (DECISIONS #88).
+- **Do:** keep actions in the panel. **Don't:** show the history for instant sale, or a crown on anyone but the top bid.
+- **Figma:** *Item page* · Type = Auction / Instant × Width = 390 / 1280 (4), built from the components above; *Item panel* · State = Live / Blocked / Ended / Cancelled (4).
 
 ## Photo carousel
 
