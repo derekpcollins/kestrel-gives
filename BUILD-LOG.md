@@ -701,3 +701,29 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   - The token check flagged the canvas fill (`#ffffff`). It's image data, not a UI color, so it's now the keyword `white` with a comment.
 - **Tests:** 11 browser tests in `submit.spec.ts`: window and default minimum with axe, admins only during live, the real resize to 1600×1200, an unreadable picture, the body in cents with the toast, the cap alert with retry reusing the upload, server field errors, locked edit with axe, the delete dialog, not-yours blocked, the Edit link. 5 unit tests for the page rules. `npm run check`: 205 unit (3 todo), 83 database, 130 browser, 12 reflow, 48 visual. On the first run one existing test (`shell.spec.ts` Restore with cooldown) failed once with the phase not yet reset. It passed alone and in a full re-run of the browser steps. `npm audit` shows only the accepted zod advisory.
 - **Preview (13:05 EST):** `kestrel-gives-hi6lfajzr` reports `"schema":"007"`, and serves `/submit`, `/items/5/edit` and the new scripts. As an admin: a real upload to `preview/`, then create, edit and delete. An employee's edit was refused (403), and a bad price came back by field (422). After the delete, the photo returned 404 with a cache-busting query; the plain URL served the CDN's copy briefly. Restore left dev reseeded (`.review/m5-5b/preview-checks.txt`, with the store host redacted).
+
+### 2026-11-03 — 5B review fixes (13:12 – 13:51 EST)
+- **Owner stepped in:** mostly approved 5B, with seven fixes. The starting bid hint said $10 while a server error said $35. The locked sale type should stay visibly chosen. Add help under the sale type. Edit item shouldn't mark Submit an Item in the nav. Confirm the Pro plan. Find out how long a deleted blob keeps serving. Fix the flaky Restore test.
+- **Built:**
+  - **Starting bid:** the "$35" was my screenshot script's made-up server answer, not the app. Both sides already read the event minimum, but the hint and the refusal were worded in two places. They're now built by one pair of functions (`startingBidHelp`, `startingBidTooLow`), which the browser's check also uses. A database test sets the minimum to $10 and $35 and checks that `/api/app`'s hint and the server's refusal name the same amount. The browser tests build their stubbed refusals the same way. The screenshot now shows a refusal only the server can give.
+  - **Locked edit:** only the unchosen card is disabled, so the chosen one keeps its check mark and border. Arrow keys skip disabled radios, so the choice still can't change. The same fix stopped the locked note being appended to `aria-describedby` again on every redraw.
+  - **Help and nav:** "Choose one to fill in the rest." describes the sale type group on Submit. `pageKeyFor` makes Edit item an item page, so no nav link is current.
+- **Caught:**
+  - **Flaky test:** `shell.spec.ts` ran only in light-1280, but its `afterAll` reset ran in all four projects' workers, in parallel, and could jump the shared event back to live mid-test. The dev log showed the stray jumps. The reset is now guarded.
+  - **Screenshots in the wrong place:** I first ran the screenshot script without its output folder, so it wrote to a folder named `undefined`. I deleted it and re-ran.
+  - **A stall:** one full check stalled in the visual step. It passed alone and in a clean full re-run, and I couldn't find a cause.
+- **Pro and blobs:** the team is on Pro (active, not a trial), and `kestrel-gives` is linked to it, checked without printing IDs. Vercel's docs say a deleted blob can stay in the CDN cache for up to a minute, and Preview matched. Browsers can keep their own copy for the upload's cache lifetime. For proofs, the mitigation is the demo warning and unguessable names (DECISIONS #100).
+
+### 2026-11-03 — Stage 5C: Your Items (13:51 – 14:25 EST)
+- **Built:**
+  - Your Items from `GET /api/me`: My bids, Won & purchased, My donated items and Cancelled (only when there's something). Every row is an item tile, the component DESIGN-SYSTEM already named for this page. `renderItemTile()` takes the page's words in the tile's shape, so there's no second card.
+  - Bids use the browse tiles' labels. Donated items show exactly their browse tile, with an Edit button under each one, outside the linked card.
+  - One proof summary covers everything: the total, a status pill, days left or late, what's next and the link to `/your-items/proof` (5D). The changed-total banner (SPEC §7.6) comes first when it applies.
+  - Loading, empty and error states. The page redraws when the demo bar changes the person or the phase (DECISIONS #101).
+- **Checked:** a survey of all seven people, live and after the close, matched the seed: winning, outbid, won, lost, approved, pending and rejected proofs, and a cancelled item. Fixed a rejected proof that asked twice for a new upload.
+- **Caught:**
+  - `vercel dev` doesn't serve new files until restarted, so the new page script returned 404 until a restart.
+  - The `package.json` edit triggered a rebuild during screenshots.
+  - The screenshot script hung waiting on lazy images below the fold. It now loads them eagerly, with each wait capped.
+- **Tests:** 8 unit tests for the page's words. 6 browser tests: the real answer with axe, after the close, a changed total, rejected, empty with axe, and a failed load with Try again. `npm run check`: 219 unit (3 todo), 84 database, 142 browser, 12 reflow, 48 visual. `npm audit` shows only the accepted zod advisory.
+- **Preview (14:23 EST):** `kestrel-gives-hmsl63m2s` reports `"schema":"007"` and serves the page, its scripts and styles, and the 5B fixes. `/api/me` answered for four people with the expected sections and proof states (`.review/m5-5c/preview-checks.txt`). Read-only.
