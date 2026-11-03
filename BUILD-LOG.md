@@ -631,3 +631,21 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 - **Tests:** 4 new unit tests (what the panel offers, dialog wording, which refusals go under the field). `tests/e2e/item-actions.spec.ts` adds 9 tests at 1280 and 390. They stub the API in the browser, so nothing is written to dev during the parallel run. They cover the field's start value, number pad and help; the dialog with axe; the success announcement (live region once, quiet toast) and focus; a lost race; field checks; a failed request; the draft surviving the refresh; buying; sold out; and the own item. The real saves and races stay in `tests/db/sales.test.ts`. `npm run check` passes (170 unit, 59 database, 98 browser, 11 reflow, 44 visual), and `npm audit` shows only the accepted zod advisory.
 - **Preview (10:18 EST):** `kestrel-gives-fo5uqsdhb` is Ready. Health is OK, the item pages and the new scripts are served, and refused bids give "Bids must be at least $245." and the lost-race answer without writing anything (`.review/m4-4d/preview-checks.txt`).
 - **Noticed, not changed:** on Instant Sale pages, the phase banner says "Bidding is open". That banner is shared by every page (3B); worth a look in 4E.
+
+### 2026-11-03 — Stage 4E: fixes and the Preview review (10:21 – 11:05 EST)
+- **Owner stepped in:** approved 4D with four fixes (DECISIONS #90):
+  - (1) each result replaces that page's earlier toast;
+  - (2) lost-race and too-low messages show under the field only, with no toast;
+  - (3) dialog titles balance their lines;
+  - (4) while the event is live, the phase banner on Instant Sale and instant-sale item pages talks about the sale ("The instant sale is open. It ends in …"; "The instant sale ends soon. It closes in …").
+- **Built:**
+  - `phaseBanner()` takes the page's sale. `<body data-sale="instant">` marks the Instant Sale page, and the item page sets it once it knows the item's type (`setBannerSale()`).
+  - The item page keeps one toast handle. Amount refusals clear it.
+- **Caught:** `text-wrap: balance` alone still broke the title as "Buy the Hand-" / "knit scarf for $45?" at 390px; the screenshot showed it. `confirmDialog()` now wraps each hyphenated word in a `nowrap` span, and a test checks that "Hand-knit" renders on one line.
+- **Request failures:** a request that gets no answer still shows its reason inside the open dialog (#89) and gets no toast, since a toast would sit behind the modal.
+- **Tests:** 1 new unit test for the banner wording. 4 new browser tests: one toast per form, no toast for a lost race, the banner per page, and the dialog title. `npm run check` passes (171 unit, 59 database, 104 browser, 11 reflow, 44 visual), and `npm audit` shows only the accepted zod advisory.
+- **Preview review:**
+  - `kestrel-gives-273f25url` (68a4b49): the 13-call API review, which places real bids and purchases on dev, gave output identical to local (`.review/m4-4e/api-preview.txt`, `api-local.txt`). Every page and script was served, including the rewrites and the 404 item.
+  - `kestrel-gives-7llzsgqu2` (f69d1a4, the final commit): health OK, pages served, and the dialog fix is live.
+  - Dev was reseeded after each run.
+- **Ready for main:** a fast-forward of 16 commits, including the held `aa9db4e` and `954377c`, waiting for the owner's approval.
