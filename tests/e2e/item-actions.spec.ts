@@ -169,7 +169,14 @@ test("The dialog title balances its lines on a phone", async ({ page }) => {
   await itemAnswers(page, (b) => { b.item.remaining = 6; });
   await page.goto("/items/12");
   await page.getByRole("button", { name: "Buy one" }).click();
-  await expect(page.getByRole("dialog").locator(".dialog__title")).toHaveCSS("text-wrap", /balance/);
+  const title = page.getByRole("dialog").locator(".dialog__title");
+  await expect(title).toHaveCSS("text-wrap", /balance/);
+  await expect(title).toHaveText("Buy the Hand-knit scarf for $45?");
+  // "Hand-knit" stays on one line.
+  const word = title.locator(".dialog__word");
+  await expect(word).toHaveText("Hand-knit");
+  const lines = await word.evaluate((e) => e.getClientRects().length);
+  expect(lines).toBe(1);
 });
 
 test("The field checks whole dollars and the minimum before any dialog opens", async ({ page }) => {

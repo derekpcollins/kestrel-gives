@@ -412,7 +412,7 @@ How forms behave, for every component below:
 - **Markup:** a native `<dialog class="dialog dialog--confirm|--danger|--type-to-confirm">` opened with `showModal()`, with `aria-labelledby` (the title) and `aria-describedby` (the body). Inside: `form.dialog__form` > `h2.dialog__title`, `.dialog__body` (text, or for a bid an item summary `.dialog__item` with `.dialog__item-thumb` and `.dialog__item-title`, plus `.dialog__amount`), an optional *Form field* for type-to-confirm, `.dialog__error` (`role="alert"`) and `.dialog__actions` (dismiss, then confirm). Behavior: `confirmDialog()` in `src/components/dialog.ts` resolves `true` once the request succeeds and `false` if dismissed. `.dialog--static` draws a closed dialog in the flow, for the gallery only.
 - **Variants:**
   - **Confirm:** says exactly what you're agreeing to, with every amount computed from the data ("Place a $65 bid?"). First focus: the confirm button.
-  - Titles use `text-wrap: balance`, so a long one ("Buy the Hand-knit scarf for $45?") breaks evenly on a phone.
+  - Titles use `text-wrap: balance`, so a long one ("Buy the Hand-knit scarf for $45?") breaks evenly on a phone, and `confirmDialog()` wraps each hyphenated word in `span.dialog__word` (`white-space: nowrap`), because balance alone still let it break after the hyphen ("Hand-" / "knit").
   - **Danger:** a destructive action; the confirm button is a *Button* (Danger). First focus: the dismiss button, so Enter never destroys anything by accident. The dismiss button says "Cancel", or "Keep item" next to "Cancel item".
   - **Type-to-confirm:** the danger variant plus a text field; the confirm button stays inactive (`aria-disabled`) until the event name is typed exactly. First focus: the field.
 - **States:**

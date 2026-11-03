@@ -41,7 +41,7 @@ export function confirmDialog(options: ConfirmOptions): Promise<boolean> {
   const title = document.createElement("h2");
   title.className = "dialog__title";
   title.id = `${id}-title`;
-  title.textContent = options.title;
+  title.append(...keepWordsWhole(options.title));
 
   const body = document.createElement("div");
   body.className = "dialog__body";
@@ -138,6 +138,20 @@ export function confirmDialog(options: ConfirmOptions): Promise<boolean> {
     // First focus: the input to type into; Cancel for destructive actions; otherwise the
     // confirm button (the person just chose to act).
     (input ?? (danger ? cancel : confirm)).focus();
+  });
+}
+
+/**
+ * Title text with each hyphenated word held together ("Hand-knit"): browsers may break after
+ * a hyphen, which `text-wrap: balance` alone doesn't prevent (owner, 4E).
+ */
+function keepWordsWhole(text: string): Node[] {
+  return text.split(/(\S*\w-\w\S*)/).filter(Boolean).map((part) => {
+    if (!/\w-\w/.test(part)) return document.createTextNode(part);
+    const span = document.createElement("span");
+    span.className = "dialog__word";
+    span.textContent = part;
+    return span;
   });
 }
 
