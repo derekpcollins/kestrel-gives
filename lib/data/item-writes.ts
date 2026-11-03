@@ -5,7 +5,7 @@
 // unused uploads ({ uploadId }). Files of removed photos are returned so the caller deletes
 // them after the commit (a rolled-back edit must not lose files).
 import type { Id, Tx } from "./db.ts";
-import { currentEventIn, phaseOf } from "./event.ts";
+import { currentEventIn, phaseOf, type CurrentEvent } from "./event.ts";
 import { claimUploadsIn } from "./uploads.ts";
 import {
   deleteBlock, editBlock, itemProblems, submitBlock,
@@ -107,7 +107,8 @@ interface LockedForWrite {
   photos: { id: Id; path: string; source: "seed" | "upload" }[];
 }
 
-async function lockForWriteIn(tx: Tx, eventId: Id, itemId: Id): Promise<LockedForWrite | null> {
+async function lockForWriteIn(tx: Tx, event: CurrentEvent, itemId: Id): Promise<LockedForWrite | null> {
+  const eventId = event.id;
   const { rows } = await tx.query<{ submitter_id: Id; status: string; type: SaleType; starting: number | null; price: number | null; quantity: number | null }>(
     `SELECT submitter_id, status, type, starting_bid_cents AS starting, price_cents AS price, quantity
        FROM items WHERE id = $1 AND event_id = $2 FOR UPDATE`,
@@ -125,8 +126,10 @@ async function lockForWriteIn(tx: Tx, eventId: Id, itemId: Id): Promise<LockedFo
     [itemId],
   );
   const num = (v: number | null) => (v === null ? null : Number(v));
+  const { rows: clock } = await tx.query<{ now: Date }>(`SELECT clock_timestamp() AS now`);
   return {
-    facts: { submitterId: r.submitter_id, cancelled: r.status === "cancelled", hasActivity: activity[0]?.any === true },
+    // The clock is read after the row lock, like a bid's, so an edit can't slip past the close.
+    facts: { submitterId: r.submitter_id, cancelled: r.status === "cancelled", hasActivity: activity[0]?.any === true, ended: phaseOf(event, clock[0]!.now) === "ended" },
     type: r.type, startingBidCents: num(r.starting), priceCents: num(r.price), quantity: num(r.quantity), photos,
   };
 }
@@ -135,7 +138,7 @@ async function lockForWriteIn(tx: Tx, eventId: Id, itemId: Id): Promise<LockedFo
 export async function updateItemIn(tx: Tx, actor: Actor, itemId: Id, input: ItemWrite): Promise<WriteOutcome<{ removedFiles: string[] }>> {
   const event = await currentEventIn(tx);
   if (!event) return NOT_FOUND;
-  const locked = await lockForWriteIn(tx, event.id, itemId);
+  const locked = await lockForWriteIn(tx, event, itemId);
   if (!locked) return NOT_FOUND;
   const blocked = editBlock(actor, locked.facts);
   if (blocked) return { ok: false, kind: "refused", refusal: blocked };
@@ -183,7 +186,7 @@ export async function updateItemIn(tx: Tx, actor: Actor, itemId: Id, input: Item
 export async function deleteItemIn(tx: Tx, actor: Actor, itemId: Id): Promise<WriteOutcome<{ removedFiles: string[] }>> {
   const event = await currentEventIn(tx);
   if (!event) return NOT_FOUND;
-  const locked = await lockForWriteIn(tx, event.id, itemId);
+  const locked = await lockForWriteIn(tx, event, itemId);
   if (!locked) return NOT_FOUND;
   const blocked = deleteBlock(actor, locked.facts);
   if (blocked) return { ok: false, kind: "refused", refusal: blocked };

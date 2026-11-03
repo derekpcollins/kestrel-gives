@@ -10,7 +10,7 @@ import type { MeAnswer } from "../me-api.ts";
 import { tileContext } from "./browse-rules.ts";
 import { EDIT_LINK, ITEM_LINK } from "./submit-rules.ts";
 import {
-  bidText, cancelledText, donatedText, proofSummary, SECTIONS, totalChangedBanner, winText, type MineText,
+  bidText, cancelledText, donatedText, groupCancelled, groupWins, proofSummary, SECTIONS, showsEdit, totalChangedBanner, winText, type MineText,
 } from "./your-items-rules.ts";
 
 const pill = (label: string, tone: string) => el("span", { className: `pill${tone === "neutral" ? "" : ` pill--${tone}`}`, text: label });
@@ -71,9 +71,10 @@ function render(answer: MeAnswer, state: AppState): Node[] {
   const zone = state.event?.timeZone ?? "UTC";
   const ctx = tileContext(state);
   const bids = answer.bids.map((b) => tile(b.itemId, b.title, b.coverUrl, bidText(b), state));
-  const wins = answer.wins.map((w) => tile(w.itemId, w.title, w.coverUrl, winText(w, zone), state));
+  const wins = groupWins(answer.wins).map((w) => tile(w.itemId, w.title, w.coverUrl, winText(w, zone), state));
   const donated = answer.donated.map((d) => {
     const li = renderItemTile({ type: d.type, title: d.title, href: ITEM_LINK(d.itemId), ...(d.coverUrl ? { photo: d.coverUrl } : {}) }, ctx, donatedText(d, ctx));
+    if (!showsEdit(answer.phase)) return li;
     // Outside the card: a linked card can't hold another control (DESIGN-SYSTEM.md › Card).
     const edit = el("a", { className: "btn btn--secondary btn--sm your-items__edit", attrs: { href: EDIT_LINK(d.itemId) } }, "Edit", el("span", { className: "visually-hidden", text: ` ${d.title}` }));
     li.append(edit);
@@ -89,7 +90,7 @@ function render(answer: MeAnswer, state: AppState): Node[] {
   );
   if (answer.cancelled.length) {
     nodes.push(section("my-cancelled", SECTIONS.cancelled.title,
-      grid(answer.cancelled.map((c) => tile(c.itemId, c.title, c.coverUrl, cancelledText(c), state)), "")));
+      grid(groupCancelled(answer.cancelled).map((c) => tile(c.itemId, c.title, c.coverUrl, cancelledText(c), state)), "")));
   }
   return nodes;
 }

@@ -57,7 +57,7 @@ describe("upload checks (#53, #92, #93)", () => {
 describe("item forms (SPEC §7.3, #94)", () => {
   const dev = { id: "4", role: "employee" as const };
   const maya = { id: "1", role: "admin" as const };
-  const fresh = { submitterId: "4", cancelled: false, hasActivity: false };
+  const fresh = { submitterId: "4", cancelled: false, hasActivity: false, ended: false };
 
   test("employees submit only in the submission window; admins any time (§7.1)", () => {
     assert.equal(submitBlock("employee", "submission"), null);
@@ -67,11 +67,13 @@ describe("item forms (SPEC §7.3, #94)", () => {
     assert.equal(submitBlock("admin", "ended"), null);
   });
 
-  test("the submitter and admins edit; nobody edits a cancelled item", () => {
+  test("the submitter and admins edit; nobody edits a cancelled item or after bidding ends", () => {
     assert.equal(editBlock(dev, fresh), null);
     assert.equal(editBlock(maya, fresh), null);
     assert.equal(editBlock({ id: "5", role: "employee" }, fresh)?.code, "not-yours");
     assert.equal(editBlock(maya, { ...fresh, cancelled: true })?.code, "cancelled");
+    assert.equal(editBlock(maya, { ...fresh, ended: true })?.code, "bidding-ended", "nobody edits after bidding ends, admins included (#102)");
+    assert.equal(deleteBlock(dev, { ...fresh, ended: true })?.code, "bidding-ended");
   });
 
   test("delete only with no bids or purchases (removed and cancelled ones count)", () => {

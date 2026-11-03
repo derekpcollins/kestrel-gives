@@ -153,7 +153,7 @@ function renderItem(answer: ItemAnswer, state: AppState, renderActions: RenderAc
       el("div", { className: "page-header__text" },
         el("h1", { className: "page-header__title", text: item.title }),
         el("p", { className: "page-header__description", text: donatedBy(item) })),
-      canEdit(state.viewer, item)
+      canEdit(state.viewer, item, state.event?.phase ?? null)
         ? el("div", { className: "page-header__actions" },
           el("a", { className: "btn btn--secondary btn--sm", attrs: { href: EDIT_LINK(item.id), "data-focus-key": "edit" } }, "Edit item"))
         : null));

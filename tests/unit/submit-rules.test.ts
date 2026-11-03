@@ -26,12 +26,15 @@ describe("submit and edit page", () => {
   test("editing: who, what's locked, and whether delete is offered", () => {
     const item = { submitter: { id: "3", firstName: "Jules", lastName: "Ferreira" }, cancelled: false, hasActivity: false };
     const jules = { id: "3", role: "employee" as const };
-    assert.deepEqual(editState(jules, item), { blocked: null, locked: [], canDelete: true });
-    assert.deepEqual(editState(jules, { ...item, hasActivity: true }), { blocked: null, locked: ["type", "startingBid", "price", "quantity"], canDelete: false });
-    assert.equal(editState({ id: "4", role: "employee" }, item).blocked?.code, "not-yours");
-    assert.equal(canEdit({ id: "1", role: "admin" }, item), true);
-    assert.equal(canEdit(jules, { ...item, cancelled: true }), false);
-    assert.equal(canEdit(null, item), false);
+    assert.deepEqual(editState(jules, item, "live"), { blocked: null, locked: [], canDelete: true });
+    assert.deepEqual(editState(jules, { ...item, hasActivity: true }, "live"), { blocked: null, locked: ["type", "startingBid", "price", "quantity"], canDelete: false });
+    assert.equal(editState({ id: "4", role: "employee" }, item, "live").blocked?.code, "not-yours");
+    assert.equal(canEdit({ id: "1", role: "admin" }, item, "live"), true);
+    assert.equal(canEdit({ id: "1", role: "admin" }, item, "ended"), false, "not after bidding ends, admins included");
+    assert.equal(editState(jules, item, "ended").blocked?.message, "Bidding has ended, so this item can't be changed.");
+    assert.equal(editState(jules, item, "ended").canDelete, false);
+    assert.equal(canEdit(jules, { ...item, cancelled: true }, "live"), false);
+    assert.equal(canEdit(null, item, "live"), false);
   });
 
   test("the request body sends cents, and only the chosen sale type's money", () => {

@@ -17,7 +17,7 @@ export const ITEM_LIMITS = {
 } as const;
 
 export interface Refusal {
-  code: "submissions-closed" | "not-yours" | "cancelled" | "has-activity";
+  code: "submissions-closed" | "not-yours" | "cancelled" | "bidding-ended" | "has-activity";
   message: string;
 }
 
@@ -32,16 +32,19 @@ export interface ItemFacts {
   cancelled: boolean;
   /** Any bid or purchase, ever (removed and cancelled ones count: they still point at the item). */
   hasActivity: boolean;
+  /** Bidding has closed: results are final, so nothing about the item changes (SPEC §7.3, v1.16). */
+  ended: boolean;
 }
 
-/** The submitter and admins edit; a cancelled item stays as it was (#94). */
+/** The submitter and admins edit, until bidding ends; a cancelled item stays as it was (#94, #102). */
 export function editBlock(viewer: { id: string; role: Role }, item: ItemFacts): Refusal | null {
   if (viewer.role !== "admin" && viewer.id !== item.submitterId) return { code: "not-yours", message: "Only the person who donated this item, or an admin, can change it." };
   if (item.cancelled) return { code: "cancelled", message: "This item has been cancelled, so it can't be changed." };
+  if (item.ended) return { code: "bidding-ended", message: "Bidding has ended, so this item can't be changed." };
   return null;
 }
 
-/** Delete: as edit, and only while there are no bids or purchases (SPEC §7.3). */
+/** Delete: as edit (so not after bidding ends), and only while there are no bids or purchases (SPEC §7.3). */
 export function deleteBlock(viewer: { id: string; role: Role }, item: ItemFacts): Refusal | null {
   const blocked = editBlock(viewer, item);
   if (blocked) return blocked;

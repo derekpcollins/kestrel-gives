@@ -54,12 +54,12 @@ export function renderItemTile(item: TileView, ctx: TileContext, words?: TileTex
 
   // The status pill sits over the photo, which comes before the title; screen readers get
   // it after the title instead, where it makes sense ("Lakeside Cabin Weekend, Outbid").
+  // An aria-label, not visually hidden text: browsers put a space before text that's
+  // positioned out of the flow, which read "Lakeside Cabin Weekend , Outbid". The label
+  // starts with the visible title, so voice control still finds it (WCAG 2.5.3).
   if (text.status) {
     media.querySelector(".item-tile__status")?.setAttribute("aria-hidden", "true");
-    const hidden = document.createElement("span");
-    hidden.className = "visually-hidden";
-    hidden.textContent = `, ${text.status.label}`;
-    link.append(hidden);
+    link.setAttribute("aria-label", `${item.title}, ${text.status.label}`);
   }
 
   tile.append(media, header, body);

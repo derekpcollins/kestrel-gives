@@ -43,7 +43,7 @@ export async function GET(request: Request): Promise<Response> {
   );
 }
 
-const REFUSAL_STATUS = { "submissions-closed": 409, "not-yours": 403, cancelled: 409, "has-activity": 409 } as const;
+const REFUSAL_STATUS = { "submissions-closed": 409, "not-yours": 403, cancelled: 409, "bidding-ended": 409, "has-activity": 409 } as const;
 
 function refused(outcome: WriteRefusal): Response {
   if (outcome.kind === "not-found") return problem(404, "That item doesn't exist.", {}, { code: "not-found" });

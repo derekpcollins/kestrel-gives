@@ -157,7 +157,7 @@ export function startSubmitPage(): void {
     } else {
       if (!item) return;
       const viewer = state.viewer;
-      const can = viewer ? editState(viewer, item) : null;
+      const can = viewer ? editState(viewer, item, state.event?.phase ?? null) : null;
       showBlocked(!can ? "The demo isn't ready yet." : can.blocked?.message ?? null);
       if (can && !can.blocked) {
         if (!filled) {

@@ -8,6 +8,7 @@ import { blobStorage } from "../../lib/storage/blob.ts";
 import { localStorage } from "../../lib/storage/local.ts";
 import { assertOwned, uploadPathname } from "../../lib/storage/paths.ts";
 import type { BlobLister } from "../../lib/storage/blob.ts";
+import { cacheSecondsFor } from "../../src/components/upload-rules.ts";
 
 describe("storage prefixes: a preview can never delete the live demo's files", () => {
   test("accepts paths inside its own prefix", () => {
@@ -134,12 +135,18 @@ describe("writing and clearing uploads", () => {
     assert.deepEqual(await dev.clear(), { files: 0, lists: 0 }, "clearing an empty prefix is fine");
   });
 
-  function fakeLister(pages: string[][]): BlobLister & { listed: string[]; deleted: string[][] } {
+  function fakeLister(pages: string[][]): BlobLister & { listed: string[]; deleted: string[][]; puts: { pathname: string; cacheControlMaxAge?: number }[] } {
     const listed: string[] = [];
     const deleted: string[][] = [];
+    const puts: { pathname: string; cacheControlMaxAge?: number }[] = [];
     return {
       listed,
       deleted,
+      puts,
+      async put(pathname, _body, options) {
+        puts.push({ pathname, ...(options.cacheControlMaxAge === undefined ? {} : { cacheControlMaxAge: options.cacheControlMaxAge }) });
+        return { pathname, url: `https://store.example/${pathname}` };
+      },
       async list({ prefix, cursor }) {
         listed.push(prefix);
         const at = cursor ? Number(cursor) : 0;
@@ -152,6 +159,15 @@ describe("writing and clearing uploads", () => {
       },
     };
   }
+
+  test("proofs upload with a one-minute browser cache; photos keep Blob's default (#100, #102)", async () => {
+    const lister = fakeLister([]);
+    const blob = blobStorage("preview/", lister);
+    await blob.put("preview/proofs/a.png", new Uint8Array([1]), "image/png", { cacheSeconds: cacheSecondsFor("proof") });
+    await blob.put("preview/photos/b.jpg", new Uint8Array([1]), "image/jpeg", { cacheSeconds: cacheSecondsFor("photo") });
+    assert.deepEqual(lister.puts, [{ pathname: "preview/proofs/a.png", cacheControlMaxAge: 60 }, { pathname: "preview/photos/b.jpg" }]);
+    await assert.rejects(blob.put("production/proofs/c.png", new Uint8Array([1]), "image/png"), /outside/);
+  });
 
   test("blob clear lists page by page under its prefix and deletes each page", async () => {
     const lister = fakeLister([["preview/photos/a.jpg", "preview/proofs/b.png"], ["preview/photos/c.webp"]]);

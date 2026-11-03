@@ -43,8 +43,10 @@ test("Jules during live: four sections from the real answer, the proof summary, 
   const headings = page.locator("[data-your-items] h2");
   await expect(headings).toHaveText(["My bids", "Won & purchased", "My donated items", "Cancelled"]);
   await expect(section(page, "My bids").locator(".item-tile")).toHaveCount(real.bids.length);
-  await expect(section(page, "My bids").getByRole("link", { name: /\s*, Outbid$/ }).first()).toBeVisible();
-  await expect(section(page, "Won & purchased").locator(".item-tile")).toHaveCount(real.wins.length);
+  await expect(section(page, "My bids").getByRole("link", { name: /^[^,]+[^ ], Outbid$/ }).first()).toBeVisible();
+  // One tile per item: repeat purchases fold together.
+  const items = new Set(real.wins.map((w: Json) => `${w.kind}:${w.itemId}`));
+  await expect(section(page, "Won & purchased").locator(".item-tile")).toHaveCount(items.size);
 
   const summary = page.getByRole("group", { name: "Your donation total" });
   await expect(summary).toContainText(`$${real.proof.totalCents / 100}`);
@@ -60,7 +62,7 @@ test("Jules during live: four sections from the real answer, the proof summary, 
   expect(results.violations).toEqual([]);
 });
 
-test("after the close, bids say won or ended, and lost ones fade", async ({ page }) => {
+test("after the close: won or Didn't win, lost ones fade, and donated items have no Edit", async ({ page }) => {
   await as(page, "3", "ended");
   await me(page, (a) => {
     a.phase = "ended";
@@ -71,9 +73,12 @@ test("after the close, bids say won or ended, and lost ones fade", async ({ page
   });
   await page.goto("/your-items");
   const bids = section(page, "My bids");
-  await expect(bids.getByRole("link", { name: /^Guitar lessons, four weeks\s*, You won$/ })).toBeVisible();
+  await expect(bids.getByRole("link", { name: "Guitar lessons, four weeks, You won", exact: true })).toBeVisible();
   await expect(bids.locator(".item-tile").nth(1)).toHaveClass(/item-tile--muted/);
-  await expect(bids.locator(".item-tile").nth(1)).toContainText("Your bid · Won at $240");
+  await expect(bids.getByRole("link", { name: "Lakeside Cabin Weekend, Didn't win", exact: true })).toBeVisible();
+  await expect(bids.locator(".item-tile").nth(1)).toContainText("Your bid · Winning bid $240");
+  await expect(section(page, "My donated items").locator(".item-tile").first()).toBeVisible();
+  await expect(section(page, "My donated items").getByRole("link", { name: /^Edit / })).toHaveCount(0);
 });
 
 test("a changed total shows the banner; nothing cancelled means no Cancelled section", async ({ page }) => {
@@ -135,3 +140,17 @@ test("a failed load says so and Try again recovers", async ({ page }) => {
   await expect(failed).toBeHidden();
   await expect(page.locator("[data-your-items] h2").first()).toHaveText("My bids");
 });
+
+test("repeat purchases of one item are one tile with the count and combined amount", async ({ page }) => {
+  await as(page, "3", "live");
+  await me(page, (a) => {
+    const unit = (at: string) => ({ kind: "bought", itemId: "12", title: "Homemade hot sauce trio", coverUrl: "", amountCents: 2_000, at });
+    a.wins = [unit("2026-11-03T15:00:00Z"), unit("2026-11-01T15:00:00Z")];
+  });
+  await page.goto("/your-items");
+  const wins = section(page, "Won & purchased");
+  await expect(wins.locator(".item-tile")).toHaveCount(1);
+  await expect(wins.locator(".item-tile")).toContainText("$20");
+  await expect(wins.locator(".item-tile")).toContainText("Bought 2 · $40 · Last on Nov 3");
+});
+

@@ -307,7 +307,7 @@ test("item tiles: words come from the rules; cancelled only in Your Items", asyn
   await expect(cabin.locator(".item-tile__detail")).toHaveText(/^Top bid · \d+ bids$/);
   await expect(live).toContainText("Starting bid · No bids yet");
   // Chrome's name computation puts a space before the visually hidden ", Status"; speech is the same.
-  await expect(live.getByRole("link", { name: /^Sourdough starter and a loaf a month ?, Outbid$/ })).toBeVisible();
+  await expect(live.getByRole("link", { name: "Sourdough starter and a loaf a month, Outbid", exact: true })).toBeVisible();
   await expect(live.getByRole("link", { name: /^Bike tune-up at your desk ?, Ending soon$/ })).toBeVisible();
   await expect(page.locator('[data-tiles="live-instant"]').first()).toContainText("2 left");
   const ended = page.locator('[data-tiles="ended"]').first();

@@ -17,7 +17,7 @@ import { viewerIdFrom } from "../lib/demo/viewer.ts";
 import { storageFor } from "../lib/storage/index.ts";
 import { LOCAL_UPLOADS_DIR } from "../lib/storage/local.ts";
 import { assertOwned, IMAGE_EXTENSIONS } from "../lib/storage/paths.ts";
-import { MAX_UPLOAD_BYTES, sniffImageType, UPLOAD_MESSAGES } from "../src/components/upload-rules.ts";
+import { cacheSecondsFor, MAX_UPLOAD_BYTES, sniffImageType, UPLOAD_MESSAGES } from "../src/components/upload-rules.ts";
 
 /** Reads at most `limit` + 1 bytes, so an oversized body is refused without reading it all. */
 async function readCapped(request: Request, limit: number): Promise<Uint8Array | "too-big"> {
@@ -86,7 +86,7 @@ export async function POST(request: Request): Promise<Response> {
     if (!reserved) return problem(503, "The demo has no people yet.");
     if (!reserved.ok) return problem(reserved.code === "uploads-paused" ? 503 : 429, reserved.message, {}, { code: reserved.code });
     try {
-      const stored = await storage.put(reserved.pathname, bytes, type);
+      const stored = await storage.put(reserved.pathname, bytes, type, { cacheSeconds: cacheSecondsFor(purpose) });
       console.log(`uploads: stored a ${purpose} (${bytes.byteLength} bytes)`);
       return json({ ok: true, id: reserved.id, url: stored.url }, 201);
     } catch (error) {

@@ -41,14 +41,14 @@ export interface EditState {
   canDelete: boolean;
 }
 
-export function editState(viewer: { id: string; role: Role }, item: Pick<ItemDetail, "submitter" | "cancelled" | "hasActivity">): EditState {
-  const facts = { submitterId: item.submitter.id, cancelled: item.cancelled, hasActivity: item.hasActivity };
+export function editState(viewer: { id: string; role: Role }, item: Pick<ItemDetail, "submitter" | "cancelled" | "hasActivity">, phase: Phase | null): EditState {
+  const facts = { submitterId: item.submitter.id, cancelled: item.cancelled, hasActivity: item.hasActivity, ended: phase === "ended" };
   return { blocked: editBlock(viewer, facts), locked: lockedFields(item.hasActivity), canDelete: deleteBlock(viewer, facts) === null };
 }
 
-/** The item page shows "Edit item" to its submitter and admins, unless it's cancelled. */
-export function canEdit(viewer: { id: string; role: Role } | null, item: Pick<ItemDetail, "submitter" | "cancelled" | "hasActivity">): boolean {
-  return viewer !== null && editState(viewer, item).blocked === null;
+/** "Edit item" shows to its submitter and admins, unless it's cancelled or bidding has ended (#102). */
+export function canEdit(viewer: { id: string; role: Role } | null, item: Pick<ItemDetail, "submitter" | "cancelled" | "hasActivity">, phase: Phase | null): boolean {
+  return viewer !== null && editState(viewer, item, phase).blocked === null;
 }
 
 /** Help under the starting bid, from the event minimum (never hard-coded, SPEC §7.4). */

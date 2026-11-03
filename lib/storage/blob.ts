@@ -4,13 +4,14 @@ import { del, list, put } from "@vercel/blob";
 import { assertOwned, assertPrefix } from "./paths.ts";
 import type { Storage } from "./types.ts";
 
-/** The Blob calls clear() makes; tests pass fakes so they never touch the network. */
+/** The Blob calls storage makes; tests pass fakes so they never touch the network. */
 export interface BlobLister {
+  put(pathname: string, body: Buffer, options: { access: "public"; contentType: string; addRandomSuffix: false; cacheControlMaxAge?: number }): Promise<{ pathname: string; url: string }>;
   list(options: { prefix: string; cursor?: string; limit: number }): Promise<{ blobs: { pathname: string }[]; cursor?: string; hasMore: boolean }>;
   del(pathnames: string[]): Promise<void>;
 }
 
-const realLister: BlobLister = { list: (options) => list(options), del: (pathnames) => del(pathnames) };
+const realLister: BlobLister = { put: (pathname, body, options) => put(pathname, body, options), list: (options) => list(options), del: (pathnames) => del(pathnames) };
 
 /** Blob lists at most 1,000 per page; each page is one advanced operation (deletes are free). */
 const PAGE = 1000;
@@ -20,9 +21,11 @@ export function blobStorage(prefix: string, lister: BlobLister = realLister): St
   return {
     kind: "blob",
     prefix,
-    async put(pathname, data, type) {
+    async put(pathname, data, type, options = {}) {
       assertOwned(pathname, prefix);
-      const result = await put(pathname, Buffer.from(data), { access: "public", contentType: type, addRandomSuffix: false });
+      // Without a cache time Blob's default applies (a month in browsers and the CDN).
+      const cache = options.cacheSeconds === undefined ? {} : { cacheControlMaxAge: options.cacheSeconds };
+      const result = await lister.put(pathname, Buffer.from(data), { access: "public", contentType: type, addRandomSuffix: false, ...cache });
       return { pathname: result.pathname, url: result.url };
     },
     async delete(pathnames) {

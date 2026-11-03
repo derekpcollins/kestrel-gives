@@ -1,6 +1,6 @@
 # Kestrel Gives — Build Spec & Conformance Rules
 
-**Status:** v1.15 · Owner: Derek Collins · Last updated: Nov 3, 2026
+**Status:** v1.16 · Owner: Derek Collins · Last updated: Nov 3, 2026
 
 This document describes what to build and the rules every contribution must follow, whether a person or an AI agent writes it. Read it in full before writing any code. If something here conflicts with a request, stop and ask.
 
@@ -105,7 +105,7 @@ The Vercel CLI is installed globally, not as a project dependency. Node's built-
 - Two branches: **`main`** for the deployed demo, **`dev`** for local work and tests. Tests reseed `dev` before each run and MUST NOT touch `main`.
 
 ### File storage
-- **One public Vercel Blob store** on the deployed site, for item photos and proof images uploaded through the app. Production and Preview share it, each under its own path prefix (`production/`, `preview/`); the storage layer MUST refuse to delete anything outside the current environment's prefix, and MUST refuse anything under `seed/`.
+- **One public Vercel Blob store** on the deployed site, for item photos and proof images uploaded through the app. Production and Preview share it, each under its own path prefix (`production/`, `preview/`); the storage layer MUST refuse to delete anything outside the current environment's prefix, and MUST refuse anything under `seed/`. Proof images are uploaded with a short browser cache (60 seconds), so a deleted proof doesn't linger in browsers; item photos keep the long default (v1.16).
 - **Seed photos** (v1.10) MUST NOT be committed to git; a check fails if any image file appears under a seed or photo path (the committed placeholders excepted). They live in the same Blob store under `seed/`, shared by Production and Preview, uploaded once by a script and never deleted by the app. The database stores relative keys (`seed/<slug>-<n>.jpg`), never URLs, and a key is resolved when shown: on Production and Preview to `SEED_PHOTOS_BASE_URL` plus the key; locally to the gitignored copy in `public/seed/` if present, otherwise the placeholder. On Production and Preview a missing or malformed `SEED_PHOTOS_BASE_URL` MUST fail the build, and `/api/health` reports it as `"seedPhotos": false`; the URL itself is never printed. Tests MUST NOT need network access or Blob for seed photos.
 - Local dev and tests store uploads in a local folder (ignored by git), so tests don't use up Blob's monthly operation allowance.
 - **Restore demo data and the daily job delete uploaded files** (v1.13): everything under the current environment's prefix (`production/` or `preview/`; locally the dev folder), never `seed/`, page by page through the same delete guard, after the database has been restored. Listing costs Blob operations, so a manual Restore lists only when something was uploaded since the last one; the daily job always sweeps.
@@ -186,7 +186,7 @@ Each has a name, a one-sentence description, and an original logo. The owner sup
   - Instant sale: price and quantity.
   - Both: title, description, and **1–5 photos (at least one required)**. Each uploaded thumbnail has left and right arrow buttons to reorder it; the first photo is the cover.
 - **Item page:** photo carousel with clickable thumbnails beneath, details, current high bid or price and stock, and actions.
-- **Edit:** shown to the submitter and admins. Once an item has any bid or purchase, its **sale type, starting bid, price, and quantity are locked**. Title, description, and photos stay editable.
+- **Edit:** shown to the submitter and admins **until bidding ends** (v1.16). Once an item has any bid or purchase, its **sale type, starting bid, price, and quantity are locked**. Title, description, and photos stay editable. After bidding ends, nobody edits or deletes an item, admins included: the results are final.
 - **Delete:** the submitter or an admin, only while the item has no bids and no purchases.
 - **Cancel:** admins only. The item is removed from listings, but its page stays up with a clear "This item has been cancelled" banner. Anyone who bid on it or bought it sees the cancellation on their dashboard. Purchases and bids on it are marked cancelled.
 

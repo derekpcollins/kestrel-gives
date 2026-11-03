@@ -57,3 +57,13 @@ export function resizedSize(width: number, height: number, longSide = RESIZE_LON
   const scale = Math.min(1, longSide / Math.max(width, height));
   return { width: Math.max(1, Math.round(width * scale)), height: Math.max(1, Math.round(height * scale)) };
 }
+
+/**
+ * How long browsers may keep an uploaded file (DECISIONS #100, #102). Proofs get Blob's minimum,
+ * a minute, so a deleted or Restored proof doesn't linger in a browser for a month; photos keep
+ * Blob's default (undefined here).
+ */
+export const PROOF_CACHE_SECONDS = 60;
+export function cacheSecondsFor(purpose: UploadPurpose): number | undefined {
+  return purpose === "proof" ? PROOF_CACHE_SECONDS : undefined;
+}

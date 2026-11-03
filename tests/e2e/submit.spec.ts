@@ -268,3 +268,15 @@ test("the submitter sees Edit item on the item page", async ({ page }) => {
   await page.goto("/items/5");
   await expect(page.getByRole("link", { name: "Edit item" })).toHaveAttribute("href", "/items/5/edit");
 });
+
+test("once bidding ends, nobody edits: no Edit link, and the edit page says why (#102)", async ({ page }) => {
+  await as(page, "1", "ended"); // Maya, an admin: no exception
+  await item(page, (it) => { it.submitter.id = "1"; it.cancelled = false; it.hasActivity = false; });
+  await page.goto("/items/5");
+  await expect(page.locator(".page-header__title")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Edit item" })).toHaveCount(0);
+  await page.goto("/items/5/edit");
+  await expect(page.locator("[data-submit-blocked]")).toContainText("Bidding has ended, so this item can't be changed.");
+  await expect(page.locator("[data-submit-form]")).toBeHidden();
+  await expect(page.locator("[data-delete-section]")).toBeHidden();
+});

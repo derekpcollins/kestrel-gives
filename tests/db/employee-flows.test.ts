@@ -238,6 +238,18 @@ describe("employee flows (rolled back)", () => {
       assert.equal(why(await updateItemIn(db, dev, "999999", same)), "not-found");
     });
 
+    test("once bidding ends, nobody edits or deletes, admins included (#102)", async () => {
+      const [dev, maya] = [await person(db, "Dev"), await person(db, "Maya")];
+      const portrait = await item(db, "Custom pet portrait");
+      const photo = (await one<{ id: string }>(db, `SELECT id FROM item_photos WHERE item_id = $1`, [portrait])).id;
+      const same = { ...auction([{ photoId: photo }]), startingBidCents: 4_000 };
+      await jumpIn(db, "ended", new Date());
+      assert.equal(why(await updateItemIn(db, dev, portrait, same)), "bidding-ended");
+      assert.equal(why(await updateItemIn(db, maya, portrait, same)), "bidding-ended");
+      assert.equal(why(await deleteItemIn(db, maya, portrait)), "bidding-ended");
+      assert.equal((await one<{ n: number }>(db, `SELECT count(*)::int AS n FROM items WHERE id = $1`, [portrait])).n, 1);
+    });
+
     test("delete only with no bids or purchases, counting removed and cancelled ones", async () => {
       const [dev, jules, maya] = [await person(db, "Dev"), await person(db, "Jules"), await person(db, "Maya")];
       const portrait = await item(db, "Custom pet portrait");

@@ -4,6 +4,7 @@
 import { formatDollars } from "../components/form-rules.ts";
 import { tileText, type TileContext, type TileItem, type TileText } from "../components/item-tile-rules.ts";
 import { deadlineWords } from "../components/proof-rules.ts";
+import type { Phase } from "../components/item-tile-rules.ts";
 import type { BidStanding, MyBid, MyCancelled, MyDonated, MyWin, ProofView } from "../me-api.ts";
 
 export type Tone = "success" | "warning" | "danger" | "neutral";
@@ -18,12 +19,13 @@ const dollars = (cents: number) => formatDollars(cents / 100);
 
 export const PROOF_LINK = "/your-items/proof";
 
-// The same labels and tones as the browse tiles, so a status reads the same everywhere.
+// The browse tiles' labels and tones, so a status reads the same everywhere, except a lost
+// auction: "Ended" is for items the viewer had no stake in, so theirs says "Didn't win".
 const STANDING: Record<BidStanding, PillWords> = {
   winning: { label: "You're winning", tone: "success" },
   outbid: { label: "Outbid", tone: "danger" },
   won: { label: "You won", tone: "success" },
-  lost: { label: "Ended", tone: "neutral" },
+  lost: { label: "Didn't win", tone: "neutral" },
 };
 
 /** My bids: my best bid is the number; the detail says where it stands. */
@@ -32,15 +34,51 @@ export function bidText(bid: Pick<MyBid, "myTopCents" | "highBidCents" | "standi
     bid.standing === "winning" ? "Your bid · the high bid"
     : bid.standing === "won" ? "Your winning bid"
     : bid.standing === "outbid" ? `Your bid · High bid ${dollars(bid.highBidCents)}`
-    : `Your bid · Won at ${dollars(bid.highBidCents)}`;
+    : `Your bid · Winning bid ${dollars(bid.highBidCents)}`;
   return { amount: dollars(bid.myTopCents), detail, status: STANDING[bid.standing], muted: bid.standing === "lost" };
 }
 
+/** One tile per item: repeat purchases of the same item fold together. */
+export interface WinGroup extends MyWin {
+  /** Units bought (1 for a won auction). */
+  count: number;
+  /** The latest unit's price; amountCents is the combined amount. */
+  unitCents: number;
+}
+
+/**
+ * The API lists each unit bought; Your Items shows one tile per item, with the count, the
+ * combined amount and the latest purchase's date (newest first). Totals are unchanged: they
+ * come from the server, not from these tiles.
+ */
+export function groupWins(wins: readonly MyWin[]): WinGroup[] {
+  const groups = new Map<string, WinGroup>();
+  for (const w of wins) {
+    const key = `${w.kind}:${w.itemId}`;
+    const seen = groups.get(key);
+    if (!seen) {
+      groups.set(key, { ...w, count: 1, unitCents: w.amountCents });
+      continue;
+    }
+    seen.count += 1;
+    seen.amountCents += w.amountCents;
+    if (w.at > seen.at) Object.assign(seen, { at: w.at, unitCents: w.amountCents });
+  }
+  return [...groups.values()].sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
+}
+
 /** Won & purchased: what it cost. The proof status is one for everything, in the summary. */
-export function winText(win: Pick<MyWin, "kind" | "amountCents" | "at">, timeZone: string): MineText {
+export function winText(win: Pick<WinGroup, "kind" | "amountCents" | "unitCents" | "count" | "at">, timeZone: string): MineText {
   if (win.kind === "won") return { amount: dollars(win.amountCents), detail: "Won", status: undefined, muted: false };
   const day = new Date(win.at).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone });
-  return { amount: dollars(win.amountCents), detail: `Bought ${day}`, status: undefined, muted: false };
+  if (win.count === 1) return { amount: dollars(win.amountCents), detail: `Bought ${day}`, status: undefined, muted: false };
+  // The big number is the price, as on the item's tile; the detail has the count and the sum.
+  return { amount: dollars(win.unitCents), detail: `Bought ${win.count} · ${dollars(win.amountCents)} · Last on ${day}`, status: undefined, muted: false };
+}
+
+/** Edit shows on donated items until bidding ends (SPEC §7.3, v1.16; DECISIONS #102). */
+export function showsEdit(phase: Phase): boolean {
+  return phase !== "ended";
 }
 
 /** My donated items: exactly what the item's own tile says in the browse grid. */
@@ -51,9 +89,26 @@ export function donatedText(item: Pick<MyDonated, "type" | "bidCount" | "highBid
   return { ...tileText(tile, ctx), muted: ctx.phase === "ended" };
 }
 
-export function cancelledText(item: Pick<MyCancelled, "why" | "amountCents">): MineText {
+/** Cancelled rows fold the same way: one tile per item and reason, purchases counted and summed. */
+export function groupCancelled(items: readonly MyCancelled[]): (MyCancelled & { count: number })[] {
+  const groups = new Map<string, MyCancelled & { count: number }>();
+  for (const c of items) {
+    const seen = groups.get(`${c.why}:${c.itemId}`);
+    if (!seen) groups.set(`${c.why}:${c.itemId}`, { ...c, count: 1 });
+    else {
+      seen.count += 1;
+      seen.amountCents = (seen.amountCents ?? 0) + (c.amountCents ?? 0);
+    }
+  }
+  return [...groups.values()];
+}
+
+export function cancelledText(item: Pick<MyCancelled, "why" | "amountCents"> & { count?: number }): MineText {
   const status = { label: "Cancelled", tone: "danger" } as const;
-  if (item.why === "bought") return { amount: dollars(item.amountCents ?? 0), detail: "Purchase cancelled · Not in your total", status, muted: true };
+  if (item.why === "bought") {
+    const what = (item.count ?? 1) > 1 ? `${item.count} purchases cancelled` : "Purchase cancelled";
+    return { amount: dollars(item.amountCents ?? 0), detail: `${what} · Not in your total`, status, muted: true };
+  }
   if (item.why === "bid") return { amount: "", detail: "Your bid no longer counts", status, muted: true };
   return { amount: "", detail: "You donated this item", status, muted: true };
 }

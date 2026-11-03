@@ -3,7 +3,7 @@ import { strict as assert } from "node:assert";
 import { describe, test } from "node:test";
 import type { ProofView } from "../../src/me-api.ts";
 import {
-  bidText, cancelledText, donatedText, PROOF_LINK, proofSummary, totalChangedBanner, winText,
+  bidText, cancelledText, donatedText, groupCancelled, groupWins, PROOF_LINK, proofSummary, showsEdit, totalChangedBanner, winText,
 } from "../../src/pages/your-items-rules.ts";
 
 const NOW = new Date("2026-11-20T15:00:00Z");
@@ -21,14 +21,34 @@ describe("Your Items tiles", () => {
       { amount: "$40", detail: "Your bid · High bid $60", status: { label: "Outbid", tone: "danger" }, muted: false });
     assert.equal(bidText({ myTopCents: 9_000, highBidCents: 9_000, standing: "won" }).status?.label, "You won");
     const lost = bidText({ myTopCents: 3_000, highBidCents: 5_500, standing: "lost" });
-    assert.equal(lost.detail, "Your bid · Won at $55");
+    assert.deepEqual(lost.status, { label: "Didn't win", tone: "neutral" }, "Ended is for items with no stake");
+    assert.equal(lost.detail, "Your bid · Winning bid $55");
     assert.equal(lost.muted, true);
   });
 
   test("won and bought say what they cost; a purchase gets its day in the event's zone", () => {
-    assert.deepEqual(winText({ kind: "won", amountCents: 31_000, at: NOW.toISOString() }, "America/New_York"), { amount: "$310", detail: "Won", status: undefined, muted: false });
+    assert.deepEqual(winText({ kind: "won", amountCents: 31_000, unitCents: 31_000, count: 1, at: NOW.toISOString() }, "America/New_York"), { amount: "$310", detail: "Won", status: undefined, muted: false });
     // 03:30 UTC on Nov 4 is still Nov 3 in New York.
-    assert.equal(winText({ kind: "bought", amountCents: 2_000, at: "2026-11-04T03:30:00Z" }, "America/New_York").detail, "Bought Nov 3");
+    assert.equal(winText({ kind: "bought", amountCents: 2_000, unitCents: 2_000, count: 1, at: "2026-11-04T03:30:00Z" }, "America/New_York").detail, "Bought Nov 3");
+  });
+
+  test("repeat purchases fold into one tile: the count, the combined amount, the latest date", () => {
+    const unit = (at: string, cents = 2_000) => ({ kind: "bought" as const, itemId: "12", title: "Hot sauce trio", coverUrl: "", amountCents: cents, at });
+    const groups = groupWins([
+      unit("2026-11-03T15:00:00Z"),
+      { kind: "won", itemId: "2", title: "Guitar lessons", coverUrl: "", amountCents: 8_500, at: "2026-11-02T12:00:00Z" },
+      unit("2026-11-01T15:00:00Z"),
+    ]);
+    assert.deepEqual(groups.map((g) => [g.itemId, g.count, g.amountCents, g.at]), [["12", 2, 4_000, "2026-11-03T15:00:00Z"], ["2", 1, 8_500, "2026-11-02T12:00:00Z"]]);
+    assert.deepEqual(winText(groups[0]!, "America/New_York"), { amount: "$20", detail: "Bought 2 · $40 · Last on Nov 3", status: undefined, muted: false });
+    const sum = (list: { amountCents: number }[]) => list.reduce((n, w) => n + w.amountCents, 0);
+    assert.equal(sum(groups), 12_500, "folding never changes the total");
+  });
+
+  test("Edit shows on donated items until bidding ends", () => {
+    assert.equal(showsEdit("submission"), true);
+    assert.equal(showsEdit("live"), true);
+    assert.equal(showsEdit("ended"), false);
   });
 
   test("a donated item says what its browse tile says", () => {
@@ -44,6 +64,12 @@ describe("Your Items tiles", () => {
     assert.deepEqual(cancelledText({ why: "bought", amountCents: 2_000 }),
       { amount: "$20", detail: "Purchase cancelled · Not in your total", status: { label: "Cancelled", tone: "danger" }, muted: true });
     assert.equal(cancelledText({ why: "bid", amountCents: null }).detail, "Your bid no longer counts");
+    const twice = groupCancelled([
+      { itemId: "9", title: "Jam", coverUrl: "", why: "bought", amountCents: 1_200 },
+      { itemId: "9", title: "Jam", coverUrl: "", why: "bought", amountCents: 1_200 },
+    ]);
+    assert.equal(twice.length, 1);
+    assert.deepEqual([cancelledText(twice[0]!).amount, cancelledText(twice[0]!).detail], ["$24", "2 purchases cancelled · Not in your total"]);
     assert.equal(cancelledText({ why: "donated", amountCents: null }).detail, "You donated this item");
   });
 });
