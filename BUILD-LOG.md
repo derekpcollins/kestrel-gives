@@ -630,7 +630,7 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   - (3) A refresh still in flight when a test ended logged a `route.fetch` error. Both item specs now drop their routes after each test.
 - **Tests:** 4 new unit tests (what the panel offers, dialog wording, which refusals go under the field). `tests/e2e/item-actions.spec.ts` adds 9 tests at 1280 and 390. They stub the API in the browser, so nothing is written to dev during the parallel run. They cover the field's start value, number pad and help; the dialog with axe; the success announcement (live region once, quiet toast) and focus; a lost race; field checks; a failed request; the draft surviving the refresh; buying; sold out; and the own item. The real saves and races stay in `tests/db/sales.test.ts`. `npm run check` passes (170 unit, 59 database, 98 browser, 11 reflow, 44 visual), and `npm audit` shows only the accepted zod advisory.
 - **Preview (10:18 EST):** `kestrel-gives-fo5uqsdhb` is Ready. Health is OK, the item pages and the new scripts are served, and refused bids give "Bids must be at least $245." and the lost-race answer without writing anything (`.review/m4-4d/preview-checks.txt`).
-- **Noticed, not changed:** on Instant Sale pages, the phase banner says "Bidding is open". That banner is shared by every page (3B); worth a look in 4E.
+- **Noticed, not changed:** on Instant Sale pages, the phase banner says "Bidding is open". That banner is shared by every page (3B); worth a look in 4E. *(Fixed in 4E: DECISIONS #90.)*
 
 ### 2026-11-03 — Stage 4E: fixes and the Preview review (10:21 – 11:05 EST)
 - **Owner stepped in:** approved 4D with four fixes (DECISIONS #90):
@@ -649,3 +649,17 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   - `kestrel-gives-7llzsgqu2` (f69d1a4, the final commit): health OK, pages served, and the dialog fix is live.
   - Dev was reseeded after each run.
 - **Ready for main:** a fast-forward of 16 commits, including the held `aa9db4e` and `954377c`, waiting for the owner's approval.
+
+### 2026-11-03 — Milestone 4 live (11:05 – 11:20 EST)
+- **Owner stepped in:** approved Milestone 4 and the push.
+- **Pushed:** `main` fast-forwarded `7b13109..0f0b289`: 16 commits, the held `aa9db4e` and `954377c` plus 4A–4E, their fixes, BUILD-LOG and DECISIONS #86–#90. Deployment `kestrel-gives-jlk6rzizv`, production, Ready.
+- **Build log:** unit tests 171 pass, 0 fail, 5 todo. `deploy-db: production build; DATABASE_URL_UNPOOLED confirmed as the main branch (direct connection).`, `Up to date.`, `deploy-db: an event exists; not seeding.`, `deploy-db: step m3-land-live-demo already ran; skipped.` There were no new migrations or deploy steps, and no errors; only Vercel's known `npm warn Unknown env config "cache-dir"`.
+- **Health:** `{"ok":true,"db":"main","schema":"005","seedPhotos":true}` on `kestrel-gives.vercel.app` and on `kestrel-gives-derek-p-collins-projects.vercel.app` (via `vercel curl`).
+- **Live pages:** a view-only look on the public domain at 390 and 1280. The browser loaded pages and sent no requests other than GET; there were no bids or purchases (`.review/m4-prod/view-checks.txt`).
+  - Silent Auction: 9 tiles, "Bidding is open".
+  - Instant Sale: 6 tiles, "The instant sale is open".
+  - `/items/1`: $240, "Top bid · 6 bids", **Place bid**, "Bid history (6 bids) · times in EST".
+  - `/items/12`: $45, "6 left", **Buy one**, and the instant-sale banner.
+  - No page errors.
+
+**Milestone 4 ended:** 2026-11-03 11:20 EST · about 6 hours of working time across two days from the plan approval (2026-11-02 16:29 EST), with an overnight pause.
