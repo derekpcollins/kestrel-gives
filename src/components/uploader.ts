@@ -10,6 +10,7 @@ import { checkPhotos, PHOTO_MAX, photoPositionLabel } from "./form-rules.ts";
 import { registerCheck } from "./forms.ts";
 import { icon } from "./icons.ts";
 import { resizeForUpload } from "./resize.ts";
+import { uploaderWords } from "./upload-rules.ts";
 
 /** A photo in the list: one the item already has, or a newly picked file. */
 export type UploaderPhoto =
@@ -42,6 +43,8 @@ export function createUploader(root: HTMLElement): Uploader {
   const max = Number(root.dataset.max ?? PHOTO_MAX);
   const required = "required" in root.dataset;
   const resize = "resize" in root.dataset;
+  const noun = root.dataset.noun ?? "photo";
+  const words = uploaderWords(noun, max);
   let photos: Photo[] = [];
   let working = 0;
 
@@ -51,12 +54,12 @@ export function createUploader(root: HTMLElement): Uploader {
     requestAnimationFrame(() => { status.textContent = text; });
   };
 
-  registerCheck(input, () => (required && photos.length === 0 ? "Add at least one photo." : ""));
+  registerCheck(input, () => (required && photos.length === 0 ? words.required : ""));
 
   input.addEventListener("click", (event) => {
     if (photos.length >= max) {
       event.preventDefault();
-      announce(`You've added ${max} photos, the most allowed. Remove one to add another.`);
+      announce(words.full);
     }
   });
 
@@ -69,7 +72,7 @@ export function createUploader(root: HTMLElement): Uploader {
     if (resize && accepted.length) {
       working += accepted.length;
       root.setAttribute("aria-busy", "true");
-      announce(accepted.length === 1 ? "Preparing 1 photo…" : `Preparing ${accepted.length} photos…`);
+      announce(words.preparing(accepted.length));
       const results = await Promise.all(accepted.map(async (file) => {
         try {
           return { file, resized: await resizeForUpload(file) };
@@ -94,7 +97,7 @@ export function createUploader(root: HTMLElement): Uploader {
       return li;
     }));
     render();
-    const added = files.length ? `${files.length === 1 ? "1 photo" : `${files.length} photos`} added. ${photos.length} of ${max}.` : "";
+    const added = files.length ? words.added(files.length, photos.length) : "";
     announce([added, ...problems].filter(Boolean).join(" "));
     input.dispatchEvent(new Event("focusout", { bubbles: true })); // let the form re-check
   });
@@ -120,16 +123,16 @@ export function createUploader(root: HTMLElement): Uploader {
       render();
       const next = list.children[Math.min(index, photos.length - 1)]?.querySelector<HTMLButtonElement>('[data-action="remove"]');
       (next ?? input).focus();
-      announce(`Photo removed. ${photos.length} of ${max}.`);
+      announce(words.removed(photos.length));
       input.dispatchEvent(new Event("focusout", { bubbles: true }));
     }
   });
 
   function render(): void {
     root.classList.toggle("uploader--full", photos.length >= max);
-    if (count) count.textContent = photos.length >= max ? `${max} of ${max} photos. Remove one to add another.` : `${photos.length} of ${max} photos`;
+    if (count) count.textContent = words.count(photos.length);
     list.hidden = photos.length === 0;
-    list.replaceChildren(...photos.map((photo, i) => item(photo, i, photos.length)));
+    list.replaceChildren(...photos.map((photo, i) => (max === 1 ? single(photo, noun) : item(photo, i, photos.length))));
   }
 
   render();
@@ -144,6 +147,22 @@ export function createUploader(root: HTMLElement): Uploader {
     },
     busy: () => working > 0,
   };
+}
+
+/** A one-file uploader's item: the picture and Remove; no cover or order. */
+function single(photo: Photo, noun: string): HTMLLIElement {
+  const li = document.createElement("li");
+  li.className = "uploader__item";
+  li.dataset.index = "0";
+  const img = document.createElement("img");
+  img.className = "uploader__thumb";
+  img.src = photo.url;
+  img.alt = `${noun.charAt(0).toUpperCase()}${noun.slice(1)}: ${photo.name}`;
+  const actions = document.createElement("div");
+  actions.className = "uploader__actions";
+  actions.append(button("remove", "trash", `Remove ${noun}`, false));
+  li.append(img, actions);
+  return li;
 }
 
 function item(photo: Photo, index: number, total: number): HTMLLIElement {

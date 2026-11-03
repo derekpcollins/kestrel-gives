@@ -41,6 +41,8 @@ describe("which nav link is current", () => {
     assert.ok(!navLinks("submission").some((l) => l.key === "item"), "no link is ever marked on an item's page");
     assert.equal(pageKeyFor("your-items", "/your-items"), "your-items");
     assert.equal(pageKeyFor(undefined, "/"), "home");
+    assert.equal(pageKeyFor("proof", "/your-items/proof"), "your-items", "the proof page is part of Your Items");
+    assert.ok(!navLinks("ended").some((l) => l.key === "giving"), "the giving stub marks nothing");
   });
 });
 

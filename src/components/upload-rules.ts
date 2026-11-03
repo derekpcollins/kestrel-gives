@@ -59,11 +59,45 @@ export function resizedSize(width: number, height: number, longSide = RESIZE_LON
 }
 
 /**
- * How long browsers may keep an uploaded file (DECISIONS #100, #102). Proofs get Blob's minimum,
+ * How long browsers may keep an uploaded file (DECISIONS entries 100 and 102). Proofs get Blob's minimum,
  * a minute, so a deleted or Restored proof doesn't linger in a browser for a month; photos keep
  * Blob's default (undefined here).
  */
 export const PROOF_CACHE_SECONDS = 60;
 export function cacheSecondsFor(purpose: UploadPurpose): number | undefined {
   return purpose === "proof" ? PROOF_CACHE_SECONDS : undefined;
+}
+
+/** What the uploader says. Photos (up to 5) keep their words; a one-file uploader (the proof
+ * screenshot) talks about its one thing by name, with no counts or order. */
+export interface UploaderWords {
+  required: string;
+  full: string;
+  preparing(n: number): string;
+  added(n: number, total: number): string;
+  removed(total: number): string;
+  count(n: number): string;
+}
+
+export function uploaderWords(noun: string, max: number): UploaderWords {
+  const Noun = noun.charAt(0).toUpperCase() + noun.slice(1);
+  if (max === 1) {
+    return {
+      required: `Add a ${noun}.`,
+      full: `You've added a ${noun}. Remove it to choose a different one.`,
+      preparing: () => `Preparing the ${noun}…`,
+      added: () => `${Noun} added.`,
+      removed: () => `${Noun} removed.`,
+      count: (n) => (n === 0 ? `No ${noun} yet` : `${Noun} added. Remove it to choose a different one.`),
+    };
+  }
+  const many = (n: number) => (n === 1 ? `1 ${noun}` : `${n} ${noun}s`);
+  return {
+    required: `Add at least one ${noun}.`,
+    full: `You've added ${max} ${noun}s, the most allowed. Remove one to add another.`,
+    preparing: (n) => `Preparing ${many(n)}…`,
+    added: (n, total) => `${many(n)} added. ${total} of ${max}.`,
+    removed: (total) => `${Noun} removed. ${total} of ${max}.`,
+    count: (n) => (n >= max ? `${max} of ${max} ${noun}s. Remove one to add another.` : `${n} of ${max} ${noun}s`),
+  };
 }

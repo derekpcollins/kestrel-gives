@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Upload donation proof · Kestrel Gives</title>
+    <link rel="icon" href="/favicon-32.png" sizes="32x32">
+    <link rel="icon" href="/favicon-16.png" sizes="16x16">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="preload" href="/fonts/plus-jakarta-sans-latin-var.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/styles/tokens.css">
+    <link rel="stylesheet" href="/styles/base.css">
+    <link rel="stylesheet" href="/styles/components.css">
+    <script type="module" src="/js/main.js"></script>
+  </head>
+  <body data-page="proof">
+    <a class="skip-link" href="#main">Skip to main content</a>
+    <div data-shell-demo></div>
+    <div data-shell-header></div>
+    <div data-shell-banner></div>
+    <main class="page" id="main" tabindex="-1" data-proof-page>
+      <header class="page-header">
+        <div class="page-header__row"><div class="page-header__text">
+          <a class="link link--quiet page-header__back" href="/your-items"><span data-icon="chevron-left"></span>Back to Your Items</a>
+          <h1 class="page-header__title">Upload donation proof</h1>
+          <p class="page-header__description">Donate your total once on the giving page, then upload the amount and a screenshot of the receipt.</p>
+        </div></div>
+      </header>
+      <section class="empty" aria-labelledby="proof-blocked-title" data-proof-blocked hidden>
+        <span class="empty__icon" data-icon="check" data-icon-size="lg"></span>
+        <h2 class="empty__title" id="proof-blocked-title" data-proof-blocked-text></h2>
+        <p><a class="link" href="/your-items">Back to Your Items</a></p>
+      </section>
+      <section class="empty" aria-labelledby="proof-error-title" data-proof-error hidden>
+        <span class="empty__icon" data-icon="alert" data-icon-size="lg"></span>
+        <h2 class="empty__title" id="proof-error-title">We couldn't load your proof details</h2>
+        <p class="empty__text">Check your connection and try again.</p>
+        <div class="empty__actions"><button type="button" class="btn btn--secondary">Try again</button></div>
+      </section>
+      <div class="proof-page" data-proof-body aria-busy="true" hidden>
+        <div class="proof-page__notes" data-proof-notes></div>
+        <form class="item-form" id="proof-form" aria-labelledby="proof-form-title" novalidate data-proof-form>
+          <h2 class="visually-hidden" id="proof-form-title">Your proof</h2>
+          <div class="proof-page__total">
+            <p class="proof-page__total-text" data-proof-total></p>
+            <a class="link" href="/giving" data-proof-giving>Go to the giving page</a>
+          </div>
+          <div class="banner banner--warning"><span data-icon="alert"></span><div class="banner__body"><p class="banner__text" id="proof-demo-note" data-proof-demo-note></p></div></div>
+          <div class="field" data-message-name="the amount you donated">
+            <label class="field__label" for="proof-amount">Amount you donated</label>
+            <p class="field__help" id="proof-amount-help">Whole dollars, as shown on the receipt.</p>
+            <div class="input-group"><span class="input-group__affix" aria-hidden="true">$</span><input class="input input--money input--short" id="proof-amount" name="amount" type="text" inputmode="numeric" pattern="[0-9]+" autocomplete="off" required data-money data-min="1" aria-describedby="proof-amount-help proof-amount-note"></div>
+            <p class="field__help proof-page__warning" id="proof-amount-note" aria-live="polite" data-proof-amount-note></p>
+          </div>
+          <div class="field"><span class="field__label" id="proof-shot-label">Screenshot of the receipt</span><div class="uploader" data-uploader data-required data-resize data-max="1" data-noun="screenshot" data-max-mb="4"><div class="uploader__add"><input class="visually-hidden uploader__input" type="file" id="proof-shot" accept="image/jpeg,image/png,image/webp" aria-labelledby="proof-shot-label proof-shot-button" aria-describedby="proof-shot-help proof-demo-note"><label class="btn btn--secondary btn--sm" for="proof-shot" id="proof-shot-button"><span data-icon="upload" data-icon-size="sm"></span>Add screenshot</label><span class="uploader__count">No screenshot yet</span><p class="field__help" id="proof-shot-help">JPEG, PNG or WebP. Large pictures are made smaller before upload.</p></div><ol class="uploader__list" aria-label="Screenshot" hidden></ol><ul class="uploader__problems"></ul><p class="visually-hidden uploader__status" aria-live="polite"></p></div></div>
+          <div class="item-form__actions"><button type="submit" class="btn" data-proof-submit>Upload proof</button><a class="link" href="/your-items">Cancel</a></div>
+        </form>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <p>Kestrel is a fictional organization, and this is a demo. <a href="/design-system/">Design system</a></p>
+    </footer>
+    <noscript><p class="page">This demo needs JavaScript to load its data.</p></noscript>
+  </body>
+</html>

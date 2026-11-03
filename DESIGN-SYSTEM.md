@@ -243,6 +243,7 @@ How forms behave, for every component below:
   - Each thumbnail's alt gives its position: "Photo 1 of 3 (cover): starter.jpg".
   - After a move, focus stays on the same button of the photo that moved, or on the other arrow at an end. After a remove, focus goes to the next photo's remove button, or to the add button.
   - Every change is announced ("Moved to photo 2 of 3.", "Photo removed. 2 of 5.").
+- **Single file** (`data-max="1"`, the proof page, DECISIONS #103): `data-noun` names the thing ("screenshot"), the input has no `multiple`, and the words drop the counts: "No screenshot yet", "Screenshot added. Remove it to choose a different one.", "Add a screenshot." The one thumbnail reads "Screenshot: receipt.png" and has only a Remove button. Words come from `uploaderWords()` in `src/components/upload-rules.ts`.
 - **Do:** say the limits in the help text. **Don't:** hide a problem in a toast; problems stay until the next pick.
 - **Figma:** split in two. *Photo uploader* · State = Empty / With photos / Error / Full (4), with thumbnails as nested instances. *Photo thumbnail* · Position = Cover / Middle / Last / Only × Uploading = On / Off (8). Cover shows the pill and an inactive left arrow, Last an inactive right arrow, and Only (a single photo) both. The arrows and remove are nested *Icon button*s (Secondary, Medium: 44px).
 
@@ -274,6 +275,30 @@ How forms behave, for every component below:
 - **Accessibility:** one `h2` per section, each section a named region; tiles are one link each with their status in the name; the summary is a named group.
 - **Do:** keep one proof summary for everything (one combined proof per person). **Don't:** put a proof status on each won tile.
 - **Figma:** *Your Items* page, built from *Item tile*, *Card*, *Pill*, *Banner* and *Button* instances; *Proof summary* · Status = None / Due / Pending / Rejected / Approved (5).
+
+## Proof page
+
+**Purpose:** Upload donation proof at `/your-items/proof` (a rewrite to `proof.html`): one combined proof per person, the amount donated and one screenshot (SPEC §7.6, DECISIONS #95, #103).
+
+- **Markup:** *Page header* (back to Your Items), then `.proof-page` > `.proof-page__notes` (one *Banner* per note) and an *Item form*: `.proof-page__total` ("Your donation total is $35. 6 days left to upload proof." and "Go to the giving page"), the demo warning *Banner* ("This is a demo. Don't upload a real receipt or personal details."), the amount *Form field* (money input, starts at the total), `.proof-page__warning`, and a single-file *Photo uploader*. Behavior: `startProofPage()` in `src/pages/proof.ts`; words in `src/pages/proof-rules.ts`. The nav marks Your Items as current.
+- **States:**
+  - First proof; **below the total**: a warning line under the amount ("That's less than your $35 donation total. You can still submit; an admin will review it.", `aria-live="polite"`) that never blocks submitting.
+  - **Notes above the form:** rejected (danger, "Your last proof was rejected" with "Reason: …"), waiting ("A new upload replaces it."), approved for an older total, and a changed total (warning, first).
+  - **Blocked:** an *Empty state* with the server's reason (nothing owed yet; proof approved for the current total).
+  - **Loading:** the body has `aria-busy`; on submit the button says "Uploading screenshot…", then "Sending proof…".
+  - **Error:** browser and server field problems under their field with the error summary (amount, or a screenshot the server won't take); anything else in `.item-form__alert`. A failed load shows an *Empty state* with Try again.
+  - **Success:** back to Your Items with the toast "Thanks. Your proof is in, and an admin will review it."
+- **Accessibility:** the demo warning describes the file input; the amount's warning is linked by `aria-describedby` and announced politely; a retry reuses an upload that worked.
+- **Do:** let people submit less than the total (an admin decides). **Don't:** name an item; proof covers the total.
+- **Figma:** *Proof page* · State = First / Short / Rejected / Blocked (4), built from *Item form* parts, *Banner*, *Form field* and *Photo uploader* (Single).
+
+## Giving stub
+
+**Purpose:** where "Go to the giving page" lands in the demo (`/giving`, the seeded giving platform URL; SPEC §3). It explains that the real event links out to one donation page whose funds are split equally among the three charities, and that no money moves here.
+
+- **Markup:** *Page header*, an info *Banner* ("This is a stand-in"), *Steps* (check your total, donate once, upload proof) with an "Upload proof" button to `/your-items/proof`, and the three *Charity card*s (filled by `showCharities()`, shared with Home). No nav link is current.
+- **Don't:** link a charity on its own (no charity choice, SPEC §7.2), or use words about paying in the app.
+- **Figma:** *Giving stub* page, built from *Banner*, *Steps*, *Button* and *Charity card*.
 
 ## Error summary
 

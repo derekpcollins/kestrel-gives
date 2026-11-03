@@ -13,7 +13,11 @@ export function showHome(state: AppState): void {
   const days = proofDaysWords(state.event);
   const daysSlot = document.querySelector<HTMLElement>("[data-proof-days]");
   if (daysSlot && days) daysSlot.textContent = days;
+  showCharities(state);
+}
 
+/** The three charities as cards, in `[data-charities]` (Home and the giving stub). */
+export function showCharities(state: AppState): void {
   const list = document.querySelector<HTMLElement>("[data-charities]");
   if (!list) return;
   list.replaceChildren(

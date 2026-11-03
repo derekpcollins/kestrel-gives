@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Giving page · Kestrel Gives</title>
+    <link rel="icon" href="/favicon-32.png" sizes="32x32">
+    <link rel="icon" href="/favicon-16.png" sizes="16x16">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="preload" href="/fonts/plus-jakarta-sans-latin-var.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/styles/tokens.css">
+    <link rel="stylesheet" href="/styles/base.css">
+    <link rel="stylesheet" href="/styles/components.css">
+    <script type="module" src="/js/main.js"></script>
+  </head>
+  <body data-page="giving">
+    <a class="skip-link" href="#main">Skip to main content</a>
+    <div data-shell-demo></div>
+    <div data-shell-header></div>
+    <div data-shell-banner></div>
+    <main class="page" id="main" tabindex="-1">
+      <header class="page-header">
+        <div class="page-header__row"><div class="page-header__text">
+          <a class="link link--quiet page-header__back" href="/your-items"><span data-icon="chevron-left"></span>Back to Your Items</a>
+          <h1 class="page-header__title">Giving page</h1>
+          <p class="page-header__description">In the real event, this link opens one outside donation page. This demo stops here, and no money moves.</p>
+        </div></div>
+      </header>
+      <div class="banner banner--info"><span data-icon="info"></span><div class="banner__body"><p class="banner__title">This is a stand-in</p><p class="banner__text">Donations happen on an outside giving platform, not in this app. The app only records your proof.</p></div></div>
+
+      <section class="home-section" aria-labelledby="giving-how">
+        <h2 id="giving-how">How giving works</h2>
+        <ol class="steps">
+          <li class="steps__item"><h3 class="steps__title">Check your total</h3><p class="steps__text">Your Items shows one donation total: your winning bids plus everything you bought.</p></li>
+          <li class="steps__item"><h3 class="steps__title">Donate once</h3><p class="steps__text">Give that total once on the giving page. There's no charity to choose.</p></li>
+          <li class="steps__item"><h3 class="steps__title">Upload proof</h3><p class="steps__text">Enter the amount and add a screenshot of the receipt. An admin reviews it.</p></li>
+        </ol>
+        <p><a class="btn" href="/your-items/proof">Upload proof</a></p>
+      </section>
+
+      <section class="home-section" aria-labelledby="giving-split">
+        <h2 id="giving-split">Split three ways</h2>
+        <p>Every donation is split equally among these three charities, so you donate once and all three benefit.</p>
+        <ul class="charity-list" data-charities aria-busy="true"></ul>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <p>Kestrel is a fictional organization, and this is a demo. <a href="/design-system/">Design system</a></p>
+    </footer>
+    <noscript><p class="page">This demo needs JavaScript to load its data.</p></noscript>
+  </body>
+</html>

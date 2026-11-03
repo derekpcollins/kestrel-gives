@@ -21,5 +21,8 @@ export const SCREENS: readonly Screen[] = [
   { name: "item-not-found", path: "/items/99999" },
   // Milestone 5B: the edit form (Jules's pottery class, seeded id 5).
   { name: "item-edit", path: "/items/5/edit" },
+  // Milestone 5D: the proof page (what it shows follows the dev phase and viewer) and the giving stub.
+  { name: "proof", path: "/your-items/proof" },
+  { name: "giving", path: "/giving" },
   { name: "design-system", path: "/design-system/" }, // every component, every state
 ];
