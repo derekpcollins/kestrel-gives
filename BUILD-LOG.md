@@ -668,7 +668,7 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 
 **Milestone 5 started:** 2026-11-03 11:22 EST, on the owner's approval of the plan.
 
-### 2026-11-03 — Stage 5A: uploads, item writes, proofs and Your Items API (11:22 – 12:15 EST)
+### 2026-11-03 — Stage 5A: uploads, item writes, proofs and Your Items API (11:22 – 12:12 EST)
 - **Owner stepped in:** approved the plan with four answers: Restore and the cron delete uploaded files under the environment's prefix; proofs in the public store with unguessable names and a demo warning; the proof page at `/your-items/proof`; resizing in the browser to about 1600px. The owner also added daily upload caps.
 - **Built (API only; the pages come in 5B–5D):**
   - Migration 006: `uploads` gets a row before its file is written, so Restore can always find it. `upload_log` counts toward the caps, and Restore leaves it alone.
