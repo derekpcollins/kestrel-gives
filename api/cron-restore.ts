@@ -10,7 +10,7 @@ export async function GET(request: Request): Promise<Response> {
   if (!cronAuthorized(request.headers.get("authorization"), process.env["CRON_SECRET"])) return problem(401, "Unauthorized.");
   return withDatabase("cron-restore", async (pool) => {
     const outcome = await tryRestore(pool, "cron", new Date());
-    console.log(`cron-restore: ${outcome.status}`);
+    console.log(`cron-restore: ${outcome.status}${outcome.status === "restored" ? `; ${outcome.filesCleared} uploaded file(s) deleted` : ""}`);
     if (outcome.status === "busy") return problem(409, "Busy; another restore, jump or deploy holds the lock.");
     return json({ ok: true, status: outcome.status });
   });

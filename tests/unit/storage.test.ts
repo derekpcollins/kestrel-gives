@@ -6,7 +6,8 @@ import { after, before, describe, test } from "node:test";
 import { storageFor } from "../../lib/storage/index.ts";
 import { blobStorage } from "../../lib/storage/blob.ts";
 import { localStorage } from "../../lib/storage/local.ts";
-import { assertOwned } from "../../lib/storage/paths.ts";
+import { assertOwned, uploadPathname } from "../../lib/storage/paths.ts";
+import type { BlobLister } from "../../lib/storage/blob.ts";
 
 describe("storage prefixes: a preview can never delete the live demo's files", () => {
   test("accepts paths inside its own prefix", () => {
@@ -60,7 +61,7 @@ describe("seed photos (seed/) can never be deleted by the app (DECISIONS #77)", 
       await mkdir(dirname(seedFile), { recursive: true });
       await writeFile(seedFile, "seed");
       const preview = localStorage("preview/", root);
-      const own = await preview.put("items", new Uint8Array([1]), "image/jpeg");
+      const own = await preview.put(uploadPathname("preview/", "photos", "image/jpeg"), new Uint8Array([1]), "image/jpeg");
       await assert.rejects(preview.delete([own.pathname, "seed/candles-1.jpg"]), /seed photos are never deleted/);
       await access(seedFile);
       await access(join(root, own.pathname));
@@ -81,8 +82,8 @@ describe("local storage driver", () => {
 
   test("put writes under the prefix; delete removes it", async () => {
     const storage = localStorage("test/", root);
-    const stored = await storage.put("items", new Uint8Array([1, 2, 3]), "image/png");
-    assert.match(stored.pathname, /^test\/items\/[0-9a-f-]{36}\.png$/);
+    const stored = await storage.put(uploadPathname("test/", "photos", "image/png"), new Uint8Array([1, 2, 3]), "image/png");
+    assert.match(stored.pathname, /^test\/photos\/[0-9a-f-]{36}\.png$/);
     await access(join(root, stored.pathname));
     await storage.delete([stored.pathname]);
     await assert.rejects(access(join(root, stored.pathname)));
@@ -93,11 +94,80 @@ describe("local storage driver", () => {
     await mkdir(dirname(production), { recursive: true });
     await writeFile(production, "live");
     const preview = localStorage("preview/", root);
-    const own = await preview.put("items", new Uint8Array([1]), "image/jpeg");
+    const own = await preview.put(uploadPathname("preview/", "photos", "image/jpeg"), new Uint8Array([1]), "image/jpeg");
 
     await assert.rejects(preview.delete([own.pathname, "production/items/live.jpg"]), /outside/);
     await access(production);
     await access(join(root, own.pathname));
+  });
+});
+
+describe("writing and clearing uploads", () => {
+  let root: string;
+  before(async () => {
+    root = await mkdtemp(join(tmpdir(), "kestrel-clear-"));
+  });
+  after(async () => {
+    await rm(root, { recursive: true, force: true });
+  });
+
+  test("put refuses a pathname outside its prefix, or under seed/", async () => {
+    const preview = localStorage("preview/", root);
+    await assert.rejects(preview.put("production/photos/a.jpg", new Uint8Array([1]), "image/jpeg"), /outside/);
+    await assert.rejects(preview.put("seed/a.jpg", new Uint8Array([1]), "image/jpeg"), /seed photos/);
+  });
+
+  test("local clear removes only its own prefix and counts the files", async () => {
+    const seedFile = join(root, "seed/candles-1.jpg");
+    const otherFile = join(root, "production/photos/live.jpg");
+    for (const file of [seedFile, otherFile]) {
+      await mkdir(dirname(file), { recursive: true });
+      await writeFile(file, "keep");
+    }
+    const dev = localStorage("development/", root);
+    await dev.put(uploadPathname("development/", "photos", "image/jpeg"), new Uint8Array([1]), "image/jpeg");
+    await dev.put(uploadPathname("development/", "proofs", "image/png"), new Uint8Array([1]), "image/png");
+    assert.equal(await dev.clear(), 2);
+    await assert.rejects(access(join(root, "development")));
+    await access(seedFile);
+    await access(otherFile);
+    assert.equal(await dev.clear(), 0, "clearing an empty prefix is fine");
+  });
+
+  function fakeLister(pages: string[][]): BlobLister & { listed: string[]; deleted: string[][] } {
+    const listed: string[] = [];
+    const deleted: string[][] = [];
+    return {
+      listed,
+      deleted,
+      async list({ prefix, cursor }) {
+        listed.push(prefix);
+        const at = cursor ? Number(cursor) : 0;
+        const blobs = (pages[at] ?? []).map((pathname) => ({ pathname }));
+        const hasMore = at + 1 < pages.length;
+        return hasMore ? { blobs, hasMore, cursor: String(at + 1) } : { blobs, hasMore };
+      },
+      async del(pathnames) {
+        deleted.push(pathnames);
+      },
+    };
+  }
+
+  test("blob clear lists page by page under its prefix and deletes each page", async () => {
+    const lister = fakeLister([["preview/photos/a.jpg", "preview/proofs/b.png"], ["preview/photos/c.webp"]]);
+    const count = await blobStorage("preview/", lister).clear();
+    assert.equal(count, 3);
+    assert.deepEqual(lister.listed, ["preview/", "preview/"]);
+    assert.deepEqual(lister.deleted, [["preview/photos/a.jpg", "preview/proofs/b.png"], ["preview/photos/c.webp"]]);
+  });
+
+  test("blob clear stops, deleting nothing from that page, if a listed path isn't its own", async () => {
+    const lister = fakeLister([["preview/photos/a.jpg", "seed/candles-1.jpg"]]);
+    await assert.rejects(blobStorage("preview/", lister).clear(), /seed photos/);
+    assert.deepEqual(lister.deleted, []);
+    const foreign = fakeLister([["preview/photos/a.jpg", "production/photos/live.jpg"]]);
+    await assert.rejects(blobStorage("preview/", foreign).clear(), /outside/);
+    assert.deepEqual(foreign.deleted, []);
   });
 });
 

@@ -64,8 +64,8 @@ export async function itemDetailIn(tx: Tx, eventId: Id, itemId: Id, viewerId: Id
   const r = rows[0];
   if (!r) return null;
 
-  const { rows: photos } = await tx.query<{ path: string; position: number }>(
-    `SELECT path, position FROM item_photos WHERE item_id = $1 ORDER BY position`,
+  const { rows: photos } = await tx.query<{ id: Id; path: string; position: number }>(
+    `SELECT id, path, position FROM item_photos WHERE item_id = $1 ORDER BY position`,
     [itemId],
   );
   const { rows: bidRows } = await tx.query<{ id: Id; bidder_id: Id; first_name: string; last_name: string; amount_cents: number; created_at: Date }>(
@@ -86,7 +86,7 @@ export async function itemDetailIn(tx: Tx, eventId: Id, itemId: Id, viewerId: Id
   return {
     id: r.id, type: r.type, title: r.title, description: r.description,
     submitter: { id: r.submitter_id, firstName: r.first_name, lastName: r.last_name },
-    photos: photos.map((p) => ({ url: resolve(p.path), position: Number(p.position) })),
+    photos: photos.map((p) => ({ id: p.id, url: resolve(p.path), position: Number(p.position) })),
     cancelled: r.status === "cancelled",
     startingBidCents: num(r.starting), priceCents: num(r.price), quantity: num(r.quantity), remaining: num(r.remaining),
     bids,

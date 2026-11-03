@@ -48,7 +48,7 @@ export async function POST(request: Request): Promise<Response> {
       if (outcome.status === "cooldown") {
         return problem(429, `The demo was just restored. Try again in ${outcome.retryAfterSeconds} seconds.`, { "Retry-After": String(outcome.retryAfterSeconds) });
       }
-      console.log("demo: restored (manual)");
+      console.log(outcome.status === "restored" ? `demo: restored (manual); ${outcome.filesCleared} uploaded file(s) deleted` : "demo: restore skipped (duplicate)");
     }
 
     const state = await withTransaction(pool, (tx) => appStateIn(tx, viewerId, process.env, hasLocalCopy));

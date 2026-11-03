@@ -9,7 +9,8 @@ import {
   photoPath, type Person,
 } from "./data.ts";
 
-const APP_TABLES = ["email_templates", "proofs", "purchases", "bids", "item_photos", "items", "charities", "users", "events"];
+// upload_log is deliberately not here: Restore must not reset the daily upload caps (#92).
+const APP_TABLES = ["email_templates", "uploads", "proofs", "purchases", "bids", "item_photos", "items", "charities", "users", "events"];
 const HOUR = 3_600_000;
 const cents = (dollars: number) => dollars * 100;
 

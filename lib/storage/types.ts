@@ -8,6 +8,9 @@ export interface StoredFile {
 export interface Storage {
   readonly kind: "blob" | "local";
   readonly prefix: string;
-  put(folder: string, data: Uint8Array, type: ImageType): Promise<StoredFile>;
+  /** Writes a file at a pathname made by uploadPathname() (inside this prefix, or it throws). */
+  put(pathname: string, data: Uint8Array, type: ImageType): Promise<StoredFile>;
   delete(pathnames: readonly string[]): Promise<void>;
+  /** Deletes every file under this storage's prefix (Restore demo data, DECISIONS #91). Returns how many. */
+  clear(): Promise<number>;
 }

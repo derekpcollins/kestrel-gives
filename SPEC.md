@@ -1,6 +1,6 @@
 # Kestrel Gives — Build Spec & Conformance Rules
 
-**Status:** v1.12 · Owner: Derek Collins · Last updated: Nov 2, 2026
+**Status:** v1.13 · Owner: Derek Collins · Last updated: Nov 3, 2026
 
 This document describes what to build and the rules every contribution must follow, whether a person or an AI agent writes it. Read it in full before writing any code. If something here conflicts with a request, stop and ask.
 
@@ -40,7 +40,7 @@ This is a **from-memory recreation** of a tool I designed and built at a previou
 A slim bar pinned to the top of every page, in the normal page flow (it never overlays content), visually distinct from the app (its own background treatment and a "Demo" label). It is a design-system component like any other.
 - **Viewing as:** a select listing every seeded user with their role. The choice is stored in a cookie; the API reads it to know who is acting. Changes are announced ("Now viewing as …, admin").
 - **Jump to:** submission window / live / ending soon / ended / 30+ days after. Moves the stored event dates relative to now. "Ending soon" is live with bidding closing in under 24 hours (the threshold in section 10). (Ending soon added v1.8.) It MUST NOT fake the clock; the real time-window rules are what get exercised.
-- **Restore demo data:** resets everything to the seeded state (including email templates), behind a confirmation dialog.
+- **Restore demo data:** resets everything to the seeded state (including email templates), behind a confirmation dialog. It also deletes the files visitors uploaded in this environment (v1.13; section 4).
 - **Shared and self-repairing** (v1.11): anyone can use Jump to and Restore demo data, and everyone sees the same data. A short global cooldown (about 10 seconds) stops repeated Restores. A daily scheduled job (Vercel cron) runs the same Restore, so the demo returns to the live phase every day; the bar says the demo is shared and resets daily. This is the only scheduled job (section 7.1).
 - Collapsible to a thin strip using `<details>`; collapsed state is remembered.
 - Exposed to assistive tech as a region labeled "Demo controls."
@@ -106,9 +106,11 @@ The Vercel CLI is installed globally, not as a project dependency. Node's built-
 
 ### File storage
 - **One public Vercel Blob store** on the deployed site, for item photos and proof images uploaded through the app. Production and Preview share it, each under its own path prefix (`production/`, `preview/`); the storage layer MUST refuse to delete anything outside the current environment's prefix, and MUST refuse anything under `seed/`.
-- **Seed photos** (v1.10) MUST NOT be committed to git; a check fails if any image file appears under a seed or photo path (the committed placeholders excepted). They live in the same Blob store under `seed/`, shared by Production and Preview, uploaded once by a script and never deleted by the app (Restore demo data only rewrites database rows, so it costs no Blob operations). The database stores relative keys (`seed/<slug>-<n>.jpg`), never URLs, and a key is resolved when shown: on Production and Preview to `SEED_PHOTOS_BASE_URL` plus the key; locally to the gitignored copy in `public/seed/` if present, otherwise the placeholder. On Production and Preview a missing or malformed `SEED_PHOTOS_BASE_URL` MUST fail the build, and `/api/health` reports it as `"seedPhotos": false`; the URL itself is never printed. Tests MUST NOT need network access or Blob for seed photos.
+- **Seed photos** (v1.10) MUST NOT be committed to git; a check fails if any image file appears under a seed or photo path (the committed placeholders excepted). They live in the same Blob store under `seed/`, shared by Production and Preview, uploaded once by a script and never deleted by the app. The database stores relative keys (`seed/<slug>-<n>.jpg`), never URLs, and a key is resolved when shown: on Production and Preview to `SEED_PHOTOS_BASE_URL` plus the key; locally to the gitignored copy in `public/seed/` if present, otherwise the placeholder. On Production and Preview a missing or malformed `SEED_PHOTOS_BASE_URL` MUST fail the build, and `/api/health` reports it as `"seedPhotos": false`; the URL itself is never printed. Tests MUST NOT need network access or Blob for seed photos.
 - Local dev and tests store uploads in a local folder (ignored by git), so tests don't use up Blob's monthly operation allowance.
-- Upload limits: images only (JPEG, PNG, WebP), size-capped, validated on the server.
+- **Restore demo data and the daily job delete uploaded files** (v1.13): everything under the current environment's prefix (`production/` or `preview/`; locally the dev folder), never `seed/`, page by page through the same delete guard, after the database has been restored. Listing costs Blob operations, so a manual Restore lists only when something was uploaded since the last one; the daily job always sweeps.
+- Upload limits: images only (JPEG, PNG, WebP), size-capped, validated on the server by the file's contents. The browser resizes each picture before upload (long side about 1600px), which also drops its metadata.
+- **Daily upload caps** (v1.13) protect the shared demo's Blob allowance: one for everyone and one per person, over the last 24 hours, with a clear refusal. Restore does not reset them.
 
 ### Secrets
 - `.env.local` holds credentials and MUST be in `.gitignore` from the first commit.

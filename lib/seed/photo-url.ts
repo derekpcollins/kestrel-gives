@@ -3,9 +3,13 @@
 // decision happens at display time:
 // - Production and Preview: the Blob store's public base URL (SEED_PHOTOS_BASE_URL) + key.
 // - Anywhere else: the gitignored local copy in public/ if present, otherwise the placeholder.
-// Paths that aren't seed photo keys (the committed placeholders) pass through unchanged.
+// Uploaded files (Milestone 5) are stored as their pathname under an environment prefix
+// ("production/…"): on Production and Preview the same Blob base URL + pathname; locally,
+// the dev folder, served by GET /api/uploads (lib/storage/local.ts).
+// Other paths (the committed placeholders) pass through unchanged.
 import { PLACEHOLDER_PHOTO } from "./data.ts";
 import { SEED_PHOTO_KEY } from "./photos.ts";
+import { localUploadUrl } from "../storage/local.ts";
 
 type Env = Readonly<Record<string, string | undefined>>;
 
@@ -29,7 +33,15 @@ export function isDeployed(env: Env): boolean {
   return env["VERCEL_ENV"] === "production" || env["VERCEL_ENV"] === "preview";
 }
 
+/** An uploaded file's stored pathname: an environment prefix, then the rest. */
+const UPLOAD_KEY = /^(production|preview|development|test)\/[a-z0-9][a-z0-9._/-]*$/;
+
 export function photoUrl(stored: string, env: Env, hasLocalCopy: (key: string) => boolean): string {
+  if (UPLOAD_KEY.test(stored)) {
+    if (!isDeployed(env)) return localUploadUrl(stored);
+    const base = env[SEED_BASE_ENV];
+    return checkSeedBase(base) === "ok" ? `${base}/${stored}` : PLACEHOLDER_PHOTO;
+  }
   if (!SEED_PHOTO_KEY.test(stored)) return stored;
   if (isDeployed(env)) {
     const base = env[SEED_BASE_ENV];

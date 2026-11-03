@@ -48,7 +48,8 @@ export interface ItemDetail {
   title: string;
   description: string;
   submitter: { id: string; firstName: string; lastName: string };
-  photos: { url: string; position: number }[];
+  /** `id` lets the edit form keep a photo (DECISIONS #94). */
+  photos: { id: string; url: string; position: number }[];
   cancelled: boolean;
   startingBidCents: number | null;
   priceCents: number | null;

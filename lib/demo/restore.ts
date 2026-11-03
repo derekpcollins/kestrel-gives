@@ -1,9 +1,12 @@
-// Restore demo data (SPEC §3.1, DECISIONS #80, #81): reseeds every app table and logs the
-// run. Shared by the demo bar, the daily cron and (Milestone 3D) the deploy step.
+// Restore demo data (SPEC §3.1, DECISIONS #80, #81, #91): reseeds every app table, logs the
+// run, then deletes the files people uploaded. Shared by the demo bar, the daily cron and
+// (Milestone 3D) the deploy step.
 import type { Pool } from "@neondatabase/serverless";
 import { withTransaction, type Tx } from "../data/db.ts";
 import { seedIn } from "../seed/seed.ts";
 import { SCHEMA_LOCK_KEY } from "../data/locks.ts";
+import { hasUploadsIn } from "../data/uploads.ts";
+import { storageFor, type Storage } from "../storage/index.ts";
 
 export type RestoreSource = "manual" | "cron" | "deploy";
 
@@ -19,7 +22,7 @@ export async function restoreIn(tx: Tx, source: RestoreSource, now: Date): Promi
 }
 
 export type RestoreOutcome =
-  | { status: "restored" }
+  | { status: "restored"; filesCleared: number }
   | { status: "busy" } // someone else holds the lock: a restore, a jump or a deploy
   | { status: "cooldown"; retryAfterSeconds: number }
   | { status: "duplicate" }; // the cron already ran within CRON_DEDUPE_MINUTES
@@ -29,12 +32,33 @@ export type RestoreOutcome =
  * transaction mode, where session locks don't hold, so this takes the schema lock for the
  * transaction only (the same key deploy-db uses, so it never races a migration).
  */
-export async function tryRestore(pool: Pool, source: "manual" | "cron", now: Date): Promise<RestoreOutcome> {
-  return withTransaction(pool, (tx) => tryRestoreIn(tx, source, now));
+export async function tryRestore(pool: Pool, source: "manual" | "cron", now: Date, storage: Storage = storageFor()): Promise<RestoreOutcome> {
+  const outcome = await withTransaction(pool, (tx) => tryRestoreIn(tx, source, now));
+  if (outcome.status !== "restored") return outcome;
+  return { status: "restored", filesCleared: await clearUploads(storage, source, outcome.hadUploads) };
 }
 
-/** tryRestore's work inside a transaction the caller owns (tests roll it back). */
-export async function tryRestoreIn(tx: Tx, source: "manual" | "cron", now: Date): Promise<RestoreOutcome> {
+/**
+ * Deletes every file under this environment's prefix (never seed/; the storage guard checks
+ * each path), after the database has committed, so a failure here leaves at worst some
+ * orphaned files, never a half-restored demo. On Blob each listed page is a paid operation,
+ * so a manual Restore lists only when something was uploaded since the last one; the daily
+ * cron always sweeps, which also catches anything a failed request left behind (#91).
+ */
+export async function clearUploads(storage: Storage, source: "manual" | "cron", hadUploads: boolean): Promise<number> {
+  if (storage.kind === "blob" && source === "manual" && !hadUploads) return 0;
+  try {
+    return await storage.clear();
+  } catch (error) {
+    console.error(`restore: couldn't clear uploaded files: ${error instanceof Error ? error.message : String(error)}`);
+    return 0;
+  }
+}
+
+type RestoreInOutcome = Exclude<RestoreOutcome, { status: "restored" }> | { status: "restored"; hadUploads: boolean };
+
+/** tryRestore's database work inside a transaction the caller owns (tests roll it back). */
+export async function tryRestoreIn(tx: Tx, source: "manual" | "cron", now: Date): Promise<RestoreInOutcome> {
   if (!(await tryDemoLockIn(tx))) return { status: "busy" };
   if (source === "cron") {
     const { rows } = await tx.query<{ recent: boolean }>(
@@ -46,8 +70,9 @@ export async function tryRestoreIn(tx: Tx, source: "manual" | "cron", now: Date)
     const wait = await cooldownLeftIn(tx, now);
     if (wait > 0) return { status: "cooldown", retryAfterSeconds: wait };
   }
+  const hadUploads = await hasUploadsIn(tx);
   await restoreIn(tx, source, now);
-  return { status: "restored" };
+  return { status: "restored", hadUploads };
 }
 
 /** The transaction-level demo lock, shared with migrations. False if someone holds it. */

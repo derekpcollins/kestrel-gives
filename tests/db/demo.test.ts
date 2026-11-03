@@ -113,7 +113,7 @@ describe("demo controls (rolled back)", () => {
     await jumpIn(db, "after", new Date());
     await db.query(`UPDATE items SET title = 'Changed by a visitor' WHERE id = 1`);
     const now = new Date();
-    assert.deepEqual(await tryRestoreIn(db, "manual", now), { status: "restored" });
+    assert.deepEqual(await tryRestoreIn(db, "manual", now), { status: "restored", hadUploads: false });
     assert.equal((await appStateIn(db, null, {}, noCopies)).event?.phase, "live");
     assert.notEqual((await db.query<{ title: string }>(`SELECT title FROM items WHERE id = 1`)).rows[0]!.title, "Changed by a visitor");
     assert.deepEqual((await db.query<{ source: string }>(`SELECT source FROM demo_restores`)).rows, [{ source: "manual" }]);
@@ -121,15 +121,15 @@ describe("demo controls (rolled back)", () => {
     const soon = new Date(now.getTime() + 3_000);
     assert.deepEqual(await tryRestoreIn(db, "manual", soon), { status: "cooldown", retryAfterSeconds: RESTORE_COOLDOWN_SECONDS - 3 });
     assert.equal(await cooldownLeftIn(db, new Date(now.getTime() + RESTORE_COOLDOWN_SECONDS * 1000)), 0);
-    assert.deepEqual(await tryRestoreIn(db, "manual", new Date(now.getTime() + RESTORE_COOLDOWN_SECONDS * 1000)), { status: "restored" });
+    assert.deepEqual(await tryRestoreIn(db, "manual", new Date(now.getTime() + RESTORE_COOLDOWN_SECONDS * 1000)), { status: "restored", hadUploads: false });
   });
 
   test("the cron restores once an hour at most; the deploy source is allowed", async () => {
     await db.query(`DELETE FROM demo_restores`);
     const now = new Date();
-    assert.deepEqual(await tryRestoreIn(db, "cron", now), { status: "restored" });
+    assert.deepEqual(await tryRestoreIn(db, "cron", now), { status: "restored", hadUploads: false });
     assert.deepEqual(await tryRestoreIn(db, "cron", new Date(now.getTime() + 30 * 60_000)), { status: "duplicate" });
-    assert.deepEqual(await tryRestoreIn(db, "cron", new Date(now.getTime() + 61 * 60_000)), { status: "restored" });
+    assert.deepEqual(await tryRestoreIn(db, "cron", new Date(now.getTime() + 61 * 60_000)), { status: "restored", hadUploads: false });
     await restoreIn(db, "deploy", new Date());
     await assert.rejects(db.query(`INSERT INTO demo_restores (source) VALUES ('visitor')`));
   });
