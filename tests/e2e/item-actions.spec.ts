@@ -122,10 +122,54 @@ test("A lost race: the dialog closes, the field shows the new minimum with the r
   await expect(field(page)).toHaveAttribute("aria-invalid", "true");
   await expect(field(page)).toHaveAccessibleDescription("At least $255. Bids go up by $5. Someone just bid $250. The minimum is now $255.");
   await expect(status(page)).toHaveText("Someone just bid $250. The minimum is now $255.");
-  await expect(page.locator(".toast-region__stack--quiet .toast--danger")).toBeVisible();
+  // The reason is under the field only: no toast (owner, 4E).
+  await expect(page.locator(".toast")).toHaveCount(0);
   // Typing clears the message.
   await field(page).fill("260");
   await expect(field(page)).not.toHaveAttribute("aria-invalid");
+});
+
+test("Each result replaces the form's earlier toast", async ({ page }) => {
+  const answers = await openCabin(page);
+  let placed = 0;
+  await page.route("**/api/bids", async (route) => {
+    placed++;
+    const body = await (await page.request.get("/api/items?id=1")).json();
+    Object.assign(body.item, { viewerIsTopBidder: false, viewerHasBid: true, highBidCents: 24_000 });
+    Object.assign(body, { phase: "live", blocked: null, minimumBidCents: 24_500, bidHint: "At least $245. Bids go up by $5.", message: `Your bid of $${240 + placed * 5} is in. You're the high bidder.` });
+    answers.set(outbid);
+    await route.fulfill({ status: 201, json: body });
+  });
+  for (let i = 0; i < 2; i++) {
+    await page.getByRole("button", { name: "Place bid" }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Place bid" }).click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+  }
+  await expect(page.locator(".toast")).toHaveCount(1);
+  await expect(page.locator(".toast")).toContainText("Your bid of $250 is in.");
+});
+
+test("While live, Instant Sale pages talk about the sale; the silent auction about bidding", async ({ page }) => {
+  await liveEvent(page);
+  const banner = page.locator(".banner--phase .banner__title");
+  await page.goto("/instant-sale");
+  await expect(banner).toHaveText("The instant sale is open");
+  await expect(page.locator(".banner--phase .banner__text")).toHaveText(/^It ends in /);
+  await itemAnswers(page, () => {});
+  await page.goto("/items/12");
+  await expect(banner).toHaveText("The instant sale is open");
+  await page.goto("/items/1");
+  await expect(banner).toHaveText("Bidding is open");
+  await page.goto("/silent-auction");
+  await expect(banner).toHaveText("Bidding is open");
+});
+
+test("The dialog title balances its lines on a phone", async ({ page }) => {
+  await liveEvent(page);
+  await itemAnswers(page, (b) => { b.item.remaining = 6; });
+  await page.goto("/items/12");
+  await page.getByRole("button", { name: "Buy one" }).click();
+  await expect(page.getByRole("dialog").locator(".dialog__title")).toHaveCSS("text-wrap", /balance/);
 });
 
 test("The field checks whole dollars and the minimum before any dialog opens", async ({ page }) => {

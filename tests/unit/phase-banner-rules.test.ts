@@ -30,6 +30,17 @@ describe("phase banner", () => {
     const tomorrow = phaseBanner(event({ endingSoon: true, biddingClosesAt: iso(19.5) }), NOW, NY)!;
     assert.equal(tomorrow.text, "Bidding closes in 19 hours, tomorrow at 9:00 AM EST.");
   });
+  test("live and ending soon follow the page's sale: Instant Sale pages talk about the sale (owner, 4E)", () => {
+    const open = phaseBanner(event({ biddingClosesAt: iso(47.5) }), NOW, NY, "instant")!;
+    assert.deepEqual([open.title, open.text], ["The instant sale is open", "It ends in 47 hours, on Wednesday, November 4 at 1:00 PM EST."]);
+    const soon = phaseBanner(event({ endingSoon: true, biddingClosesAt: iso(3.5) }), NOW, NY, "instant")!;
+    assert.deepEqual([soon.title, soon.text, soon.urgent], ["The instant sale ends soon", "It closes in 3 hours, today at 5:00 PM EST.", true]);
+    // Submission and ended are shared.
+    const sub = phaseBanner(event({ phase: "submission", biddingOpensAt: iso(10) }), NOW, NY, "instant")!;
+    assert.equal(sub.title, "Submissions are open");
+    const ended = phaseBanner(event({ phase: "ended", biddingClosesAt: iso(-1.5), proofDeadline: iso(-1.5 + 7 * 24) }), NOW, NY, "instant")!;
+    assert.equal(ended.title, "Bidding has ended");
+  });
   test("ended: winners donate and upload proof by the deadline", () => {
     const b = phaseBanner(event({ phase: "ended", biddingClosesAt: iso(-1.5), proofDeadline: iso(-1.5 + 7 * 24) }), NOW, NY)!;
     assert.deepEqual([b.title, b.text], ["Bidding has ended", "Winners, please donate and upload proof by Monday, November 9 at 12:00 PM EST."]);

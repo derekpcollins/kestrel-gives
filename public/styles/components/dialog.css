@@ -18,7 +18,7 @@
 @keyframes dialog-fade { from { opacity: 0; } }
 
 .dialog__form { display: grid; gap: var(--space-4); padding: var(--space-6); }
-.dialog__title { font: var(--type-heading-2); }
+.dialog__title { font: var(--type-heading-2); text-wrap: balance; } /* "Buy the Hand-knit scarf for $45?" breaks evenly on phones, not at the hyphen */
 .dialog__body { display: grid; gap: var(--space-3); color: var(--color-text); }
 .dialog__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-3); padding-top: var(--space-2); }
 .dialog--danger .dialog__title, .dialog--type-to-confirm .dialog__title { color: var(--color-danger); }

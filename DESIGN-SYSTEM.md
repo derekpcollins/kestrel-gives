@@ -341,7 +341,7 @@ How forms behave, for every component below:
 **Purpose:** the frame every app page shares (Milestone 3B): demo bar, site header, phase banner, the page's content column, and the footer.
 
 - **Markup:** `<body data-page="…">` > skip link, `[data-shell-demo]`, `[data-shell-header]`, `[data-shell-banner]`, `<main class="page" id="main" tabindex="-1">`, `footer.site-footer`. `src/shell.ts` fills the three slots from `GET /api/app`; the banner sits in `.phase-banner` (the content width, under the header).
-- **Phase banner words** come from `phaseBanner()` (`src/components/phase-banner-rules.ts`), one per phase: "Submissions are open", "Bidding is open", "Bidding ends soon" (alert icon), "Bidding has ended" (proof due, or the deadline passed). Times are in the viewer's zone with the zone labeled ("today at 5:00 PM EST", "on Wednesday, November 4 at 1:00 PM EST").
+- **Phase banner words** come from `phaseBanner()` (`src/components/phase-banner-rules.ts`), one per phase: "Submissions are open", "Bidding is open", "Bidding ends soon" (alert icon), "Bidding has ended" (proof due, or the deadline passed). While live, the page's sale picks the wording (DECISIONS #90): Instant Sale and instant-sale item pages (`<body data-sale="instant">`, set by the item page once it knows) say "The instant sale is open" / "It ends in 47 hours, on …" and "The instant sale ends soon" / "It closes in …"; every other page uses the bidding words. Submission and ended are shared. Times are in the viewer's zone with the zone labeled ("today at 5:00 PM EST", "on Wednesday, November 4 at 1:00 PM EST").
 - **States:** default. Loading: the header draws at once without the person or Submit an Item, then fills in. **Error:** if the state can't load, a danger banner (`role="alert"`) takes the banner slot. Hover, focus, active, disabled and empty: N/A.
 - **Accessibility:** one `<main>`; the phase banner is `role="status"`, so a phase change is announced. The `hidden` attribute always wins over a component's `display` (base.css).
 - **Do:** put page content in `.page`, starting with a *Page header*. **Don't:** put page-specific content in the shell slots.
@@ -412,6 +412,7 @@ How forms behave, for every component below:
 - **Markup:** a native `<dialog class="dialog dialog--confirm|--danger|--type-to-confirm">` opened with `showModal()`, with `aria-labelledby` (the title) and `aria-describedby` (the body). Inside: `form.dialog__form` > `h2.dialog__title`, `.dialog__body` (text, or for a bid an item summary `.dialog__item` with `.dialog__item-thumb` and `.dialog__item-title`, plus `.dialog__amount`), an optional *Form field* for type-to-confirm, `.dialog__error` (`role="alert"`) and `.dialog__actions` (dismiss, then confirm). Behavior: `confirmDialog()` in `src/components/dialog.ts` resolves `true` once the request succeeds and `false` if dismissed. `.dialog--static` draws a closed dialog in the flow, for the gallery only.
 - **Variants:**
   - **Confirm:** says exactly what you're agreeing to, with every amount computed from the data ("Place a $65 bid?"). First focus: the confirm button.
+  - Titles use `text-wrap: balance`, so a long one ("Buy the Hand-knit scarf for $45?") breaks evenly on a phone.
   - **Danger:** a destructive action; the confirm button is a *Button* (Danger). First focus: the dismiss button, so Enter never destroys anything by accident. The dismiss button says "Cancel", or "Keep item" next to "Cancel item".
   - **Type-to-confirm:** the danger variant plus a text field; the confirm button stays inactive (`aria-disabled`) until the event name is typed exactly. First focus: the field.
 - **States:**
@@ -452,8 +453,8 @@ How forms behave, for every component below:
   - **Bid form** (live, nothing in the way): `form.bid-form` > a *Form field* "Your bid" whose help is the computed minimum ("At least $245. Bids go up by $5.") > a *Money input* (`inputmode="numeric"`), starting at the minimum > **Place bid**. While the form shows, the minimum isn't repeated as the note.
   - **Buy button:** **Buy one**.
   - **Confirm dialogs:** "Place a $250 bid?" or "Buy the Hand-knit scarf for $45?", with the item's cover, title and where it stands, the amount, and "Bids can't be taken back." or "One per purchase. Purchases can't be taken back."
-  - **Results** go to the page's status region and a quiet *Toast*, so they're read once.
-  - **Amount refusals** (too low, lost race) close the dialog and put the reason under the field, with the new minimum filled in and focus on the field. Other refusals redraw the panel, which takes focus. A failed request keeps the dialog open with the reason.
+  - **Results** go to the page's status region and a quiet *Toast*, so they're read once. Each result replaces the page's earlier toast.
+  - **Amount refusals** (too low, lost race) close the dialog and put the reason under the field only (no toast), with the new minimum filled in and focus on the field. Other refusals (sold out, ended) redraw the panel, which takes focus, and get a toast. A failed request keeps the dialog open with the reason.
   - What the bidder typed survives the refresh.
   - States: default, **error** (field), **loading** (the dialog's), and **blocked** (no controls; the note says why).
 - **Do:** keep actions in the panel. **Don't:** show the history for instant sale, or a crown on anyone but the top bid.

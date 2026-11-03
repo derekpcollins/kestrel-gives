@@ -12,6 +12,7 @@ import { hydrateIcons } from "../components/icons.ts";
 import { enhanceTableScroll } from "../components/table.ts";
 import type { ItemAnswer, ItemDetail } from "../items-api.ts";
 import { tileContext } from "./browse-rules.ts";
+import { setBannerSale } from "../components/phase-banner.ts";
 import { createActions } from "./item-actions.ts";
 import { backLink, bidCountWords, bidTime, bidderName, donatedBy, initialsOf, itemIdFromPath, panelText, refreshAnnouncement, zoneName } from "./item-rules.ts";
 
@@ -102,6 +103,7 @@ export function startItemPage(): void {
     failed.hidden = true;
     missing.hidden = true;
     document.title = `${answer.item.title} · Kestrel Gives`;
+    setBannerSale(answer.item.type === "instant" ? "instant" : "auction");
     // Keep the carousel (and the photo the visitor is on) when the photos haven't changed.
     const oldCarousel = content.querySelector<HTMLElement>("[data-carousel]");
     content.replaceChildren(...renderItem(answer, state!, actions.render));

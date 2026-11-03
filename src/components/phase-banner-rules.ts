@@ -19,8 +19,16 @@ const LOCALE = "en-US";
 
 export type BannerEvent = Pick<EventView, "phase" | "endingSoon" | "biddingOpensAt" | "biddingClosesAt" | "proofDeadline">;
 
-/** The banner for the event right now, or null if there's no event. */
-export function phaseBanner(event: BannerEvent | null, now: Date, timeZone?: string): PhaseBannerText | null {
+/** Which sale the page is about: the live and ending-soon wording follows it (owner, 4E). */
+export type BannerSale = "auction" | "instant";
+
+/**
+ * The banner for the event right now, or null if there's no event. While the event is live,
+ * Instant Sale and instant-sale item pages talk about the sale ("The instant sale is open.
+ * It ends in 47 hours, on …"); every other page talks about bidding. Submission and ended are
+ * the same everywhere.
+ */
+export function phaseBanner(event: BannerEvent | null, now: Date, timeZone?: string, sale: BannerSale = "auction"): PhaseBannerText | null {
   if (!event) return null;
   const at = (iso: string | null) => (iso ? new Date(iso) : null);
   const opens = at(event.biddingOpensAt);
@@ -35,11 +43,22 @@ export function phaseBanner(event: BannerEvent | null, now: Date, timeZone?: str
     };
   }
   if (event.phase === "live") {
-    if (!closes) return { title: "Bidding is open", text: "Place bids and claim instant-sale items.", icon: "clock" };
+    const instant = sale === "instant";
+    if (!closes) {
+      return instant
+        ? { title: "The instant sale is open", text: "Buy instant-sale items while they last.", icon: "clock" }
+        : { title: "Bidding is open", text: "Place bids and claim instant-sale items.", icon: "clock" };
+    }
     const left = durationWords(closes.getTime() - now.getTime());
-    return event.endingSoon
-      ? { title: "Bidding ends soon", text: `Bidding closes in ${left}, ${when(closes, now, timeZone)}.`, icon: "alert", urgent: true }
-      : { title: "Bidding is open", text: `Bidding ends in ${left}, ${when(closes, now, timeZone)}.`, icon: "clock" };
+    const close = when(closes, now, timeZone);
+    if (event.endingSoon) {
+      return instant
+        ? { title: "The instant sale ends soon", text: `It closes in ${left}, ${close}.`, icon: "alert", urgent: true }
+        : { title: "Bidding ends soon", text: `Bidding closes in ${left}, ${close}.`, icon: "alert", urgent: true };
+    }
+    return instant
+      ? { title: "The instant sale is open", text: `It ends in ${left}, ${close}.`, icon: "clock" }
+      : { title: "Bidding is open", text: `Bidding ends in ${left}, ${close}.`, icon: "clock" };
   }
   if (deadline && deadline.getTime() > now.getTime()) {
     return { title: "Bidding has ended", text: `Winners, please donate and upload proof by ${when(deadline, now, timeZone, false)}.`, icon: "check" };

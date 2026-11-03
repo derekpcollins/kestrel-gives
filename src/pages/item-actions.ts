@@ -4,10 +4,11 @@
 // - What someone typed survives the 30-second refresh. The field keeps following the minimum
 //   until they type.
 // - Results and refusals are announced through the page's live region and shown as a quiet
-//   toast, so they're read once (DECISIONS #88).
+//   toast, so they're read once (DECISIONS #88). Each result replaces this page's earlier
+//   toast, so a stale message never sits beside a new one (owner, 4E).
 // - A refusal about the amount (too low, or someone just bid) goes under the field with the
-//   new minimum filled in. Anything else (bidding ended, sold out) redraws the panel, whose
-//   note says why.
+//   new minimum filled in, with no toast. Anything else (bidding ended, sold out) redraws the
+//   panel, whose note says why, with a toast.
 // - If the request itself fails, the dialog stays open with the reason, to try again.
 import { confirmDialog } from "../components/dialog.ts";
 import { el } from "../components/dom.ts";
@@ -37,6 +38,12 @@ export function createActions(host: ActionHost) {
   let draft: string | null = null;
   /** The message under the bid field, kept across redraws until they type. */
   let fieldError: string | null = null;
+  /** The toast from the last result; a new result replaces it. */
+  let lastToast: HTMLElement | null = null;
+  const toast = (message: string | null, tone: "success" | "danger") => {
+    lastToast?.remove();
+    lastToast = message ? showToast(message, { tone, announce: false }) : null;
+  };
 
   const focusAfter = (key: string) => {
     const target = document.querySelector<HTMLElement>(`[data-focus-key="${key}"]`) ?? document.querySelector<HTMLElement>("[data-item-panel]");
@@ -49,7 +56,7 @@ export function createActions(host: ActionHost) {
       fieldError = null;
       host.show(outcome.answer);
       host.announce(outcome.answer.message);
-      showToast(outcome.answer.message, { tone: "success", announce: false });
+      toast(outcome.answer.message, "success");
       focusAfter(focusKey);
       return;
     }
@@ -60,7 +67,8 @@ export function createActions(host: ActionHost) {
     fieldError = amount ? refusal.error : null;
     await host.reload();
     host.announce(refusal.error);
-    showToast(refusal.error, { tone: "danger", announce: false });
+    // A message about the amount belongs under the field only; other refusals get a toast too.
+    toast(amount ? null : refusal.error, "danger");
     focusAfter(amount ? FIELD_ID : focusKey);
   };
 
