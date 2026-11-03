@@ -727,3 +727,24 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   - The screenshot script hung waiting on lazy images below the fold. It now loads them eagerly, with each wait capped.
 - **Tests:** 8 unit tests for the page's words. 6 browser tests: the real answer with axe, after the close, a changed total, rejected, empty with axe, and a failed load with Try again. `npm run check`: 219 unit (3 todo), 84 database, 142 browser, 12 reflow, 48 visual. `npm audit` shows only the accepted zod advisory.
 - **Preview (14:23 EST):** `kestrel-gives-hmsl63m2s` reports `"schema":"007"` and serves the page, its scripts and styles, and the 5B fixes. `/api/me` answered for four people with the expected sections and proof states (`.review/m5-5c/preview-checks.txt`). Read-only.
+
+### 2026-11-03 — 5C review changes (14:25 – 15:01 EST)
+- **Owner stepped in:** approved 5C with four changes. Lost auctions say "Didn't win". Repeat purchases become one tile. Edit is hidden once bidding ends. The tile's accessible name had a stray space ("Title , Status"). Proofs get a short browser cache. Asked to capture the stalled shot and the process state if the visual step stalls again.
+- **A question back:** hiding Edit raised whether edits are allowed after the close at all. SPEC allowed them. I asked rather than chose. The owner picked "everywhere": the server refuses edits after close, admins included (SPEC v1.16, DECISIONS #102). Because delete reuses the same rule, delete is refused after close too.
+- **Built:**
+  - "Didn't win" with "Your bid · Winning bid $240". "Ended" stays for items with no stake.
+  - One tile per purchased item: "Bought 2 · $40 · Last on Nov 3", with the unit price as the big number. Totals unchanged.
+  - The server reads the clock after the item's row lock, like a bid, so an edit can't slip past the close.
+  - The tile's status moved into the link's `aria-label`.
+  - Proof uploads use Blob's minimum cache, 60 seconds. Photos keep the default (#100).
+- **Tests:** unit tests for each change, a database test that nobody edits or deletes after close, and browser tests for after close and repeat purchases.
+
+### 2026-11-03 — Stage 5D: proof page and giving stub (15:01 – 15:35 EST)
+- **Built:**
+  - `/your-items/proof`, a rewrite to `proof.html`. The amount starts at the donation total. A live warning below it never blocks submitting. One screenshot goes through the existing uploader in a new single-file mode ("No screenshot yet", "Screenshot: receipt.png", only Remove).
+  - Notes above the form for a rejected proof (with its reason), a waiting one, an approved one and a changed total. Someone with nothing owed sees why instead of the form.
+  - Submit uploads with `purpose=proof`, keeps the upload id for a retry, and posts the proof. Server field errors show under their field. Success returns to Your Items with a toast.
+  - `/giving` explains the one outside donation page, split equally three ways, with no money moving in the demo. It has three steps, an Upload proof button and the charity cards, shared with Home. No new endpoint: `/api/me` already carries the proof (DECISIONS #103).
+- **Caught:** the token check read "#100, #102" in a code comment as hex colors. That comment came with the 5C review commit, after its last full check. Reworded.
+- **Tests:** 11 unit tests (proof words, uploader words). 5 browser tests with axe: the full submit with a below-total warning, a rejected proof with a server refusal and a retry reusing the upload, nothing owed, a failed load, and the giving stub (no pay words). Proof and giving joined the a11y, reflow and visual screens. `npm run check`: 233 unit (3 todo), 85 database, 164 browser, 14 reflow, 56 visual. No stall this time; a watcher was on the log in case. `npm audit` shows only the accepted zod advisory.
+- **Preview (15:32 EST):** `kestrel-gives-ab59yvgvx` serves both pages. As Owen: a real screenshot upload to `preview/`, served with `max-age=60`. A too-large amount was refused by field. The $20 proof against a $35 total went in as pending. Reusing the upload was refused. Restore put the seed back and removed the file (`.review/m5-5d/preview-checks.txt`, with the store host redacted).
