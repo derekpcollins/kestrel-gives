@@ -23,7 +23,7 @@
     "start": "node scripts/dev.ts",
     "check:deps": "node scripts/check-deps.ts",
     "check:tokens": "node scripts/check-tokens.ts",
-    "check:a11y": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test tests/e2e/a11y.spec.ts tests/e2e/keyboard.spec.ts tests/e2e/shell.spec.ts tests/e2e/home.spec.ts tests/e2e/browse.spec.ts tests/e2e/item.spec.ts tests/e2e/item-actions.spec.ts",
+    "check:a11y": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test tests/e2e/a11y.spec.ts tests/e2e/keyboard.spec.ts tests/e2e/shell.spec.ts tests/e2e/home.spec.ts tests/e2e/browse.spec.ts tests/e2e/item.spec.ts tests/e2e/item-actions.spec.ts tests/e2e/submit.spec.ts",
     "check:visual": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test tests/e2e/visual.spec.ts",
     "check:reflow": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test tests/e2e/reflow.spec.ts --project=reflow-320",
     "check": "npm run check:deps && npm run check:seed-images && npm run check:tokens && npm run check:types && npm run test:rules && npm run test:db && npm run check:a11y && npm run check:reflow && npm run check:visual"

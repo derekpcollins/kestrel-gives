@@ -18,11 +18,10 @@ export const RESIZE_LONG_SIDE = 1600;
 export const RESIZE_QUALITY = 0.85;
 
 /**
- * Daily caps for the public demo (#92), counted over the last 24 hours. Blob's free plan
- * allows 2,000 uploads and lists a month, shared by Production and Preview, and going over
- * shuts Blob off for 30 days (seed photos included). 20 a day is at most 600 uploads a
- * month on Production, plus at most one list per Restore that follows an upload, plus the
- * daily cron's list: under 1,300 in the worst case, leaving room for Preview reviews.
+ * Daily caps for the public demo (#92), counted over the last 24 hours. They were sized for
+ * Hobby's 2,000 uploads and lists a month; on Pro (#96) they stay as an abuse guard on cost.
+ * 20 a day is at most 600 uploads a month on Production, plus at most one list per Restore
+ * that follows an upload, plus the daily cron's list.
  * 10 per person covers an item with five photos, a proof and a few retries.
  */
 export const UPLOAD_CAPS = { perPersonPerDay: 10, everyonePerDay: 20 } as const;
@@ -43,7 +42,7 @@ export const UPLOAD_MESSAGES = {
   cantRead: "We couldn't read that picture. Try a JPEG, PNG or WebP.",
   personCap: `You've uploaded ${UPLOAD_CAPS.perPersonPerDay} pictures today, the most this demo allows each person in a day. Try again tomorrow.`,
   everyoneCap: "This demo has reached its upload limit for today. Try again tomorrow.",
-  paused: "Uploads are paused for now so this free demo stays within its storage allowance. Everything else still works.",
+  paused: "Uploads are paused for now to keep this demo's storage use in check. Everything else still works.",
 } as const;
 
 /** Why this upload can't happen now, or null. `counts` are uploads in the last 24 hours. */

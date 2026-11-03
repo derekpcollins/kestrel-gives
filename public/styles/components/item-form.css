@@ -1,0 +1,13 @@
+/* Item form (DESIGN-SYSTEM.md › Item form; SPEC §7.3): Submit an Item and Edit item. One
+   column at reading width on a raised surface, like the gallery's demo form. Nested fieldsets
+   group fields without borders. The delete section sits below, apart from the form. */
+.item-form { display: grid; gap: var(--space-6); max-width: var(--size-content-narrow); padding: var(--space-6); border-radius: var(--radius-lg); background: var(--color-surface); box-shadow: var(--shadow-sm); }
+.item-form fieldset { display: grid; gap: var(--space-6); min-width: 0; margin: 0; padding: 0; border: 0; }
+.item-form fieldset[hidden] { display: none; }
+.item-form__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.item-form__danger { display: grid; gap: var(--space-3); justify-items: start; max-width: var(--size-content-narrow); margin-top: var(--space-8); padding-top: var(--space-6); border-top: var(--border-thin) solid var(--color-border); }
+.item-form__danger-title { font: var(--type-heading-3); }
+.item-form__danger-text { color: var(--color-text-muted); }
+@media (max-width: 40rem) {
+  .item-form { padding: var(--space-4); }
+}

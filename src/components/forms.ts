@@ -76,7 +76,20 @@ function validateAll(form: HTMLFormElement, { silent = false } = {}): Problem[] 
 
 /** Checks one control, shows or clears its message, and returns the message. */
 function validateField(control: Control): string {
-  const message = problemFor(control);
+  return setFieldMessage(control, problemFor(control));
+}
+
+/**
+ * Shows problems the server found (DECISIONS #98): each under its field, as if the browser had
+ * found it, plus the error summary, which takes focus. A field's message clears as it's fixed.
+ */
+export function showServerProblems(form: HTMLFormElement, problems: readonly { control: Control; message: string }[]): void {
+  for (const { control, message } of problems) setFieldMessage(control, message);
+  showSummary(form, problems.map(({ control, message }) => ({ control, label: labelFor(control), message })));
+}
+
+/** Shows or clears one control's message. */
+function setFieldMessage(control: Control, message: string): string {
   const field = control.closest<HTMLElement>(".field");
   if (!field) return message;
   const group = control.type === "radio" ? Array.from(field.querySelectorAll<HTMLInputElement>(`input[name="${CSS.escape(control.name)}"]`)) : [control];

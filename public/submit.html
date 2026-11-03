@@ -18,16 +18,36 @@
     <div data-shell-demo></div>
     <div data-shell-header></div>
     <div data-shell-banner></div>
-    <main class="page" id="main" tabindex="-1">
+    <main class="page" id="main" tabindex="-1" data-submit-page>
       <header class="page-header">
         <div class="page-header__row"><div class="page-header__text">
-          <h1 class="page-header__title">Submit an Item</h1>
-          <p class="page-header__description">Donate an item or an experience to the auction.</p>
+          <a class="link link--quiet page-header__back" href="/" data-submit-back hidden><span data-icon="chevron-left"></span><span data-submit-back-label>Back to the item</span></a>
+          <h1 class="page-header__title" data-submit-title>Submit an Item</h1>
+          <p class="page-header__description" data-submit-description>Donate an item or an experience to the auction.</p>
         </div></div>
       </header>
-      <section class="empty" aria-labelledby="later">
+      <section class="empty" aria-labelledby="submit-blocked-title" data-submit-blocked hidden>
         <span class="empty__icon" data-icon="clock" data-icon-size="lg"></span>
-        <h2 class="empty__title" id="later">The submission form arrives in a later milestone of this demo.</h2>
+        <h2 class="empty__title" id="submit-blocked-title" data-submit-blocked-text></h2>
+        <p><a class="link" href="/silent-auction">Browse the Silent Auction</a></p>
+      </section>
+      <form class="item-form" id="item-form" aria-labelledby="item-form-title" data-submit-form hidden>
+        <h2 class="visually-hidden" id="item-form-title" data-submit-form-title>Item details</h2>
+        <div class="banner banner--info" data-locked-note hidden><span data-icon="info"></span><div class="banner__body"><p class="banner__text" id="locked-note"></p></div></div>
+        <fieldset class="field" id="item-type-group" data-message-name="a sale type"><legend class="field__label">What kind of sale is it?</legend><div class="radio-cards"><label class="radio-card"><input class="radio-card__input" type="radio" name="type" id="item-type-auction" value="auction" required><span class="radio-card__title">Silent auction</span><span class="radio-card__text">People bid until bidding closes. Best for one-of-a-kind things.</span></label><label class="radio-card"><input class="radio-card__input" type="radio" name="type" id="item-type-instant" value="instant" required><span class="radio-card__title">Instant sale</span><span class="radio-card__text">People buy at a set price while stock lasts. Best for things you can make several of.</span></label></div></fieldset>
+        <fieldset id="item-rest" disabled>
+          <div class="field" data-message-name="a title"><label class="field__label" for="item-title">Title</label><input class="input" id="item-title" name="title" required maxlength="80" autocomplete="off"></div>
+          <div class="field" data-message-name="a description"><label class="field__label" for="item-description">Description</label><textarea class="input" id="item-description" name="description" required maxlength="2000"></textarea></div>
+          <fieldset id="item-auction" hidden><div class="field" data-message-name="a starting bid"><label class="field__label" for="item-start">Starting bid</label><p class="field__help" id="item-start-help">Whole dollars.</p><div class="input-group"><span class="input-group__affix" aria-hidden="true">$</span><input class="input input--money input--short" id="item-start" name="startingBid" type="text" inputmode="numeric" pattern="[0-9]+" autocomplete="off" required data-money aria-describedby="item-start-help"></div></div></fieldset>
+          <fieldset id="item-instant" hidden><div class="field-row"><div class="field" data-message-name="a price"><label class="field__label" for="item-price">Price</label><div class="input-group"><span class="input-group__affix" aria-hidden="true">$</span><input class="input input--money" id="item-price" name="price" type="text" inputmode="numeric" pattern="[0-9]+" autocomplete="off" required data-money data-min="1"></div></div><div class="field" data-message-name="a quantity" data-pattern-message="Whole numbers only."><label class="field__label" for="item-quantity">Quantity</label><input class="input input--money" id="item-quantity" name="quantity" type="text" inputmode="numeric" pattern="[1-9][0-9]*" autocomplete="off" required value="1"></div></div></fieldset>
+          <div class="field"><span class="field__label" id="item-photos-label">Photos</span><div class="uploader" data-uploader data-required data-resize data-max-mb="4"><div class="uploader__add"><input class="visually-hidden uploader__input" type="file" id="item-photos" accept="image/jpeg,image/png,image/webp" multiple aria-labelledby="item-photos-label item-photos-button" aria-describedby="item-photos-help"><label class="btn btn--secondary btn--sm" for="item-photos" id="item-photos-button"><span data-icon="upload" data-icon-size="sm"></span>Add photos</label><span class="uploader__count">0 of 5 photos</span><p class="field__help" id="item-photos-help">JPEG, PNG or WebP. Up to 5 photos; the first is the cover. Large photos are made smaller before upload.</p></div><ol class="uploader__list" aria-label="Photos, in order" hidden></ol><ul class="uploader__problems"></ul><p class="visually-hidden uploader__status" aria-live="polite"></p></div></div>
+        </fieldset>
+        <div class="item-form__actions"><button type="submit" class="btn" data-submit-button>Submit item</button><a class="link" href="/" data-submit-cancel hidden>Cancel</a></div>
+      </form>
+      <section class="item-form__danger" aria-labelledby="delete-title" data-delete-section hidden>
+        <h2 class="item-form__danger-title" id="delete-title">Delete this item</h2>
+        <p class="item-form__danger-text">You can delete it while it has no bids or purchases.</p>
+        <button type="button" class="btn btn--danger btn--sm" data-delete-button><span data-icon="trash" data-icon-size="sm"></span>Delete item</button>
       </section>
     </main>
     <footer class="site-footer">

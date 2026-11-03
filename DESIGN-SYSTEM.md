@@ -110,7 +110,7 @@ The same pattern applies to every component below. Each entry's **Figma** line g
 
 **Purpose:** a brief confirmation that something just happened ("Bid placed").
 
-- **Code:** `showToast(message, { tone, duration, announce })` in `src/components/toast.ts`. It creates one `.toast-region` at the bottom of the screen, above everything (`--layer-toast`), holding two `.toast-region__stack`s: `--live` (`role="status"`, `aria-live="polite"`) and `--quiet`. `announce: false` puts the toast in the quiet stack, for a page that announces the same words through its own live region (the item page's bid and buy results, DECISIONS #88), so they're read once.
+- **Code:** `showToast(message, { tone, duration, announce })` in `src/components/toast.ts`. `flashToast(message)` saves one for the next page this tab opens (after a save moves you to the item), and `showFlash()` shows it once. It creates one `.toast-region` at the bottom of the screen, above everything (`--layer-toast`), holding two `.toast-region__stack`s: `--live` (`role="status"`, `aria-live="polite"`) and `--quiet`. `announce: false` puts the toast in the quiet stack, for a page that announces the same words through its own live region (the item page's bid and buy results, DECISIONS #88), so they're read once.
 - **Classes:** `.toast`; tones `--neutral`, `--success`, `--danger`; `__message`, `__dismiss`. `.toast--static` shows one in place, for the gallery only.
 - **States:** default; it enters with a short rise that is instant under reduced motion. Hover and focus **pause** the timer (6 seconds by default), and it resumes when the pointer and focus leave. The dismiss button has the quiet button's states. Disabled, loading and empty: N/A. Error: `--danger` ("Couldn't save…"), but an error that needs action goes in a banner.
 - **Accessibility:** announced politely without moving focus. Always dismissible. Never the only place important information appears.
@@ -225,19 +225,19 @@ How forms behave, for every component below:
 
 **Purpose:** add 1–5 photos (JPEG, PNG or WebP, up to 4 MB each), put them in order, and pick the cover (first) (SPEC §7.2, §4).
 
-- **Markup:** `.field` > `.field__label` + `.uploader[data-uploader][data-required][data-max-mb]` with:
+- **Markup:** `.field` > `.field__label` + `.uploader[data-uploader][data-required][data-max-mb]` (and `data-resize` on the submit page, DECISIONS #93) with:
   - `.uploader__add`: a visually hidden `<input type="file" class="uploader__input">`, its `<label class="btn">` as the visible button, `.uploader__count` and help
   - `.uploader__list` of `.uploader__item`: thumbnail, a "Cover" pill on the first, and a control row underneath with move-left, move-right and remove buttons. Each control is a full `--size-target` (44px) icon button, and each item is as wide as that row, so photos wrap to fewer per row on narrow screens
   - `.uploader__problems`
   - a visually hidden `.uploader__status` live region
-  - Behavior: `createUploader(root)` in `src/components/uploader.ts`.
+  - Behavior: `createUploader(root)` in `src/components/uploader.ts`. With `data-resize`, each picked picture is resized to JPEG (long side 1600px, `src/components/resize.ts`) as it's added, so the 4 MB cap applies to the resized file. `setExisting()` shows an item's current photos on the edit page; they keep their ids and read "current photo" in their alt text.
 - **States:**
   - Default/empty (dashed box, "0 of 5 photos"), and with photos.
   - Hover, active and focus come from the buttons; the file input's focus shows on its label button.
   - Disabled: the edge arrows use `aria-disabled` (so focus can stay on them).
   - **Full** (`.uploader--full`): the add button looks inactive but stays focusable, and pressing it explains why ("Remove one to add another").
-  - **Loading**: `.uploader__item--uploading` dims the thumbnail with "Uploading…". It's wired to storage in Milestone 5.
-  - **Error**: "Add at least one photo." on submit, plus a message per bad file that names it ("“scan.gif” isn't a JPEG, PNG or WebP image.", "“cabin.png” is larger than 4 MB.", "You can add up to 5 photos. 1 photo wasn't added.").
+  - **Loading**: while pictures are resized, the uploader has `aria-busy` and announces "Preparing 2 photos…". Uploads happen when the form is saved, and the submit button shows the progress ("Uploading photo 1 of 2…"). `.uploader__item--uploading` (a dimmed thumbnail with "Uploading…") stays in the gallery for a future per-photo upload.
+  - **Error**: "Add at least one photo." on submit, plus a message per bad file that names it ("“scan.gif” isn't a JPEG, PNG or WebP image.", "“cabin.png” is larger than 4 MB.", "You can add up to 5 photos. 1 photo wasn't added.", "“scan.heic”: We couldn't read that picture. Try a JPEG, PNG or WebP.").
 - **Accessibility:**
   - No dragging (SPEC §6).
   - Each thumbnail's alt gives its position: "Photo 1 of 3 (cover): starter.jpg".
@@ -245,6 +245,23 @@ How forms behave, for every component below:
   - Every change is announced ("Moved to photo 2 of 3.", "Photo removed. 2 of 5.").
 - **Do:** say the limits in the help text. **Don't:** hide a problem in a toast; problems stay until the next pick.
 - **Figma:** split in two. *Photo uploader* · State = Empty / With photos / Error / Full (4), with thumbnails as nested instances. *Photo thumbnail* · Position = Cover / Middle / Last / Only × Uploading = On / Off (8). Cover shows the pill and an inactive left arrow, Last an inactive right arrow, and Only (a single photo) both. The arrows and remove are nested *Icon button*s (Secondary, Medium: 44px).
+
+## Item form
+
+**Purpose:** Submit an Item (`/submit`) and Edit item (`/items/<id>/edit`), one page (SPEC §7.3, DECISIONS #98). The gallery's "Submit an item (demo)" is the same form.
+
+- **Markup:** `form.item-form` on a raised surface at reading width, holding the sale-type radio cards, then `fieldset#item-rest` (disabled until a type is chosen) with title, description, the type's money fields, and the photo uploader. `.item-form__actions` holds the submit button (and Cancel when editing). Below the form, `.item-form__danger` holds "Delete item" (`.btn--danger`) when deleting is allowed. Behavior: `startSubmitPage()` in `src/pages/submit.ts`; decisions in `src/pages/submit-rules.ts`.
+- **States:**
+  - Default (submit, starting bid filled in with the event minimum); edit (filled in, with the item's photos).
+  - **Locked** (edit, the item has bids or purchases): an info banner with "Locked: this item has bids or purchases. You can still change the title, description and photos.", and the sale type, starting bid, price and quantity disabled and described by it.
+  - **Blocked:** an empty state in place of the form: "Submissions are closed. Only admins can add items now.", "Only the person who donated this item, or an admin, can change it.", "This item has been cancelled, so it can't be changed.", "That item doesn't exist."
+  - **Loading:** the submit button has `aria-busy` and says "Uploading photo 1 of 2…", then "Submitting…" or "Saving…".
+  - **Error:** field problems from the browser *or the server* show under each field with the error summary (`showServerProblems`). Anything else (an upload cap, uploads paused, submissions closed, no connection) shows in `.item-form__alert`, a danger banner at the top of the form (`role="alert"`) that takes focus.
+  - **Success:** the page moves to the item with a toast ("Thanks. Your item is in.", "Your changes are saved."), via `flashToast()`.
+  - Delete asks first in a danger dialog ("Delete “Pottery class for two”?", **Delete item** / **Keep item**), then goes to Your Items with "Your item is deleted."
+- **Accessibility:** one tab stop per control; locked controls stay visible with the reason linked by `aria-describedby`; every message is reachable from the summary or the alert, both of which take focus.
+- **Do:** keep the field messages the same as the server's (they come from `item-form-rules.ts`). **Don't:** hide locked fields; people should see what's fixed and why.
+- **Figma:** *Item form* · Mode = Submit / Edit × Locked = Off / On (3 used; Submit has no lock). Built from *Radio card*, *Form field*, *Photo uploader*, *Banner* and *Button* instances.
 
 ## Error summary
 

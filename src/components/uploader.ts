@@ -1,16 +1,35 @@
 // Photo uploader (DESIGN-SYSTEM.md › Photo uploader; SPEC §7.2, §6). 1–5 JPEG, PNG or
 // WebP photos; the first is the cover. Each thumbnail has move-left, move-right and remove
 // buttons, so reordering never needs dragging; every change is announced. This handles
-// picking, checking and ordering in the browser; sending files to storage comes with the
-// submit flow (Milestone 5).
+// picking, checking and ordering in the browser; the submit page sends the files.
+// - `data-resize` (the submit page, DECISIONS #93): each picked picture is resized to JPEG as
+//   it's added, so the size cap applies to the resized file and an unreadable picture is
+//   reported at once. The gallery demo leaves it off.
+// - The edit page starts with the item's current photos (setExisting), which keep their ids.
 import { checkPhotos, PHOTO_MAX, photoPositionLabel } from "./form-rules.ts";
 import { registerCheck } from "./forms.ts";
 import { icon } from "./icons.ts";
+import { resizeForUpload } from "./resize.ts";
 
-interface Photo { file: File; url: string }
+/** A photo in the list: one the item already has, or a newly picked file. */
+export type UploaderPhoto =
+  | { kind: "existing"; photoId: string; url: string; name: string }
+  | { kind: "new"; file: File; url: string; name: string; uploadId?: string };
+
+type Photo = UploaderPhoto;
+
+/** Before resizing, originals may be this large; phone photos are often 3–8 MB. */
+const ORIGINAL_MAX_MB = 40;
 
 export interface Uploader {
-  photos(): File[];
+  /** The photos in order. New ones are the same objects each time, so the page can note an uploadId on them. */
+  photos(): UploaderPhoto[];
+  /** Shows the item's current photos (the edit page). */
+  setExisting(photos: readonly { photoId: string; url: string }[]): void;
+  /** Forgets upload ids, so the next save uploads again (an upload the server no longer accepts). */
+  forgetUploads(): void;
+  /** True while picked pictures are still being resized. */
+  busy(): boolean;
 }
 
 export function createUploader(root: HTMLElement): Uploader {
@@ -22,7 +41,9 @@ export function createUploader(root: HTMLElement): Uploader {
   const maxMb = Number(root.dataset.maxMb ?? "4");
   const max = Number(root.dataset.max ?? PHOTO_MAX);
   const required = "required" in root.dataset;
+  const resize = "resize" in root.dataset;
   let photos: Photo[] = [];
+  let working = 0;
 
   const announce = (text: string) => {
     // Clear first so the same words are announced again.
@@ -39,11 +60,33 @@ export function createUploader(root: HTMLElement): Uploader {
     }
   });
 
-  input.addEventListener("change", () => {
+  input.addEventListener("change", async () => {
     const picked = Array.from(input.files ?? []);
     input.value = ""; // so picking the same file again still fires change
-    const { accepted: files, problems } = checkPhotos(photos.length, picked, maxMb, max);
-    photos = [...photos, ...files.map((file) => ({ file, url: URL.createObjectURL(file) }))];
+    // With resizing, originals may be large; the cap applies to the resized file below.
+    const { accepted, problems } = checkPhotos(photos.length + working, picked, resize ? ORIGINAL_MAX_MB : maxMb, max);
+    let files = accepted.map((file) => ({ file, name: file.name }));
+    if (resize && accepted.length) {
+      working += accepted.length;
+      root.setAttribute("aria-busy", "true");
+      announce(accepted.length === 1 ? "Preparing 1 photo…" : `Preparing ${accepted.length} photos…`);
+      const results = await Promise.all(accepted.map(async (file) => {
+        try {
+          return { file, resized: await resizeForUpload(file) };
+        } catch (error) {
+          return { file, error: error instanceof Error ? error.message : String(error) };
+        }
+      }));
+      working -= accepted.length;
+      if (working === 0) root.removeAttribute("aria-busy");
+      files = [];
+      for (const r of results) {
+        if ("error" in r) problems.push(`“${r.file.name}”: ${r.error}`);
+        else if (r.resized.size > maxMb * 1024 * 1024) problems.push(`“${r.file.name}” is larger than ${maxMb} MB.`);
+        else files.push({ file: r.resized, name: r.file.name });
+      }
+    }
+    photos = [...photos, ...files.map(({ file, name }): Photo => ({ kind: "new", file, name, url: URL.createObjectURL(file) }))];
     problemsEl.replaceChildren(...problems.map((p) => {
       const li = document.createElement("li");
       li.className = "field__message field__message--error";
@@ -73,7 +116,7 @@ export function createUploader(root: HTMLElement): Uploader {
       announce(`Moved to ${photoPositionLabel(to, photos.length).toLowerCase()}.`);
     } else if (action === "remove") {
       const [gone] = photos.splice(index, 1);
-      if (gone) URL.revokeObjectURL(gone.url);
+      if (gone?.kind === "new") URL.revokeObjectURL(gone.url);
       render();
       const next = list.children[Math.min(index, photos.length - 1)]?.querySelector<HTMLButtonElement>('[data-action="remove"]');
       (next ?? input).focus();
@@ -90,7 +133,17 @@ export function createUploader(root: HTMLElement): Uploader {
   }
 
   render();
-  return { photos: () => photos.map((p) => p.file) };
+  return {
+    photos: () => [...photos],
+    setExisting(list) {
+      photos = list.map((p): Photo => ({ kind: "existing", photoId: p.photoId, url: p.url, name: "current photo" }));
+      render();
+    },
+    forgetUploads() {
+      for (const p of photos) if (p.kind === "new") delete p.uploadId;
+    },
+    busy: () => working > 0,
+  };
 }
 
 function item(photo: Photo, index: number, total: number): HTMLLIElement {
@@ -100,7 +153,7 @@ function item(photo: Photo, index: number, total: number): HTMLLIElement {
   const img = document.createElement("img");
   img.className = "uploader__thumb";
   img.src = photo.url;
-  img.alt = `${photoPositionLabel(index, total)}: ${photo.file.name}`;
+  img.alt = `${photoPositionLabel(index, total)}: ${photo.name}`;
   li.append(img);
   if (index === 0) {
     const cover = document.createElement("span");

@@ -64,3 +64,32 @@ export function showToast(message: string, { tone = "neutral", duration = 6000, 
   start();
   return toast;
 }
+
+const FLASH_KEY = "kg:flash";
+
+/** Shows a toast on the next page this tab opens (after saving and moving on, DECISIONS #98). */
+export function flashToast(message: string, tone: ToastTone = "success"): void {
+  try {
+    sessionStorage.setItem(FLASH_KEY, JSON.stringify({ message, tone }));
+  } catch {
+    // Storage blocked: the next page simply shows no toast.
+  }
+}
+
+/** Shows (once) a toast left by the previous page. */
+export function showFlash(): void {
+  let saved: string | null = null;
+  try {
+    saved = sessionStorage.getItem(FLASH_KEY);
+    sessionStorage.removeItem(FLASH_KEY);
+  } catch {
+    return;
+  }
+  if (!saved) return;
+  try {
+    const { message, tone } = JSON.parse(saved) as { message: unknown; tone: unknown };
+    if (typeof message === "string" && (tone === "success" || tone === "neutral" || tone === "danger")) showToast(message, { tone });
+  } catch {
+    // Ignore anything malformed.
+  }
+}

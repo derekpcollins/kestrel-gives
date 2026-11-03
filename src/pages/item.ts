@@ -3,6 +3,7 @@
 // public bid history with the crown. The id comes from the path (/items/12). While the tab is
 // visible it refreshes every 30 seconds (SPEC §7.4), and announces only a change in the
 // viewer's own standing. Bid and buy results are announced too.
+import { canEdit, EDIT_LINK } from "./submit-rules.ts";
 import type { AppState } from "../app-state.ts";
 import { renderAvatar } from "../components/avatar.ts";
 import { enhanceCarousel } from "../components/carousel.ts";
@@ -151,7 +152,11 @@ function renderItem(answer: ItemAnswer, state: AppState, renderActions: RenderAc
     el("div", { className: "page-header__row" },
       el("div", { className: "page-header__text" },
         el("h1", { className: "page-header__title", text: item.title }),
-        el("p", { className: "page-header__description", text: donatedBy(item) }))));
+        el("p", { className: "page-header__description", text: donatedBy(item) })),
+      canEdit(state.viewer, item)
+        ? el("div", { className: "page-header__actions" },
+          el("a", { className: "btn btn--secondary btn--sm", attrs: { href: EDIT_LINK(item.id), "data-focus-key": "edit" } }, "Edit item"))
+        : null));
 
   const nodes: Node[] = [header];
   if (item.cancelled) {

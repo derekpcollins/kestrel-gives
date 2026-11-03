@@ -1,6 +1,6 @@
 # Kestrel Gives — Build Spec & Conformance Rules
 
-**Status:** v1.14 · Owner: Derek Collins · Last updated: Nov 3, 2026
+**Status:** v1.15 · Owner: Derek Collins · Last updated: Nov 3, 2026
 
 This document describes what to build and the rules every contribution must follow, whether a person or an AI agent writes it. Read it in full before writing any code. If something here conflicts with a request, stop and ask.
 
@@ -92,7 +92,7 @@ The Vercel CLI is installed globally, not as a project dependency. Node's built-
 - `fetch` for data, and URL-based routing with real URLs (no hash routing)
 
 ### Hosting
-- MUST deploy to **Vercel** (Hobby plan): static files for the front end, and Vercel Functions (TypeScript) for the API.
+- MUST deploy to **Vercel** (Pro plan since v1.15, with spend alerts and no hard pause; Hobby before): static files for the front end, and Vercel Functions (TypeScript) for the API.
 - URL: the free `*.vercel.app` address (ideally `kestrel-gives.vercel.app`). No custom domain.
 - Everything MUST work within free-plan limits. No feature may require a paid plan.
 
@@ -111,7 +111,7 @@ The Vercel CLI is installed globally, not as a project dependency. Node's built-
 - **Restore demo data and the daily job delete uploaded files** (v1.13): everything under the current environment's prefix (`production/` or `preview/`; locally the dev folder), never `seed/`, page by page through the same delete guard, after the database has been restored. Listing costs Blob operations, so a manual Restore lists only when something was uploaded since the last one; the daily job always sweeps.
 - Upload limits: images only (JPEG, PNG, WebP), size-capped, validated on the server by the file's contents. The browser resizes each picture before upload (long side about 1600px), which also drops its metadata.
 - **Daily upload caps** (v1.13) protect the shared demo's Blob allowance: one for everyone and one per person, over the last 24 hours, with a clear refusal. Restore does not reset them.
-- **Blob circuit breaker** (v1.14): the app counts its own Blob operations that use up the monthly allowance (uploads and lists) and stops accepting uploads, with a clear message, at 75% of it. Restore and the daily job keep working.
+- **Blob circuit breaker** (v1.14; v1.15): the app counts its own billed Blob operations (uploads and lists) and stops accepting uploads, with a clear message, at a set number a month. On Pro there is no 30-day lockout, so this is an abuse guard that limits cost, not a guard on a free allowance. Restore and the daily job keep working.
 
 ### Secrets
 - `.env.local` holds credentials and MUST be in `.gitignore` from the first commit.

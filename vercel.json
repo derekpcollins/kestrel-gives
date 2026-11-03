@@ -12,6 +12,10 @@
   ],
   "rewrites": [
     {
+      "source": "/items/:id/edit",
+      "destination": "/submit"
+    },
+    {
       "source": "/items/:id",
       "destination": "/item"
     }

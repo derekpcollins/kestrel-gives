@@ -6,6 +6,8 @@ import { startBrowse } from "./pages/browse.ts";
 import { showHome } from "./pages/home.ts";
 import { startItemPage } from "./pages/item.ts";
 import { startShell } from "./shell.ts";
+import { showFlash } from "./components/toast.ts";
+import { startSubmitPage } from "./pages/submit.ts";
 
 hydrateIcons();
 
@@ -22,5 +24,7 @@ if (document.body.dataset.page === "home") {
 const browseType = document.querySelector<HTMLElement>("[data-browse-type]")?.dataset.browseType;
 if (browseType === "auction" || browseType === "instant") startBrowse(browseType);
 if (document.body.dataset.page === "item") startItemPage();
+if (document.body.dataset.page === "submit") startSubmitPage();
+showFlash();
 
 await startShell();

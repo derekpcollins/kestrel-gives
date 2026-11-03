@@ -19,5 +19,7 @@ export const SCREENS: readonly Screen[] = [
   { name: "item-instant", path: "/items/13" }, // sold out
   { name: "item-cancelled", path: "/items/10" },
   { name: "item-not-found", path: "/items/99999" },
+  // Milestone 5B: the edit form (Jules's pottery class, seeded id 5).
+  { name: "item-edit", path: "/items/5/edit" },
   { name: "design-system", path: "/design-system/" }, // every component, every state
 ];
