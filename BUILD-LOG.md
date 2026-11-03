@@ -546,6 +546,13 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 **Milestone 3 ended:** 2026-11-02 15:00 EST · about 1 hour 45 minutes from the plan review.
 
 
+### 2026-11-03 — First daily cron run confirmed (checked 08:36 EST, 13:36 UTC)
+- **Request log:** one `GET /api/cron-restore` on production at **08:48:26 UTC**: status 200, user agent `vercel-cron/1.0`, deployment `kestrel-gives-5h4zj8w5u`. Vercel fires a Hobby cron anywhere within its scheduled hour, and this one landed at :48.
+- **Runtime log:** the `cron-restore: restored` line couldn't be read. The Hobby plan keeps runtime logs only briefly ("does not retain runtime logs for the requested time range"), unlike request records.
+- **Restore happened, and it was the cron:** the event dates moved to opened Nov 1 08:00 UTC and closes Nov 5 08:00 UTC. That's what a restore during the 08:00 UTC hour writes, because the seed rounds to the hour. Before, bidding closed Nov 4 at 19:00 UTC. No `/api/demo` requests reached production between 07:00 and 09:05 UTC, and nothing was deployed, so the restore can't have come from the demo bar or a deploy. The `demo_restores` row wasn't read: main is off limits to local scripts. The owner can confirm `source = cron` in the Neon console if wanted.
+- **Health:** `{"ok":true,"db":"main","schema":"005","seedPhotos":true}` on both domains. `/api/app` shows phase `live`. `vercel crons ls` still lists `/api/cron-restore` at `0 8 * * *`.
+- **Lesson:** next time, read the runtime log within the retention window, or rely on the request log plus the data, as here.
+
 ## Milestone 4: Browsing and buying
 
 **Milestone 4 started:** 2026-11-02 16:29 EST, when the owner gave the go to start 4A without waiting for the cron check (that check is still scheduled for 2026-11-03 04:12 EST and will be logged separately).
