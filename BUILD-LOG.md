@@ -761,3 +761,18 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   - Owen's total went from $35 to $65 with the win, and his $65 proof went in as pending.
   - Restore removed the item and both uploaded files (`.review/m5-5e/preview-checks.txt`).
 - **Before main:** production reports schema 005. The push would apply 006 (uploads) and 007 (blob ops) in the production build, both additive. Production already has the Blob token. Not pushed; waiting for approval.
+
+### 2026-11-03 — Milestone 5 live (16:30 – 16:40 EST)
+- **Owner stepped in:** approved Milestone 5 and the push to main.
+- **Pushed:** `main` fast-forwarded `0f0b289..7947840`: 16 commits, the held `7d651bc` plus 5A–5E, their review fixes, BUILD-LOG and DECISIONS #91–#105. Deployment `kestrel-gives-he5vchuae`, production, Ready.
+- **Build log:** unit tests 238 pass, 0 fail. `deploy-db: production build; DATABASE_URL_UNPOOLED confirmed as the main branch (direct connection).`, `applied 006_uploads.sql`, `applied 007_blob_ops.sql`, `2 applied.`, `deploy-db: an event exists; not seeding.`, `deploy-db: step m3-land-live-demo already ran; skipped.` No error lines.
+- **Health:** `{"ok":true,"db":"main","schema":"007","seedPhotos":true}` on `kestrel-gives.vercel.app` and on `kestrel-gives-derek-p-collins-projects.vercel.app` (via `vercel curl`). Phase `live`.
+- **Live pages:** a view-only look on the public domain at 1280 and 390, as the default viewer (Jules). The browser aborted anything other than GET, and nothing else was attempted. No uploads, bids or purchases (`.review/m5-prod/view-checks.txt`).
+  - `/your-items`: My bids, Won & purchased, My donated items, Cancelled. Your Items is current in the nav.
+  - `/submit`: "Submissions are closed. Only admins can add items now." (bidding is open).
+  - `/giving`: "Your total: $125" and Upload proof.
+  - `/your-items/proof`: "Your donation total is $125. 8 days left to upload proof." Your Items is current.
+  - No page errors.
+- **Restore deadlock:** the retry (#105) is the chosen fix, with lock ordering noted as a possible later improvement (DECISIONS #106).
+
+**Milestone 5 ended:** 2026-11-03 16:40 EST · about 5 hours 20 minutes from the plan approval (11:22 EST).
