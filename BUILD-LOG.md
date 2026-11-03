@@ -663,3 +663,19 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   - No page errors.
 
 **Milestone 4 ended:** 2026-11-03 11:20 EST · about 6 hours of working time across two days from the plan approval (2026-11-02 16:29 EST), with an overnight pause.
+
+## Milestone 5 — employee flows
+
+**Milestone 5 started:** 2026-11-03 11:22 EST, on the owner's approval of the plan.
+
+### 2026-11-03 — Stage 5A: uploads, item writes, proofs and Your Items API (11:22 – 12:15 EST)
+- **Owner stepped in:** approved the plan with four answers: Restore and the cron delete uploaded files under the environment's prefix; proofs in the public store with unguessable names and a demo warning; the proof page at `/your-items/proof`; resizing in the browser to about 1600px. The owner also added daily upload caps.
+- **Built (API only; the pages come in 5B–5D):**
+  - Migration 006: `uploads` gets a row before its file is written, so Restore can always find it. `upload_log` counts toward the caps, and Restore leaves it alone.
+  - `POST /api/uploads`: 4 MB cap, type taken from the file's first bytes, caps of 20 a day for everyone and 10 per person (DECISIONS #92). `GET` serves local dev files.
+  - `POST`/`PATCH`/`DELETE` on `/api/items`: submit, edit and delete. Fields lock once there's activity, and removed bids count as activity (#94). The files of removed photos are deleted after the commit, and only under the environment's own prefix.
+  - `POST /api/proofs` (#95) and `GET /api/me` (Your Items). That's 10 of 12 functions.
+  - Restore and the daily cron empty the environment's upload prefix through the delete guard. On Blob, a manual Restore lists only if something was uploaded (#91; flagged for the owner).
+- **Caught:** `vercel dev` serves only static files that existed when it started, so a new upload in `public/` returned 404. Local files stay in `.local-uploads/` (the owner's name for it), and `GET /api/uploads?file=` serves them, only off Vercel and only inside the local prefix. Path escapes and `seed/` give 404.
+- **Tests:** 22 new unit tests (sniffing, caps, resizing, form and proof rules, request shapes, Restore's list rule, own-prefix deletes) and 4 storage tests (local and Blob clear with a fake lister, paging, refusing foreign and `seed/` paths). 21 new database tests on dev, including uploads at once against the cap and an edit racing a first bid. Retired two business-rule todos. `npm run check` passes (197 unit with 3 todo, 80 database, 104 browser, 11 reflow, 44 visual). `npm audit` shows only the accepted zod advisory.
+- **Preview (12:10 EST):** `kestrel-gives-qtm2iazkt` reports `"schema":"006"`. Real uploads went to Blob under `preview/` and were publicly readable. An admin created an item during live, and an employee was refused. An edit and a delete each removed their file. A proof upload worked, and Restore removed it; all three files then returned 404 (`.review/m5-5a/preview-checks.txt`, with the store host redacted). Restore left dev reseeded.
