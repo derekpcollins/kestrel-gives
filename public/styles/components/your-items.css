@@ -1,0 +1,22 @@
+/* Your Items (DESIGN-SYSTEM.md › Your Items; SPEC §8): sections of item tiles, with the proof
+   summary at the top of Won & purchased. Rows are item tiles; nothing here restyles them. */
+.your-items { display: grid; gap: var(--space-10); }
+.your-items__section { display: grid; gap: var(--space-4); }
+.your-items__title { margin: 0; font: var(--type-heading-2); color: var(--color-text); }
+.your-items__empty { margin: 0; font: var(--type-body); color: var(--color-text-muted); }
+/* Edit sits under its tile, outside the linked card (a linked card holds one control). */
+.item-grid > li:has(.your-items__edit) { grid-template-rows: 1fr auto; gap: var(--space-2); }
+.your-items__edit { justify-self: start; }
+
+/* The proof summary: the total, then the status, what happens next, and the upload link. */
+.proof-summary { display: grid; gap: var(--space-4); padding: var(--space-5); }
+.proof-summary__label { margin: 0; font: var(--type-label); color: var(--color-text-muted); }
+.proof-summary__amount { margin: 0; font: var(--type-amount); color: var(--color-price); font-variant-numeric: var(--figures-amount); }
+.proof-summary__body { display: grid; gap: var(--space-2); align-content: start; }
+.proof-summary__status { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.proof-summary__due { font: var(--type-label); color: var(--color-text); }
+.proof-summary__note { margin: 0; font: var(--type-body); color: var(--color-text); }
+.proof-summary__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); margin-top: var(--space-2); }
+@media (min-width: 40rem) {
+  .proof-summary { grid-template-columns: minmax(max-content, 1fr) 3fr; gap: var(--space-6); }
+}

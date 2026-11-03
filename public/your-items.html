@@ -22,12 +22,15 @@
       <header class="page-header">
         <div class="page-header__row"><div class="page-header__text">
           <h1 class="page-header__title">Your Items</h1>
-          <p class="page-header__description">Your bids, wins and claims, and the items you donated.</p>
+          <p class="page-header__description">Your bids, wins and purchases, and the items you donated.</p>
         </div></div>
       </header>
-      <section class="empty" aria-labelledby="later">
-        <span class="empty__icon" data-icon="clock" data-icon-size="lg"></span>
-        <h2 class="empty__title" id="later">Your items arrive in a later milestone of this demo.</h2>
+      <div class="your-items" data-your-items aria-busy="true"></div>
+      <section class="empty" aria-labelledby="your-items-error-title" data-your-items-error hidden>
+        <span class="empty__icon" data-icon="alert" data-icon-size="lg"></span>
+        <h2 class="empty__title" id="your-items-error-title">We couldn't load your items</h2>
+        <p class="empty__text">Check your connection and try again.</p>
+        <div class="empty__actions"><button type="button" class="btn btn--secondary">Try again</button></div>
       </section>
     </main>
     <footer class="site-footer">

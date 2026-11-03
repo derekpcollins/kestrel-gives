@@ -263,6 +263,18 @@ How forms behave, for every component below:
 - **Do:** keep the field messages the same as the server's (they come from `item-form-rules.ts`; the starting bid hint and refusal both come from `startingBidHelp`/`startingBidTooLow`). **Don't:** hide locked fields; people should see what's fixed and why.
 - **Figma:** *Item form* · Mode = Submit / Edit × Locked = Off / On (3 used; Submit has no lock). Built from *Radio card*, *Form field*, *Photo uploader*, *Banner* and *Button* instances.
 
+## Your Items
+
+**Purpose:** the viewer's personal dashboard (SPEC §8): *My bids*, *Won & purchased* with the proof summary, *My donated items* with Edit, and *Cancelled* (only when something was cancelled). DECISIONS #101.
+
+- **Markup:** `.your-items` > `.your-items__section` (each `aria-labelledby` its `h2.your-items__title`) > `ul.item-grid` of *Item tile*s, or `p.your-items__empty` when the list is empty. On donated items, an Edit button (`.btn--secondary.btn--sm.your-items__edit`, read as "Edit <title>") sits under the tile in the same `li`, outside the linked card. A warning *Banner* ("Your donation total changed") comes first when the total moved after the latest proof (SPEC §7.6). Behavior: `startYourItemsPage()` in `src/pages/your-items.ts`; words in `src/pages/your-items-rules.ts`.
+- **Proof summary:** `.card.card--flat.proof-summary` (`role="group"`, named "Your donation total"): the total in the amount style, then a status pill (Proof due / Pending review / Rejected / Approved) with days left or late, a line on what's next (or the rejection reason), and the upload link ("Donate and upload proof" or "Upload a new proof", to `/your-items/proof`) with "Go to the giving page" before a first proof. Two columns from 40rem.
+- **Tiles' words:** bids use the browse tiles' labels (You're winning, Outbid, You won, Ended) with "Your bid · High bid $60"; won and bought say "Won" or "Bought Nov 3" (event time zone); donated items say exactly what their browse tile says; cancelled ones say why ("Your bid no longer counts", "Purchase cancelled · Not in your total", "You donated this item"). Lost bids and cancelled items are muted.
+- **States:** loading (`aria-busy` on `.your-items`); loaded; each list's empty message ("You haven't bid on anything yet.", "Nothing won or bought yet.", "You haven't donated an item yet."); error (an *Empty state* "We couldn't load your items" with Try again). It redraws when the demo bar changes the person or the phase; only the newest answer is drawn.
+- **Accessibility:** one `h2` per section, each section a named region; tiles are one link each with their status in the name; the summary is a named group.
+- **Do:** keep one proof summary for everything (one combined proof per person). **Don't:** put a proof status on each won tile.
+- **Figma:** *Your Items* page, built from *Item tile*, *Card*, *Pill*, *Banner* and *Button* instances; *Proof summary* · Status = None / Due / Pending / Rejected / Approved (5).
+
 ## Error summary
 
 **Purpose:** after a submit with problems, one place that lists them all and gets you to each.
@@ -445,7 +457,7 @@ How forms behave, for every component below:
 
 **Purpose:** one item in a browse grid (Silent Auction, Instant Sale) and in Your Items (SPEC §8).
 
-- **Markup:** `ul.item-grid` (wraps at `--size-tile-min`, no breakpoints) of `li` > `.card.card--link.item-tile` with `.card__media` (photo, and the status pill `.pill.item-tile__status` over it), `h3` > the title link, `.item-tile__amount` and `.item-tile__detail`. Built by `renderItemTile()` in `src/components/item-tile.ts`.
+- **Markup:** `ul.item-grid` (wraps at `--size-tile-min`, no breakpoints) of `li` > `.card.card--link.item-tile` with `.card__media` (photo, and the status pill `.pill.item-tile__status` over it), `h3` > the title link, `.item-tile__amount` and `.item-tile__detail`. Built by `renderItemTile()` in `src/components/item-tile.ts`. Your Items passes its own words in the same shape (amount, detail, one status, muted) from `src/pages/your-items-rules.ts`; an empty amount is left out.
 - **Words come from data:** `tileText()` in `src/components/item-tile-rules.ts` computes the amount line and the one status from the item, the viewer and the phase; nothing on a tile is typed in. Unit tests: `tests/unit/item-tile-rules.test.ts`.
   - Only the number takes the amount style (`.item-tile__amount`, "$240"); its label goes on the detail line.
   - Silent auction: "$40 / Starting bid · No bids yet", "$240 / Top bid · 6 bids"; after close "$310 / Winning bid · 9 bids" or "$40 / Starting bid · No bids".
