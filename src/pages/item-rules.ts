@@ -33,6 +33,8 @@ export interface PanelText extends TileText {
   bought: string | null;
   /** The next step after winning: the proof upload lives in Your Items (SPEC §7.6). */
   link: { href: string; label: string } | null;
+  /** What the panel offers: the bid form, the buy button, or nothing (the note says why). */
+  action: "bid" | "buy" | null;
 }
 
 export function panelText(answer: ItemAnswer, ctx: TileContext): PanelText {
@@ -43,7 +45,41 @@ export function panelText(answer: ItemAnswer, ctx: TileContext): PanelText {
     : null;
   const won = item.type === "auction" && !item.cancelled && ctx.phase === "ended" && item.viewerIsTopBidder;
   const link = won ? { href: "/your-items", label: "Donate and upload proof in Your Items" } : null;
-  return { ...text, note: noteFor(answer, ctx), bought, link };
+  const action = actionFor(answer, ctx);
+  // With the bid form shown, the minimum is the field's help, so the note would repeat it.
+  return { ...text, note: action === "bid" ? null : noteFor(answer, ctx), bought, link, action };
+}
+
+function actionFor({ item, blocked }: ItemAnswer, ctx: TileContext): PanelText["action"] {
+  if (item.cancelled || ctx.phase === "submission" || ctx.phase === "ended" || blocked) return null;
+  return item.type === "auction" ? "bid" : "buy";
+}
+
+/** The bid dialog's title: "Place a $245 bid?" */
+export function bidDialogTitle(amountCents: number): string {
+  return `Place a ${dollars(amountCents)} bid?`;
+}
+
+/** The buy dialog's title: "Buy the Hand-knit scarf for $45?" */
+export function buyDialogTitle(item: Pick<ItemDetail, "title" | "priceCents">): string {
+  return `Buy the ${item.title} for ${dollars(item.priceCents ?? 0)}?`;
+}
+
+/** The item line in a dialog: "Top bid $240 · 6 bids", "Starting bid $150 · No bids yet", "6 left". */
+export function dialogDetail(item: ItemDetail): string {
+  if (item.type === "instant") return item.remaining === 1 ? "1 left" : `${item.remaining ?? 0} left`;
+  if (item.highBidCents === null) return `Starting bid ${dollars(item.startingBidCents ?? 0)} · No bids yet`;
+  return `Top bid ${dollars(item.highBidCents)} · ${bidCountWords(item.bids.length)}`;
+}
+
+/** Shown in the dialog when the request itself fails (no answer, or a server error); it stays open to try again. */
+export function actionFailure(action: "bid" | "buy"): string {
+  return action === "bid" ? "We couldn't place your bid. Check your connection and try again." : "We couldn't complete the purchase. Check your connection and try again.";
+}
+
+/** Refusals about the amount belong under the bid field; the rest (ended, sold out …) go to the panel. */
+export function isAmountRefusal(code: string | undefined): boolean {
+  return code === "too-low" || code === "outbid-race" || code === "not-whole-dollars";
 }
 
 function noteFor(answer: ItemAnswer, ctx: TileContext): string | null {

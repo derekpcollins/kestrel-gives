@@ -28,3 +28,10 @@
 @media (width < 40rem) {
   .bid-history .bid-history__time { display: none; }
 }
+/* Stage 4D: the bid form and buy button sit at the bottom of the panel. The panel takes focus
+   after a bid (the form is gone by then), so it needs no ring of its own. */
+.item-panel:focus:not(:focus-visible) { outline: none; }
+.item-panel__actions { justify-self: stretch; margin-top: var(--space-2); }
+.bid-form { display: grid; gap: var(--space-4); justify-items: start; }
+.bid-form .field { justify-self: stretch; }
+.bid-form .input-group { max-width: calc(var(--space-16) * 3); }

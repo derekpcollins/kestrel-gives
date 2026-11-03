@@ -1,7 +1,10 @@
 // Toast (DESIGN-SYSTEM.md › Toast): a short message that confirms something just happened.
-// Toasts appear in one polite live region at the bottom of the screen, so screen readers
-// announce them without interrupting. They stay while hovered or focused and can always be
-// dismissed; anything that needs action belongs in a banner or dialog instead.
+// Toasts appear at the bottom of the screen in a polite live region, so screen readers
+// announce them without interrupting. A page that announces the same words through its own
+// live region (the item page's bid and buy results, DECISIONS #88) passes `announce: false`,
+// which puts the toast in a quiet stack beside it so the words are read once. Toasts stay
+// while hovered or focused and can always be dismissed; anything that needs action belongs in
+// a banner or dialog instead.
 import { icon, type IconName } from "./icons.ts";
 
 export type ToastTone = "neutral" | "success" | "danger";
@@ -10,23 +13,31 @@ export interface ToastOptions {
   tone?: ToastTone;
   /** Milliseconds before it leaves on its own; paused while hovered or focused. */
   duration?: number;
+  /** False when the page announces the same words itself, so they aren't read twice. */
+  announce?: boolean;
 }
 
 const TONE_ICON: Record<ToastTone, IconName> = { neutral: "info", success: "check", danger: "alert" };
 
-function region(): HTMLElement {
+/** The fixed stack at the bottom: a live part, then a quiet part. */
+function region(announce: boolean): HTMLElement {
   let el = document.querySelector<HTMLElement>(".toast-region");
   if (!el) {
     el = document.createElement("div");
     el.className = "toast-region";
-    el.setAttribute("role", "status");
-    el.setAttribute("aria-live", "polite");
+    const live = document.createElement("div");
+    live.className = "toast-region__stack toast-region__stack--live";
+    live.setAttribute("role", "status");
+    live.setAttribute("aria-live", "polite");
+    const quiet = document.createElement("div");
+    quiet.className = "toast-region__stack toast-region__stack--quiet";
+    el.append(live, quiet);
     document.body.append(el);
   }
-  return el;
+  return el.querySelector<HTMLElement>(announce ? ".toast-region__stack--live" : ".toast-region__stack--quiet")!;
 }
 
-export function showToast(message: string, { tone = "neutral", duration = 6000 }: ToastOptions = {}): HTMLElement {
+export function showToast(message: string, { tone = "neutral", duration = 6000, announce = true }: ToastOptions = {}): HTMLElement {
   const toast = document.createElement("div");
   toast.className = `toast toast--${tone}`;
   const text = document.createElement("p");
@@ -49,7 +60,7 @@ export function showToast(message: string, { tone = "neutral", duration = 6000 }
   toast.addEventListener("focusin", pause);
   toast.addEventListener("focusout", start);
 
-  region().append(toast);
+  region(announce).append(toast);
   start();
   return toast;
 }

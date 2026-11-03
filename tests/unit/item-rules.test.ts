@@ -4,7 +4,7 @@ import { strict as assert } from "node:assert";
 import { describe, test } from "node:test";
 import type { TileContext } from "../../src/components/item-tile-rules.ts";
 import type { BidView, ItemAnswer, ItemDetail } from "../../src/items-api.ts";
-import { auctionResult, backLink, bidTime, itemIdFromPath, panelText, refreshAnnouncement, standingOf, zoneName } from "../../src/pages/item-rules.ts";
+import { actionFailure, auctionResult, backLink, bidDialogTitle, bidTime, buyDialogTitle, dialogDetail, isAmountRefusal, itemIdFromPath, panelText, refreshAnnouncement, standingOf, zoneName } from "../../src/pages/item-rules.ts";
 
 const tz = "America/New_York";
 const now = new Date("2026-11-02T20:00:00Z"); // 3:00 PM EST
@@ -30,9 +30,9 @@ const answer = (item: ItemDetail, over: Partial<ItemAnswer> = {}): ItemAnswer =>
 });
 
 describe("item panel words", () => {
-  test("live auction, outbid: amount, detail and pill as on the tile, then the computed minimum", () => {
+  test("live auction, outbid: amount, detail and pill as on the tile; the bid form carries the minimum", () => {
     const t = panelText(answer(auction()), ctx("live"));
-    assert.deepEqual([t.amount, t.detail, t.status?.label, t.note], ["$240", "Top bid · 2 bids", "Outbid", "At least $245. Bids go up by $5."]);
+    assert.deepEqual([t.amount, t.detail, t.status?.label, t.note, t.action], ["$240", "Top bid · 2 bids", "Outbid", null, "bid"]);
   });
   test("why the viewer can't act: high bidder, own item, sold out", () => {
     assert.equal(panelText(answer(auction({ viewerIsTopBidder: true }), { blocked: { code: "high-bidder", message: "" } }), ctx("live")).note, "You're the high bidder.");
@@ -62,6 +62,36 @@ describe("item panel words", () => {
     assert.equal(panelText(answer(instant({ viewerPurchases: 2 })), ctx("live")).bought, "You've bought 2.");
     assert.equal(panelText(answer(instant({ viewerPurchases: 1 })), ctx("live")).bought, "You've bought 1.");
     assert.equal(panelText(answer(instant()), ctx("live")).bought, null);
+  });
+});
+
+describe("what the panel offers (Stage 4D)", () => {
+  test("live and nothing in the way: the bid form (its help carries the minimum, so no note) or the buy button", () => {
+    const bid = panelText(answer(auction()), ctx("live"));
+    assert.deepEqual([bid.action, bid.note], ["bid", null]);
+    assert.equal(panelText(answer(instant()), ctx("live")).action, "buy");
+  });
+  test("nothing to do before opening, after the close, when cancelled, or when blocked; the note says why", () => {
+    assert.equal(panelText(answer(auction()), ctx("submission")).action, null);
+    assert.equal(panelText(answer(instant()), ctx("ended")).action, null);
+    assert.equal(panelText(answer(auction({ cancelled: true })), ctx("live")).action, null);
+    const own = panelText(answer(instant(), { blocked: { code: "own-item", message: "" } }), ctx("live"));
+    assert.deepEqual([own.action, own.note], [null, "This is your item."]);
+    const top = panelText(answer(auction({ viewerIsTopBidder: true }), { blocked: { code: "high-bidder", message: "" } }), ctx("live"));
+    assert.deepEqual([top.action, top.note], [null, "You're the high bidder."]);
+  });
+  test("dialog words come from the data", () => {
+    assert.equal(bidDialogTitle(24_500), "Place a $245 bid?");
+    assert.equal(buyDialogTitle(instant()), "Buy the Hand-knit scarf for $45?");
+    assert.equal(dialogDetail(auction()), "Top bid $240 · 2 bids");
+    assert.equal(dialogDetail(auction({ bids: [], highBidCents: null })), "Starting bid $150 · No bids yet");
+    assert.equal(dialogDetail(instant()), "6 left");
+    assert.equal(dialogDetail(instant({ remaining: 1 })), "1 left");
+    assert.match(actionFailure("buy"), /^We couldn't complete the purchase\./);
+  });
+  test("amount refusals go under the field; the rest go to the panel", () => {
+    for (const c of ["too-low", "outbid-race", "not-whole-dollars"]) assert.equal(isAmountRefusal(c), true, c);
+    for (const c of ["ended", "high-bidder", "sold-out", "own-item", undefined]) assert.equal(isAmountRefusal(c), false, String(c));
   });
 });
 

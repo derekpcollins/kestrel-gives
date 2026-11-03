@@ -1,7 +1,8 @@
-// The item page (SPEC §7.3, §8; DECISIONS #86, #88), read-only in Stage 4C: photos, details,
-// the amount and status, why the viewer can or can't act, and the public bid history with the
-// crown. The id comes from the path (/items/12). While the tab is visible it refreshes every 30
-// seconds (SPEC §7.4) and announces only a change in the viewer's own standing.
+// The item page (SPEC §7.3, §8; DECISIONS #86, #88): photos, details, the amount and status,
+// the bid form or buy button (src/pages/item-actions.ts) or why the viewer can't act, and the
+// public bid history with the crown. The id comes from the path (/items/12). While the tab is
+// visible it refreshes every 30 seconds (SPEC §7.4), and announces only a change in the
+// viewer's own standing. Bid and buy results are announced too.
 import type { AppState } from "../app-state.ts";
 import { renderAvatar } from "../components/avatar.ts";
 import { enhanceCarousel } from "../components/carousel.ts";
@@ -11,6 +12,7 @@ import { hydrateIcons } from "../components/icons.ts";
 import { enhanceTableScroll } from "../components/table.ts";
 import type { ItemAnswer, ItemDetail } from "../items-api.ts";
 import { tileContext } from "./browse-rules.ts";
+import { createActions } from "./item-actions.ts";
 import { backLink, bidCountWords, bidTime, bidderName, donatedBy, initialsOf, itemIdFromPath, panelText, refreshAnnouncement, zoneName } from "./item-rules.ts";
 
 const REFRESH_MS = 30_000;
@@ -27,6 +29,7 @@ export function startItemPage(): void {
   let shown: ItemAnswer | null = null;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let latest = 0;
+  let acting = false;
 
   const showMissing = () => {
     content.replaceChildren();
@@ -41,8 +44,10 @@ export function startItemPage(): void {
     if (document.visibilityState === "visible") timer = setTimeout(() => void load("refresh"), REFRESH_MS);
   };
 
-  const load = async (why: "first" | "state" | "refresh") => {
+  const load = async (why: "first" | "state" | "refresh" | "action") => {
     if (!state) return;
+    // While a bid or buy dialog is open, the refresh waits so the page doesn't move behind it.
+    if (why === "refresh" && acting) return schedule();
     const request = ++latest;
     let response: Response;
     try {
@@ -65,9 +70,24 @@ export function startItemPage(): void {
     // viewer or phase (from the demo bar) changes whose standing it is, so it stays quiet.
     const message = why === "refresh" && shown ? refreshAnnouncement(shown.item, answer.item) : null;
     render(answer);
-    if (message) status.textContent = message;
+    if (message) announce(message);
     schedule();
   };
+
+  // Cleared first, so the same words twice in a row (two lost races) are still read.
+  let announcing: ReturnType<typeof setTimeout> | undefined;
+  const announce = (message: string) => {
+    clearTimeout(announcing);
+    status.textContent = "";
+    announcing = setTimeout(() => { status.textContent = message; }, 50);
+  };
+
+  const actions = createActions({
+    show: (answer) => { render(answer); schedule(); },
+    reload: () => load("action"),
+    announce,
+    setActing: (on) => { acting = on; },
+  });
 
   const showError = () => {
     if (shown) return; // keep showing what we have; the next refresh tries again
@@ -84,7 +104,7 @@ export function startItemPage(): void {
     document.title = `${answer.item.title} · Kestrel Gives`;
     // Keep the carousel (and the photo the visitor is on) when the photos haven't changed.
     const oldCarousel = content.querySelector<HTMLElement>("[data-carousel]");
-    content.replaceChildren(...renderItem(answer, state!));
+    content.replaceChildren(...renderItem(answer, state!, actions.render));
     content.removeAttribute("aria-busy");
     const newCarousel = content.querySelector<HTMLElement>("[data-carousel]");
     if (oldCarousel && newCarousel && oldCarousel.dataset.photosKey === newCarousel.dataset.photosKey) newCarousel.replaceWith(oldCarousel);
@@ -115,7 +135,9 @@ function captureFocus(root: HTMLElement): (() => void) | null {
   return key ? () => root.querySelector<HTMLElement>(`[data-focus-key="${key}"]`)?.focus() : null;
 }
 
-function renderItem(answer: ItemAnswer, state: AppState): Node[] {
+type RenderActions = (answer: ItemAnswer, action: "bid" | "buy" | null) => HTMLElement | null;
+
+function renderItem(answer: ItemAnswer, state: AppState, renderActions: RenderActions): Node[] {
   const { item } = answer;
   const ctx = tileContext(state);
   const text = panelText(answer, ctx);
@@ -138,7 +160,7 @@ function renderItem(answer: ItemAnswer, state: AppState): Node[] {
         el("p", { className: "banner__text", text: "It's no longer offered. Bids and purchases on it don't count toward anyone's donation." }))));
   }
 
-  const panel = el("section", { className: "card card--flat item-panel" + (item.cancelled || ctx.phase === "ended" ? " item-panel--muted" : ""), attrs: { "aria-labelledby": "item-amount-label" } },
+  const panel = el("section", { className: "card card--flat item-panel" + (item.cancelled || ctx.phase === "ended" ? " item-panel--muted" : ""), attrs: { "aria-labelledby": "item-amount-label", "data-item-panel": "", tabindex: "-1" } },
     el("h2", { className: "visually-hidden", attrs: { id: "item-amount-label" }, text: item.type === "auction" ? "Bidding" : "Buying" }),
     text.status ? el("p", { className: `pill item-panel__status${text.status.tone === "neutral" ? "" : ` pill--${text.status.tone}`}`, text: text.status.label }) : null,
     el("p", { className: "item-panel__amount", text: text.amount }),
@@ -146,7 +168,7 @@ function renderItem(answer: ItemAnswer, state: AppState): Node[] {
     text.note ? el("p", { className: "item-panel__note", text: text.note }) : null,
     text.bought ? el("p", { className: "item-panel__note", text: text.bought }) : null,
     text.link ? el("a", { className: "link item-panel__link", attrs: { href: text.link.href, "data-focus-key": "next-step" }, text: text.link.label }) : null,
-    el("div", { className: "item-panel__actions", attrs: { "data-item-actions": "" } }));
+    el("div", { className: "item-panel__actions", attrs: { "data-item-actions": "" } }, renderActions(answer, text.action)));
 
   nodes.push(el("div", { className: "item-layout" }, carousel(item), panel));
   nodes.push(el("section", { className: "item-section", attrs: { "aria-labelledby": "about-title" } },

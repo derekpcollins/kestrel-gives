@@ -5,6 +5,9 @@ import { expect, test, type Page } from "@playwright/test";
 
 test.beforeEach(({}, info) => test.skip(info.project.name !== "light-1280", "content is the same in every project"));
 
+// A refresh can still be in flight when a test ends; let its rewrite go quietly.
+test.afterEach(async ({ page }) => { await page.unrouteAll({ behavior: "ignoreErrors" }); });
+
 const content = (page: Page) => page.locator("[data-item-content]");
 const loaded = (page: Page) => expect(content(page)).not.toHaveAttribute("aria-busy");
 
