@@ -11,7 +11,7 @@ import { hydrateIcons } from "../components/icons.ts";
 import { enhanceTableScroll } from "../components/table.ts";
 import type { ItemAnswer, ItemDetail } from "../items-api.ts";
 import { tileContext } from "./browse-rules.ts";
-import { backLink, bidCountWords, bidTime, bidderName, donatedBy, initialsOf, itemIdFromPath, panelText, refreshAnnouncement } from "./item-rules.ts";
+import { backLink, bidCountWords, bidTime, bidderName, donatedBy, initialsOf, itemIdFromPath, panelText, refreshAnnouncement, zoneName } from "./item-rules.ts";
 
 const REFRESH_MS = 30_000;
 
@@ -145,6 +145,7 @@ function renderItem(answer: ItemAnswer, state: AppState): Node[] {
     el("p", { className: "item-panel__detail", text: text.detail }),
     text.note ? el("p", { className: "item-panel__note", text: text.note }) : null,
     text.bought ? el("p", { className: "item-panel__note", text: text.bought }) : null,
+    text.link ? el("a", { className: "link item-panel__link", attrs: { href: text.link.href, "data-focus-key": "next-step" }, text: text.link.label }) : null,
     el("div", { className: "item-panel__actions", attrs: { "data-item-actions": "" } }));
 
   nodes.push(el("div", { className: "item-layout" }, carousel(item), panel));
@@ -183,18 +184,24 @@ function carousel(item: ItemDetail): HTMLElement {
 }
 
 function bidHistory(item: ItemDetail, now: Date): HTMLElement {
+  // Below 40rem the Time column hides and the time shows as a line under the name instead
+  // (only one of the two is ever displayed, so nothing is read twice).
   const rows = item.bids.length
     ? item.bids.map((b) => el("tr", {},
         el("th", { attrs: { scope: "row" } },
           el("span", { className: "bid-history__bidder" },
             renderAvatar(initialsOf(b), { size: "sm", crowned: b.isTop }),
-            el("span", {}, bidderName(b), b.isTop ? el("span", { className: "visually-hidden", text: " (top bidder)" }) : null))),
+            el("span", { className: "bid-history__who" },
+              el("span", {}, bidderName(b), b.isTop ? el("span", { className: "visually-hidden", text: " (top bidder)" }) : null),
+              el("span", { className: "bid-history__when", text: bidTime(b.createdAt, now) })))),
         el("td", { className: "table__num", text: formatDollars(b.amountCents / 100) }),
-        el("td", { text: bidTime(b.createdAt, now) })))
+        el("td", { className: "bid-history__time", text: bidTime(b.createdAt, now) })))
     : [el("tr", {}, el("td", { className: "table__empty", attrs: { colspan: "3" }, text: "No bids yet." }))];
+  const zone = zoneName(now);
 
   return el("section", { className: "item-section", attrs: { "aria-labelledby": "history-title" } },
-    el("h2", { className: "item-section__title", attrs: { id: "history-title" } }, "Bid history ", el("span", { className: "item-section__count", text: `(${bidCountWords(item.bids.length)})` })),
+    el("h2", { className: "item-section__title", attrs: { id: "history-title" } }, "Bid history ", el("span", { className: "item-section__count", text: `(${bidCountWords(item.bids.length)})` }),
+      zone ? el("span", { className: "item-section__count", text: ` · times in ${zone}` }) : null),
     el("p", { className: "visually-hidden", attrs: { id: "history-order" }, text: "Newest first." }),
     // Named by the visible heading rather than a hidden caption: a <caption> keeps a line of
     // height and its full width even when visually hidden, which shows and fails reflow.
@@ -203,6 +210,6 @@ function bidHistory(item: ItemDetail, now: Date): HTMLElement {
         el("thead", {}, el("tr", {},
           el("th", { attrs: { scope: "col" }, text: "Bidder" }),
           el("th", { className: "table__num", attrs: { scope: "col" }, text: "Amount" }),
-          el("th", { attrs: { scope: "col" }, text: "Time" }))),
+          el("th", { className: "bid-history__time", attrs: { scope: "col" }, text: "Time" }))),
         el("tbody", {}, ...rows))));
 }

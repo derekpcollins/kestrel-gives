@@ -4,7 +4,7 @@ import { strict as assert } from "node:assert";
 import { describe, test } from "node:test";
 import type { TileContext } from "../../src/components/item-tile-rules.ts";
 import type { BidView, ItemAnswer, ItemDetail } from "../../src/items-api.ts";
-import { auctionResult, backLink, bidTime, itemIdFromPath, panelText, refreshAnnouncement, standingOf } from "../../src/pages/item-rules.ts";
+import { auctionResult, backLink, bidTime, itemIdFromPath, panelText, refreshAnnouncement, standingOf, zoneName } from "../../src/pages/item-rules.ts";
 
 const tz = "America/New_York";
 const now = new Date("2026-11-02T20:00:00Z"); // 3:00 PM EST
@@ -50,6 +50,13 @@ describe("item panel words", () => {
     const ended = panelText(answer(instant()), ctx("ended"));
     assert.deepEqual([ended.detail, ended.note], ["Sale ended", "The sale has ended."]);
   });
+  test("the winner gets a link to Your Items to donate and upload proof; no one else does", () => {
+    const won = panelText(answer(auction({ viewerIsTopBidder: true })), ctx("ended"));
+    assert.deepEqual([won.note, won.link], ["You won this item for $240.", { href: "/your-items", label: "Donate and upload proof in Your Items" }]);
+    assert.equal(panelText(answer(auction()), ctx("ended")).link, null);
+    assert.equal(panelText(answer(auction({ viewerIsTopBidder: true })), ctx("live")).link, null);
+    assert.equal(panelText(answer(auction({ viewerIsTopBidder: true, cancelled: true })), ctx("ended")).link, null);
+  });
   test("cancelled: the banner says it, so no note; instant sale counts what the viewer bought", () => {
     assert.equal(panelText(answer(auction({ cancelled: true })), ctx("live")).note, null);
     assert.equal(panelText(answer(instant({ viewerPurchases: 2 })), ctx("live")).bought, "You've bought 2.");
@@ -67,11 +74,13 @@ describe("item page helpers", () => {
   test("back link goes to the item's own browse page", () => {
     assert.deepEqual(backLink({ type: "instant" }), { href: "/instant-sale", label: "Instant Sale" });
   });
-  test("bid times: today, yesterday, then a short date, zone labeled", () => {
-    assert.equal(bidTime("2026-11-02T19:14:00Z", now, tz), "today at 2:14 PM EST");
-    assert.equal(bidTime("2026-11-02T02:00:00Z", now, tz), "yesterday at 9:00 PM EST");
+  test("bid times: today, yesterday, then a short date; the zone is labeled once, beside the heading", () => {
+    assert.equal(zoneName(now, tz), "EST");
+    assert.equal(bidTime("2026-11-02T19:14:00Z", now, tz), "today at 2:14 PM");
+    assert.equal(bidTime("2026-11-02T02:00:00Z", now, tz), "yesterday at 9:00 PM");
+    assert.equal(bidTime("2025-12-24T15:00:00Z", now, tz), "Dec 24, 2025 at 10:00 AM");
+    // Across a clock change the row keeps its own zone, so it never reads as EST when it was EDT.
     assert.equal(bidTime("2026-10-31T23:00:00Z", now, tz), "Oct 31 at 7:00 PM EDT");
-    assert.equal(bidTime("2025-12-24T15:00:00Z", now, tz), "Dec 24, 2025 at 10:00 AM EST");
   });
 });
 

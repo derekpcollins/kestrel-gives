@@ -23,7 +23,7 @@ test("Lakeside Cabin Weekend: title, donor, back link, five photos, and the publ
   await carousel.getByRole("button", { name: "Next photo" }).click();
   await expect(carousel.getByRole("img", { name: "Lakeside Cabin Weekend, photo 2 of 5" })).toBeVisible();
 
-  const history = page.getByRole("region", { name: "Bid history (6 bids)" });
+  const history = page.getByRole("region", { name: /^Bid history \(6 bids\) · times in [A-Z]+[+\-\d:]*$/ });
   await expect(history.getByRole("row")).toHaveCount(7); // header + six bids
   await expect(history.locator(".avatar__crown")).toHaveCount(1);
   const top = history.getByRole("row").nth(1);
@@ -40,6 +40,32 @@ test("A cancelled item keeps its page with a banner, and offers nothing", async 
   await expect(content(page).locator(".banner--danger")).toContainText("This item has been cancelled");
   await expect(content(page).locator(".item-panel__status")).toHaveText("Cancelled");
   await expect(content(page).locator(".item-panel__note")).toHaveCount(0);
+  // No winner, so no crown, though the bids still show.
+  await expect(content(page).locator(".bid-history tbody tr").first()).toBeVisible();
+  await expect(content(page).locator(".avatar__crown")).toHaveCount(0);
+  await expect(content(page).getByText("(top bidder)")).toHaveCount(0);
+});
+
+test("On a phone: five thumbnails on one row, and the bid history in two columns with the time under the name", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/items/1");
+  await loaded(page);
+  const thumbs = page.locator(".carousel__thumb");
+  await expect(thumbs).toHaveCount(5);
+  const boxes = await thumbs.evaluateAll((els) => els.map((e) => e.getBoundingClientRect()).map((r) => ({ top: r.top, width: r.width, height: r.height })));
+  expect(new Set(boxes.map((b) => b.top)).size).toBe(1);
+  for (const b of boxes) expect(Math.min(b.width, b.height)).toBeGreaterThanOrEqual(44);
+
+  const table = page.locator("table.bid-history");
+  await expect(table.getByRole("columnheader")).toHaveText(["Bidder", "Amount"]);
+  const row = table.locator("tbody tr").first();
+  await expect(row.locator(".bid-history__when")).toBeVisible();
+  await expect(row.locator(".bid-history__when")).not.toHaveText(/[A-Z]{3}$/); // the zone is beside the heading
+  await expect(row.locator("td.bid-history__time")).toBeHidden();
+  // Every row is one line of name plus one caption line: no three-line wraps.
+  const heights = await table.locator("tbody th").evaluateAll((els) => els.map((e) => e.getBoundingClientRect().height));
+  const line = await row.locator(".bid-history__when").evaluate((e) => e.getBoundingClientRect().height);
+  for (const h of heights) expect(h).toBeLessThan(line * 4);
 });
 
 test("Instant sale: price, stock, no bid history; an unknown item says so", async ({ page }) => {

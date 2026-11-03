@@ -76,9 +76,11 @@ export async function itemDetailIn(tx: Tx, eventId: Id, itemId: Id, viewerId: Id
     [itemId],
   );
   const top = topOf(bidRows);
+  // A cancelled item has no winner, so no bid wears the crown (the amounts still show).
+  const crowned = r.status === "cancelled" ? undefined : top;
   const bids: BidView[] = bidRows.map((b) => ({
     id: b.id, bidderId: b.bidder_id, firstName: b.first_name, lastName: b.last_name,
-    amountCents: Number(b.amount_cents), createdAt: b.created_at.toISOString(), isTop: b.id === top?.id,
+    amountCents: Number(b.amount_cents), createdAt: b.created_at.toISOString(), isTop: b.id === crowned?.id,
   }));
 
   return {

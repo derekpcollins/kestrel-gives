@@ -16,6 +16,15 @@
 .item-section__title { font: var(--type-heading-2); }
 .item-section__count { font: var(--type-body); color: var(--color-text-muted); font-variant-numeric: var(--figures-amount); }
 .item-section__text { max-width: var(--size-content-narrow); white-space: pre-line; }
+.item-panel__link { font: var(--type-label); }
 .bid-history__bidder { display: inline-flex; align-items: center; gap: var(--space-3); }
-/* On phones the bidder and the time wrap instead of making the table scroll sideways. */
-.bid-history th[scope="row"], .bid-history td:last-child { white-space: normal; }
+.bid-history__who { display: grid; }
+.bid-history th[scope="row"] { white-space: normal; }
+/* Phones: two columns (bidder, amount); the time is a caption line under the name. */
+.bid-history__when { font: var(--type-caption); color: var(--color-text-muted); }
+@media (min-width: 40rem) {
+  .bid-history__when { display: none; }
+}
+@media (width < 40rem) {
+  .bid-history .bid-history__time { display: none; }
+}

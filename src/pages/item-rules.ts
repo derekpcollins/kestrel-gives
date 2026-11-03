@@ -31,6 +31,8 @@ export interface PanelText extends TileText {
   note: string | null;
   /** Instant sale: how many the viewer has bought. */
   bought: string | null;
+  /** The next step after winning: the proof upload lives in Your Items (SPEC §7.6). */
+  link: { href: string; label: string } | null;
 }
 
 export function panelText(answer: ItemAnswer, ctx: TileContext): PanelText {
@@ -39,7 +41,9 @@ export function panelText(answer: ItemAnswer, ctx: TileContext): PanelText {
   const bought = item.type === "instant" && item.viewerPurchases > 0
     ? item.viewerPurchases === 1 ? "You've bought 1." : `You've bought ${item.viewerPurchases}.`
     : null;
-  return { ...text, note: noteFor(answer, ctx), bought };
+  const won = item.type === "auction" && !item.cancelled && ctx.phase === "ended" && item.viewerIsTopBidder;
+  const link = won ? { href: "/your-items", label: "Donate and upload proof in Your Items" } : null;
+  return { ...text, note: noteFor(answer, ctx), bought, link };
 }
 
 function noteFor(answer: ItemAnswer, ctx: TileContext): string | null {
@@ -71,10 +75,21 @@ export function backLink(item: Pick<ItemDetail, "type">): { href: string; label:
   return item.type === "auction" ? { href: "/silent-auction", label: "Silent Auction" } : { href: "/instant-sale", label: "Instant Sale" };
 }
 
-/** A bid's time in the viewer's zone, zone labeled: "today at 3:14 PM EST", "yesterday at …", "Oct 31 at …". */
+/** The viewer's zone as a short name ("EST"), shown once beside the bid history heading. */
+export function zoneName(at: Date, timeZone?: string): string {
+  return new Intl.DateTimeFormat("en-US", { timeZoneName: "short", timeZone }).formatToParts(at).find((p) => p.type === "timeZoneName")?.value ?? "";
+}
+
+/**
+ * A bid's time in the viewer's zone: "today at 3:14 PM", "yesterday at …", "Oct 31 at …".
+ * The zone is labeled once, beside the heading (`zoneName(now)`); a bid from the other side of
+ * a clock change keeps its own zone ("Oct 31 at 7:00 PM EDT") so no time reads wrong.
+ */
 export function bidTime(iso: string, now: Date, timeZone?: string): string {
   const date = new Date(iso);
-  const time = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short", timeZone }).format(date);
+  const zone = zoneName(date, timeZone);
+  const clock = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone }).format(date);
+  const time = zone === zoneName(now, timeZone) ? clock : `${clock} ${zone}`;
   const day = (d: Date) => new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", day: "2-digit", timeZone }).format(d);
   const daysAgo = Math.round((Date.parse(`${day(now)}T00:00:00Z`) - Date.parse(`${day(date)}T00:00:00Z`)) / 86_400_000);
   if (daysAgo === 0) return `today at ${time}`;

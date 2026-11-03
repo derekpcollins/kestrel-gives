@@ -599,3 +599,17 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 - **Preview (08:57 EST):** `kestrel-gives-nwcwnadl9`, Ready. Health is OK, `/items/1` serves the item page through the rewrite, and the item API answers match local, including the 404 (`.review/m4-4c/preview-checks.txt`).
 - **Still to check on the Preview, by the owner in a logged-in browser:** the browse pages (4B) and item pages (4C) as rendered. Deployment protection blocks a headless browser.
 
+
+### 2026-11-03 — 4C fixes
+- **Owner stepped in:** approved 4C with four fixes:
+  - no crown on a cancelled item;
+  - on phones, a two-column bid history: the zone is shown once beside the heading ("· times in EST") and the time is a caption line under the name;
+  - all five thumbnails on one row at 390px;
+  - a "Donate and upload proof in Your Items" link under "You won this item for $85."
+- **Built:**
+  - The crown comes off in the data layer, so no client can show one on a cancelled item.
+  - The time is drawn twice, as a cell and as a line under the name. CSS shows exactly one per width, so screen readers never hear it twice.
+  - The thumbnails shrink to fit but stay at least 44px.
+- **Our addition:** a bid from the other side of a clock change keeps its own zone ("Oct 31 at 7:00 PM EDT"), so a row never reads as EST when it was EDT.
+- **Caught:** `check:tokens` flagged "44px" written in a CSS comment, which I reworded.
+- **Tests:** 1 new unit test, plus one new browser test for the phone layout (one row, two columns, no three-line rows); the cancelled-item test now also checks for no crown. `npm run check` passes (166 unit, 59 database, 80 browser, 11 reflow, 44 visual). 4C screenshots were retaken.
