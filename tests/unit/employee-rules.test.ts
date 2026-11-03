@@ -5,6 +5,7 @@ import { describe, test } from "node:test";
 import { parseItemId, parseItemWrite, parseProofRequest, parseUploadPurpose } from "../../lib/api/item-requests.ts";
 import { deleteOwnFiles } from "../../lib/api/files.ts";
 import { clearUploads } from "../../lib/demo/restore.ts";
+import { BLOB_ADVANCED_PER_MONTH, BLOB_UPLOAD_STOP, blobStopFor } from "../../lib/data/blob-budget.ts";
 import { PLACEHOLDER_PHOTO } from "../../lib/seed/data.ts";
 import { photoUrl } from "../../lib/seed/photo-url.ts";
 import type { Storage } from "../../lib/storage/index.ts";
@@ -188,28 +189,28 @@ describe("uploaded files: where they show from, and clearing them", () => {
       kind, prefix, clears: 0, deleted: [] as string[][],
       async put() { throw new Error("unused"); },
       async delete(paths: readonly string[]) { s.deleted.push([...paths]); },
-      async clear() { s.clears += 1; return 3; },
+      async clear() { s.clears += 1; return { files: 3, lists: 1 }; },
     };
     return s;
   }
 
   test("Blob: a manual Restore lists only after an upload; the cron always sweeps (#91)", async () => {
     const blob = fakeStorage("blob");
-    assert.equal(await clearUploads(blob, "manual", false), 0);
+    assert.deepEqual(await clearUploads(blob, "manual", false), { files: 0, lists: 0 });
     assert.equal(blob.clears, 0, "no list operation spent");
-    assert.equal(await clearUploads(blob, "manual", true), 3);
-    assert.equal(await clearUploads(blob, "cron", false), 3);
+    assert.deepEqual(await clearUploads(blob, "manual", true), { files: 3, lists: 1 });
+    assert.deepEqual(await clearUploads(blob, "cron", false), { files: 3, lists: 1 });
     assert.equal(blob.clears, 2);
   });
 
   test("local Restore always clears; a failed clear is logged, not thrown", async () => {
     const local = fakeStorage("local", "development/");
-    assert.equal(await clearUploads(local, "manual", false), 3);
-    const broken = { ...fakeStorage("blob"), async clear(): Promise<number> { throw new Error("network"); } };
+    assert.deepEqual(await clearUploads(local, "manual", false), { files: 3, lists: 1 });
+    const broken = { ...fakeStorage("blob"), async clear(): Promise<{ files: number; lists: number }> { throw new Error("network"); } };
     const quiet = console.error;
     console.error = () => {};
     try {
-      assert.equal(await clearUploads(broken, "cron", true), 0);
+      assert.deepEqual(await clearUploads(broken, "cron", true), { files: 0, lists: 1 }, "a failed clear still counts a list");
     } finally {
       console.error = quiet;
     }
@@ -221,5 +222,24 @@ describe("uploaded files: where they show from, and clearing them", () => {
     assert.deepEqual(preview.deleted, [["preview/photos/a.jpg"]]);
     assert.equal(await deleteOwnFiles(preview, ["development/photos/b.jpg"], "test"), 0);
     assert.equal(preview.deleted.length, 1);
+  });
+});
+
+describe("the Blob circuit breaker (#96)", () => {
+  test("uploads stop at 75% of the monthly allowance, split between Production and Preview", () => {
+    const total = Object.values(BLOB_UPLOAD_STOP).reduce((a, b) => a + b, 0);
+    assert.equal(total, BLOB_ADVANCED_PER_MONTH * 0.75);
+    assert.ok(BLOB_UPLOAD_STOP["production/"]! > BLOB_UPLOAD_STOP["preview/"]!);
+  });
+
+  test("only Blob storage is counted; an unknown Blob prefix gets no budget", () => {
+    assert.equal(blobStopFor({ kind: "blob", prefix: "production/" }), 1_200);
+    assert.equal(blobStopFor({ kind: "blob", prefix: "preview/" }), 300);
+    assert.equal(blobStopFor({ kind: "local", prefix: "development/" }), null);
+    assert.equal(blobStopFor({ kind: "blob", prefix: "development/" }), 0);
+  });
+
+  test("the refusal says uploads are paused and the rest still works", () => {
+    assert.match(UPLOAD_MESSAGES.paused, /^Uploads are paused for now.*Everything else still works\.$/);
   });
 });

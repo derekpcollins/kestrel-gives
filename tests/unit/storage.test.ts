@@ -127,11 +127,11 @@ describe("writing and clearing uploads", () => {
     const dev = localStorage("development/", root);
     await dev.put(uploadPathname("development/", "photos", "image/jpeg"), new Uint8Array([1]), "image/jpeg");
     await dev.put(uploadPathname("development/", "proofs", "image/png"), new Uint8Array([1]), "image/png");
-    assert.equal(await dev.clear(), 2);
+    assert.deepEqual(await dev.clear(), { files: 2, lists: 0 });
     await assert.rejects(access(join(root, "development")));
     await access(seedFile);
     await access(otherFile);
-    assert.equal(await dev.clear(), 0, "clearing an empty prefix is fine");
+    assert.deepEqual(await dev.clear(), { files: 0, lists: 0 }, "clearing an empty prefix is fine");
   });
 
   function fakeLister(pages: string[][]): BlobLister & { listed: string[]; deleted: string[][] } {
@@ -155,8 +155,7 @@ describe("writing and clearing uploads", () => {
 
   test("blob clear lists page by page under its prefix and deletes each page", async () => {
     const lister = fakeLister([["preview/photos/a.jpg", "preview/proofs/b.png"], ["preview/photos/c.webp"]]);
-    const count = await blobStorage("preview/", lister).clear();
-    assert.equal(count, 3);
+    assert.deepEqual(await blobStorage("preview/", lister).clear(), { files: 3, lists: 2 }, "two pages, two list operations");
     assert.deepEqual(lister.listed, ["preview/", "preview/"]);
     assert.deepEqual(lister.deleted, [["preview/photos/a.jpg", "preview/proofs/b.png"], ["preview/photos/c.webp"]]);
   });

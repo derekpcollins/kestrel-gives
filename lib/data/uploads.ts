@@ -2,18 +2,25 @@
 // Restore can always find it; the daily caps are checked in the same transaction. Forms then
 // attach files by id: only their own person's, only unused ones, only for the right purpose.
 import type { Id, Tx } from "./db.ts";
+import { blobOpsUsedIn, recordBlobOpsIn } from "./blob-budget.ts";
 import { UPLOAD_CAP_LOCK_KEY } from "./locks.ts";
 import { uploadPathname } from "../storage/paths.ts";
-import { uploadCapRefusal, type UploadPurpose, type UploadType } from "../../src/components/upload-rules.ts";
+import { UPLOAD_MESSAGES, uploadCapRefusal, type UploadPurpose, type UploadType } from "../../src/components/upload-rules.ts";
 
-export type ReserveOutcome = { ok: true; id: Id; pathname: string } | { ok: false; message: string };
+export type ReserveOutcome = { ok: true; id: Id; pathname: string } | { ok: false; code: "upload-cap" | "uploads-paused"; message: string };
 
-/** Checks the caps, counts this upload and records its row; the caller then writes the file. */
+/**
+ * Checks the Blob breaker and the caps, counts this upload and records its row; the caller then
+ * writes the file. `blobStop` is where uploads stop for this environment (#96), or null where
+ * nothing goes to Blob.
+ */
 export async function reserveUploadIn(
   tx: Tx,
-  upload: { userId: Id; purpose: UploadPurpose; type: UploadType; bytes: number; prefix: string },
+  upload: { userId: Id; purpose: UploadPurpose; type: UploadType; bytes: number; prefix: string; blobStop?: number | null },
 ): Promise<ReserveOutcome> {
   await tx.query(`SELECT pg_advisory_xact_lock($1)`, [UPLOAD_CAP_LOCK_KEY]);
+  const blobStop = upload.blobStop ?? null;
+  if (blobStop !== null && (await blobOpsUsedIn(tx)) >= blobStop) return { ok: false, code: "uploads-paused", message: UPLOAD_MESSAGES.paused };
   // Only the last day matters; keep the log small.
   await tx.query(`DELETE FROM upload_log WHERE created_at < now() - interval '2 days'`);
   const { rows } = await tx.query<{ person: number; everyone: number }>(
@@ -22,9 +29,11 @@ export async function reserveUploadIn(
     [upload.userId],
   );
   const refusal = uploadCapRefusal({ person: Number(rows[0]?.person ?? 0), everyone: Number(rows[0]?.everyone ?? 0) });
-  if (refusal) return { ok: false, message: refusal };
+  if (refusal) return { ok: false, code: "upload-cap", message: refusal };
 
   await tx.query(`INSERT INTO upload_log (user_id) VALUES ($1)`, [upload.userId]);
+  // Counted before the write, so a put that fails halfway still counts (conservative).
+  if (blobStop !== null) await recordBlobOpsIn(tx, "put");
   const pathname = uploadPathname(upload.prefix, `${upload.purpose}s`, upload.type);
   const { rows: inserted } = await tx.query<{ id: Id }>(
     `INSERT INTO uploads (user_id, purpose, pathname, content_type, bytes) VALUES ($1, $2, $3, $4, $5) RETURNING id`,

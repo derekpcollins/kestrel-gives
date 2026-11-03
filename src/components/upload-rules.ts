@@ -43,6 +43,7 @@ export const UPLOAD_MESSAGES = {
   cantRead: "We couldn't read that picture. Try a JPEG, PNG or WebP.",
   personCap: `You've uploaded ${UPLOAD_CAPS.perPersonPerDay} pictures today, the most this demo allows each person in a day. Try again tomorrow.`,
   everyoneCap: "This demo has reached its upload limit for today. Try again tomorrow.",
+  paused: "Uploads are paused for now so this free demo stays within its storage allowance. Everything else still works.",
 } as const;
 
 /** Why this upload can't happen now, or null. `counts` are uploads in the last 24 hours. */

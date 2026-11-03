@@ -11,10 +11,12 @@ import { createItemIn, deleteItemIn, updateItemIn, type ItemWrite } from "../../
 import { meAnswerIn } from "../../lib/data/me.ts";
 import { submitProofIn } from "../../lib/data/proofs.ts";
 import { buyIn, placeBidIn } from "../../lib/data/sales.ts";
+import { blobOpsUsedIn, recordBlobOpsIn } from "../../lib/data/blob-budget.ts";
 import { claimUploadsIn, reserveUploadIn } from "../../lib/data/uploads.ts";
 import { cancelItemIn } from "../../lib/data/winners.ts";
 import { jumpIn } from "../../lib/demo/jump.ts";
-import { tryRestoreIn } from "../../lib/demo/restore.ts";
+import { tryRestore, tryRestoreIn } from "../../lib/demo/restore.ts";
+import type { Storage } from "../../lib/storage/index.ts";
 import { seedIn } from "../../lib/seed/seed.ts";
 import { UPLOAD_CAPS, UPLOAD_MESSAGES } from "../../src/components/upload-rules.ts";
 
@@ -73,9 +75,36 @@ describe("employee flows (rolled back)", () => {
     test("one person's cap, then everyone's", async () => {
       const [jules, priya] = [await person(db, "Jules"), await person(db, "Priya")];
       for (let i = 0; i < UPLOAD_CAPS.perPersonPerDay; i++) await upload(db, jules.id);
-      assert.deepEqual(await reserve(db, jules.id), { ok: false, message: UPLOAD_MESSAGES.personCap });
+      assert.deepEqual(await reserve(db, jules.id), { ok: false, code: "upload-cap", message: UPLOAD_MESSAGES.personCap });
       for (let i = UPLOAD_CAPS.perPersonPerDay; i < UPLOAD_CAPS.everyonePerDay; i++) await upload(db, priya.id);
-      assert.deepEqual(await reserve(db, (await person(db, "Rosa")).id), { ok: false, message: UPLOAD_MESSAGES.everyoneCap });
+      assert.deepEqual(await reserve(db, (await person(db, "Rosa")).id), { ok: false, code: "upload-cap", message: UPLOAD_MESSAGES.everyoneCap });
+    });
+
+    test("the Blob breaker: each put counts, and uploads stop at the environment's budget (#96)", async () => {
+      const [jules, priya] = [await person(db, "Jules"), await person(db, "Priya")];
+      await db.query(`DELETE FROM blob_ops`);
+      const viaBlob = (userId: string, blobStop: number | null) =>
+        reserveUploadIn(db, { userId, purpose: "photo", type: "image/jpeg", bytes: 10, prefix: "test/", blobStop });
+      assert.ok((await viaBlob(jules.id, 300)).ok);
+      assert.equal((await one<{ n: number }>(db, `SELECT count(*)::int AS n FROM blob_ops WHERE kind = 'put'`)).n, 1);
+      assert.ok((await viaBlob(jules.id, null)).ok, "local storage isn't counted");
+      assert.equal((await one<{ n: number }>(db, `SELECT count(*)::int AS n FROM blob_ops`)).n, 1);
+
+      await recordBlobOpsIn(db, "list", 298);
+      assert.equal(await blobOpsUsedIn(db), 299);
+      assert.ok((await viaBlob(priya.id, 300)).ok, "the 300th operation is allowed");
+      assert.deepEqual(await viaBlob(priya.id, 300), { ok: false, code: "uploads-paused", message: UPLOAD_MESSAGES.paused });
+      assert.equal(await blobOpsUsedIn(db), 300, "a refused upload spends nothing");
+      assert.ok((await viaBlob(priya.id, null)).ok, "local dev is never paused");
+    });
+
+    test("the breaker counts the last 31 days, and Restore keeps the count", async () => {
+      await db.query(`DELETE FROM blob_ops`);
+      await db.query(`INSERT INTO blob_ops (kind, created_at) VALUES ('put', now() - interval '32 days'), ('put', now() - interval '30 days')`);
+      assert.equal(await blobOpsUsedIn(db), 1);
+      await db.query(`DELETE FROM demo_restores`);
+      assert.equal((await tryRestoreIn(db, "manual", new Date())).status, "restored");
+      assert.equal(await blobOpsUsedIn(db), 1);
     });
 
     test("only the last 24 hours count", async () => {
@@ -308,6 +337,24 @@ describe("simultaneous uploads and edits (committed; dev is reseeded after)", ()
     const results = await Promise.all(Array.from({ length: 5 }, () => withTransaction(pool, (tx) => reserve(tx, ids))));
     assert.equal(results.filter((r) => r.ok).length, 2);
     assert.equal(results.filter((r) => !r.ok).length, 3);
+  });
+
+  test("Restore and the cron keep working past the breaker, and their lists are counted (#96)", async () => {
+    await withTransaction(pool, async (tx) => {
+      await tx.query(`DELETE FROM blob_ops`);
+      await recordBlobOpsIn(tx, "put", 400); // past Preview's stop of 300
+      await tx.query(`DELETE FROM demo_restores`);
+    });
+    const fakeBlob: Storage = {
+      kind: "blob", prefix: "preview/",
+      async put() { throw new Error("unused"); },
+      async delete() {},
+      async clear() { return { files: 4, lists: 2 }; },
+    };
+    assert.deepEqual(await tryRestore(pool, "cron", new Date(), fakeBlob), { status: "restored", filesCleared: 4 });
+    const used = await withTransaction(pool, (tx) => one<{ lists: number }>(tx, `SELECT count(*) FILTER (WHERE kind = 'list')::int AS lists FROM blob_ops`));
+    assert.equal(used.lists, 2);
+    await withTransaction(pool, (tx) => tx.query(`DELETE FROM blob_ops`));
   });
 
   test("an edit and a first bid at once: the money either locks or the bid sees the new start", async () => {

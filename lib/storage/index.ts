@@ -5,7 +5,7 @@ import { blobStorage } from "./blob.ts";
 import { localStorage } from "./local.ts";
 import type { Storage } from "./types.ts";
 
-export type { Storage, StoredFile } from "./types.ts";
+export type { ClearResult, Storage, StoredFile } from "./types.ts";
 export type { ImageType } from "./paths.ts";
 
 export function storageFor(env: Readonly<Record<string, string | undefined>> = process.env): Storage {

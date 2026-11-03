@@ -11,6 +11,7 @@ import { actingUserIn } from "../lib/api/item-answer.ts";
 import { json, problem, withDatabase } from "../lib/api/http.ts";
 import { parseUploadPurpose } from "../lib/api/item-requests.ts";
 import { withTransaction } from "../lib/data/db.ts";
+import { blobStopFor } from "../lib/data/blob-budget.ts";
 import { forgetUploadIn, reserveUploadIn } from "../lib/data/uploads.ts";
 import { viewerIdFrom } from "../lib/demo/viewer.ts";
 import { storageFor } from "../lib/storage/index.ts";
@@ -80,10 +81,10 @@ export async function POST(request: Request): Promise<Response> {
     const reserved = await withTransaction(pool, async (tx) => {
       const viewer = await actingUserIn(tx, cookieId);
       if (!viewer) return null;
-      return reserveUploadIn(tx, { userId: viewer.id, purpose, type, bytes: bytes.byteLength, prefix: storage.prefix });
+      return reserveUploadIn(tx, { userId: viewer.id, purpose, type, bytes: bytes.byteLength, prefix: storage.prefix, blobStop: blobStopFor(storage) });
     });
     if (!reserved) return problem(503, "The demo has no people yet.");
-    if (!reserved.ok) return problem(429, reserved.message, {}, { code: "upload-cap" });
+    if (!reserved.ok) return problem(reserved.code === "uploads-paused" ? 503 : 429, reserved.message, {}, { code: reserved.code });
     try {
       const stored = await storage.put(reserved.pathname, bytes, type);
       console.log(`uploads: stored a ${purpose} (${bytes.byteLength} bytes)`);

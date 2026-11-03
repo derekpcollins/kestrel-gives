@@ -34,14 +34,16 @@ export function blobStorage(prefix: string, lister: BlobLister = realLister): St
       // outside this prefix (another environment, or seed/) can ever be deleted.
       let cursor: string | undefined;
       let count = 0;
+      let lists = 0;
       do {
+        lists += 1;
         const page = await lister.list({ prefix, limit: PAGE, ...(cursor ? { cursor } : {}) });
         const owned = page.blobs.map((b) => assertOwned(b.pathname, prefix));
         if (owned.length > 0) await lister.del(owned);
         count += owned.length;
         cursor = page.hasMore ? page.cursor : undefined;
       } while (cursor);
-      return count;
+      return { files: count, lists };
     },
   };
 }

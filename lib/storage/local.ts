@@ -35,7 +35,7 @@ export function localStorage(prefix: string, root: string = LOCAL_UPLOADS_DIR): 
       const files = await readdir(dir, { recursive: true, withFileTypes: true }).catch(() => []);
       const count = files.filter((f) => f.isFile()).length;
       await rm(dir, { recursive: true, force: true });
-      return count;
+      return { files: count, lists: 0 };
     },
   };
 }

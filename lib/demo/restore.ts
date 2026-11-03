@@ -5,8 +5,9 @@ import type { Pool } from "@neondatabase/serverless";
 import { withTransaction, type Tx } from "../data/db.ts";
 import { seedIn } from "../seed/seed.ts";
 import { SCHEMA_LOCK_KEY } from "../data/locks.ts";
+import { recordBlobOpsIn } from "../data/blob-budget.ts";
 import { hasUploadsIn } from "../data/uploads.ts";
-import { storageFor, type Storage } from "../storage/index.ts";
+import { storageFor, type ClearResult, type Storage } from "../storage/index.ts";
 
 export type RestoreSource = "manual" | "cron" | "deploy";
 
@@ -35,7 +36,14 @@ export type RestoreOutcome =
 export async function tryRestore(pool: Pool, source: "manual" | "cron", now: Date, storage: Storage = storageFor()): Promise<RestoreOutcome> {
   const outcome = await withTransaction(pool, (tx) => tryRestoreIn(tx, source, now));
   if (outcome.status !== "restored") return outcome;
-  return { status: "restored", filesCleared: await clearUploads(storage, source, outcome.hadUploads) };
+  const cleared = await clearUploads(storage, source, outcome.hadUploads);
+  if (storage.kind === "blob" && cleared.lists > 0) {
+    // The lists count toward Blob's allowance (#96). A failure to record is logged, not thrown.
+    await withTransaction(pool, (tx) => recordBlobOpsIn(tx, "list", cleared.lists)).catch((error: unknown) => {
+      console.error(`restore: couldn't record Blob lists: ${error instanceof Error ? error.name : "unknown error"}`);
+    });
+  }
+  return { status: "restored", filesCleared: cleared.files };
 }
 
 /**
@@ -45,13 +53,14 @@ export async function tryRestore(pool: Pool, source: "manual" | "cron", now: Dat
  * so a manual Restore lists only when something was uploaded since the last one; the daily
  * cron always sweeps, which also catches anything a failed request left behind (#91).
  */
-export async function clearUploads(storage: Storage, source: "manual" | "cron", hadUploads: boolean): Promise<number> {
-  if (storage.kind === "blob" && source === "manual" && !hadUploads) return 0;
+export async function clearUploads(storage: Storage, source: "manual" | "cron", hadUploads: boolean): Promise<ClearResult> {
+  if (storage.kind === "blob" && source === "manual" && !hadUploads) return { files: 0, lists: 0 };
   try {
     return await storage.clear();
   } catch (error) {
     console.error(`restore: couldn't clear uploaded files: ${error instanceof Error ? error.message : String(error)}`);
-    return 0;
+    // At least one list was attempted; count it, to stay on the safe side of the allowance.
+    return { files: 0, lists: storage.kind === "blob" ? 1 : 0 };
   }
 }
 
