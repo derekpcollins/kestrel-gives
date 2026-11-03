@@ -62,6 +62,8 @@ export interface ItemDetail {
   viewerHasBid: boolean;
   /** How many units the viewer has bought (instant sale), not counting cancelled ones. */
   viewerPurchases: number;
+  /** Any bid or purchase ever, removed or cancelled ones included: locks money fields and blocks delete (#94). */
+  hasActivity: boolean;
 }
 
 export interface ItemAnswer {

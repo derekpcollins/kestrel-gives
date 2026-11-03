@@ -52,11 +52,12 @@ export async function itemDetailIn(tx: Tx, eventId: Id, itemId: Id, viewerId: Id
   const { rows } = await tx.query<{
     id: Id; type: ItemType; title: string; description: string; status: string;
     starting: number | null; price: number | null; quantity: number | null; remaining: number | null;
-    submitter_id: Id; first_name: string; last_name: string; viewer_purchases: number;
+    submitter_id: Id; first_name: string; last_name: string; viewer_purchases: number; activity: boolean;
   }>(
     `SELECT i.id, i.type, i.title, i.description, i.status, i.starting_bid_cents AS starting, i.price_cents AS price,
             i.quantity, i.remaining, u.id AS submitter_id, u.first_name, u.last_name,
-            (SELECT count(*)::int FROM purchases p WHERE p.item_id = i.id AND p.buyer_id = $3 AND p.cancelled_at IS NULL) AS viewer_purchases
+            (SELECT count(*)::int FROM purchases p WHERE p.item_id = i.id AND p.buyer_id = $3 AND p.cancelled_at IS NULL) AS viewer_purchases,
+            (EXISTS (SELECT 1 FROM bids b WHERE b.item_id = i.id) OR EXISTS (SELECT 1 FROM purchases p WHERE p.item_id = i.id)) AS activity
        FROM items i JOIN users u ON u.id = i.submitter_id
       WHERE i.id = $2 AND i.event_id = $1`,
     [eventId, itemId, viewerId],
@@ -94,6 +95,7 @@ export async function itemDetailIn(tx: Tx, eventId: Id, itemId: Id, viewerId: Id
     viewerIsTopBidder: top?.bidder_id === viewerId,
     viewerHasBid: bidRows.some((b) => b.bidder_id === viewerId),
     viewerPurchases: Number(r.viewer_purchases),
+    hasActivity: r.activity,
   };
 }
 

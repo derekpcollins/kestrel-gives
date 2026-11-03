@@ -17,7 +17,7 @@ const bid = (first: string, cents: number, isTop = false, bidderId = first): Bid
 const auction = (over: Partial<ItemDetail> = {}): ItemDetail => ({
   id: "1", type: "auction", title: "Lakeside Cabin Weekend", description: "", submitter: { id: "2", firstName: "Theo", lastName: "Lindqvist" },
   photos: [], cancelled: false, startingBidCents: 15_000, priceCents: null, quantity: null, remaining: null,
-  bids: [bid("Priya", 24_000, true), bid("Jules", 20_000)], highBidCents: 24_000, viewerIsTopBidder: false, viewerHasBid: true, viewerPurchases: 0, ...over,
+  bids: [bid("Priya", 24_000, true), bid("Jules", 20_000)], highBidCents: 24_000, viewerIsTopBidder: false, viewerHasBid: true, viewerPurchases: 0, hasActivity: true, ...over,
 });
 const instant = (over: Partial<ItemDetail> = {}): ItemDetail => ({
   ...auction(), type: "instant", title: "Hand-knit scarf", startingBidCents: null, priceCents: 4_500, quantity: 8, remaining: 6, bids: [], highBidCents: null,

@@ -38,6 +38,7 @@ export async function appStateIn(tx: Tx, viewerId: string | null, env: Env, hasL
       endingSoon: phase === "live" && closesIn <= ENDING_SOON_HOURS * 3_600_000,
       winnersFinalized: event.winnersFinalizedAt !== null,
       givingPlatformUrl: event.givingPlatformUrl,
+      minStartingBidCents: event.minStartingBidCents,
     };
   }
 

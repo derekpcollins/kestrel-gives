@@ -22,6 +22,8 @@ export interface EventView {
   endingSoon: boolean;
   winnersFinalized: boolean;
   givingPlatformUrl: string | null;
+  /** The default and lowest starting bid for new items (the submit form, SPEC §7.3). */
+  minStartingBidCents: number;
 }
 
 export interface CharityView {
