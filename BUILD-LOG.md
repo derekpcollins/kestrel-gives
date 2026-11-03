@@ -613,3 +613,21 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 - **Our addition:** a bid from the other side of a clock change keeps its own zone ("Oct 31 at 7:00 PM EDT"), so a row never reads as EST when it was EDT.
 - **Caught:** `check:tokens` flagged "44px" written in a CSS comment, which I reworded.
 - **Tests:** 1 new unit test, plus one new browser test for the phone layout (one row, two columns, no three-line rows); the cancelled-item test now also checks for no crown. `npm run check` passes (166 unit, 59 database, 80 browser, 11 reflow, 44 visual). 4C screenshots were retaken.
+
+### 2026-11-03 — Stage 4D: bidding and buying (09:56 – 10:20 EST)
+- **Built** (`src/pages/item-actions.ts`; DECISIONS #89):
+  - **Bid form:** a "Your bid" *Money input* that starts at the minimum and opens the phone's number pad (`inputmode="numeric"`), with the computed minimum as its help, and **Place bid**.
+  - **Buy button:** **Buy one**.
+  - **Confirm dialogs:** each shows the item's cover, title and standing, then the amount. Every amount comes from the data.
+  - **Announcements:** results and refusals go to the page's live region. They also show as a toast in a new quiet stack (`showToast(…, { announce: false })`), so a screen reader hears them once.
+  - **Lost race:** the dialog closes, the field refills with the new minimum, the reason sits under the field, and focus moves there.
+  - **Other refusals and failures:** an ended sale, sold out and so on redraw the panel and focus it. A failed request keeps the dialog open to try again.
+  - **Refresh:** what the bidder typed survives the 30-second refresh, and the refresh waits while a dialog is open.
+- **Real run on dev:** in the screenshot script, Jules opened the dialog at $245 while another user bid $250 through the API. Confirming gave "Someone just bid $250. The minimum is now $255." with 255 in the field, and the retry made Jules the high bidder. The scarf was bought for real. Dev was reseeded afterwards.
+- **Caught:**
+  - (1) The dialog's axe check failed on contrast because it ran while the dialog was still fading in. The test now waits for full opacity.
+  - (2) Editing `package.json` made the dev server rebuild, and the rebuild failed on an untyped test callback, so pages returned 404 until it was fixed and the server restarted.
+  - (3) A refresh still in flight when a test ended logged a `route.fetch` error. Both item specs now drop their routes after each test.
+- **Tests:** 4 new unit tests (what the panel offers, dialog wording, which refusals go under the field). `tests/e2e/item-actions.spec.ts` adds 9 tests at 1280 and 390. They stub the API in the browser, so nothing is written to dev during the parallel run. They cover the field's start value, number pad and help; the dialog with axe; the success announcement (live region once, quiet toast) and focus; a lost race; field checks; a failed request; the draft surviving the refresh; buying; sold out; and the own item. The real saves and races stay in `tests/db/sales.test.ts`. `npm run check` passes (170 unit, 59 database, 98 browser, 11 reflow, 44 visual), and `npm audit` shows only the accepted zod advisory.
+- **Preview (10:18 EST):** `kestrel-gives-fo5uqsdhb` is Ready. Health is OK, the item pages and the new scripts are served, and refused bids give "Bids must be at least $245." and the lost-race answer without writing anything (`.review/m4-4d/preview-checks.txt`).
+- **Noticed, not changed:** on Instant Sale pages, the phase banner says "Bidding is open". That banner is shared by every page (3B); worth a look in 4E.
