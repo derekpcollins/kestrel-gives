@@ -17,7 +17,7 @@ const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
 const LOCALE = "en-US";
 
-export type BannerEvent = Pick<EventView, "phase" | "endingSoon" | "biddingOpensAt" | "biddingClosesAt" | "proofDeadline">;
+export type BannerEvent = Pick<EventView, "phase" | "endingSoon" | "biddingOpensAt" | "biddingClosesAt" | "proofDeadline"> & Partial<Pick<EventView, "name" | "submissionsOpenAt">>;
 
 /** Which sale the page is about: the live and ending-soon wording follows it (owner, 4E). */
 export type BannerSale = "auction" | "instant";
@@ -35,6 +35,13 @@ export function phaseBanner(event: BannerEvent | null, now: Date, timeZone?: str
   const closes = at(event.biddingClosesAt);
   const deadline = at(event.proofDeadline);
 
+  if (event.phase === "unscheduled") {
+    return { title: "Not scheduled yet", text: `Dates for ${event.name ?? "this year's event"} aren't set yet. Check back soon.`, icon: "clock" };
+  }
+  if (event.phase === "upcoming") {
+    const start = at(event.submissionsOpenAt ?? null);
+    return { title: "Submissions open soon", text: start ? `Submissions open ${when(start, now, timeZone)}.` : "Submissions aren't open yet.", icon: "clock" };
+  }
   if (event.phase === "submission") {
     return {
       title: "Submissions are open",

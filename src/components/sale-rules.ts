@@ -3,7 +3,7 @@
 // are cents here, as stored; copy shows whole dollars. Every amount in copy is computed from
 // the event settings and the item, never typed in (SPEC §7.4).
 import { formatDollars } from "./form-rules.ts";
-import type { Phase } from "./item-tile-rules.ts";
+import { beforeBidding, type Phase } from "./item-tile-rules.ts";
 
 export type SaleRefusalCode =
   | "not-open" | "ended" | "cancelled" | "own-item" | "high-bidder"
@@ -47,7 +47,7 @@ export function bidHint(s: Pick<BidState, "startingBidCents" | "incrementCents" 
 /** Why this viewer can't bid or buy at all right now; shared by both. Null if nothing stops them. */
 function blockedBy(s: { phase: Phase; cancelled: boolean; viewerIsSubmitter: boolean }, verb: "Bidding" | "Buying"): SaleRefusal | null {
   if (s.cancelled) return { code: "cancelled", message: "This item has been cancelled." };
-  if (s.phase === "submission") return { code: "not-open", message: `${verb} hasn't opened yet.` };
+  if (beforeBidding(s.phase)) return { code: "not-open", message: `${verb} hasn't opened yet.` };
   if (s.phase === "ended") return { code: "ended", message: `${verb} has ended.` };
   if (s.viewerIsSubmitter) return { code: "own-item", message: "This is your item." };
   return null;

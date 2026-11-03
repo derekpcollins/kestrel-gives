@@ -1,7 +1,7 @@
 // The item page's words (SPEC §7.3, §7.4, §7.5; DECISIONS #88). No DOM, so node:test covers it.
 // The amount, detail and status come from the tile rules, so a tile and its page always agree.
 import { formatDollars } from "../components/form-rules.ts";
-import { tileText, type TileContext, type TileItem, type TileText } from "../components/item-tile-rules.ts";
+import { beforeBidding, tileText, type TileContext, type TileItem, type TileText } from "../components/item-tile-rules.ts";
 import { when } from "../components/phase-banner-rules.ts";
 import type { BidView, ItemAnswer, ItemDetail } from "../items-api.ts";
 
@@ -51,7 +51,7 @@ export function panelText(answer: ItemAnswer, ctx: TileContext): PanelText {
 }
 
 function actionFor({ item, blocked }: ItemAnswer, ctx: TileContext): PanelText["action"] {
-  if (item.cancelled || ctx.phase === "submission" || ctx.phase === "ended" || blocked) return null;
+  if (item.cancelled || beforeBidding(ctx.phase) || ctx.phase === "ended" || blocked) return null;
   return item.type === "auction" ? "bid" : "buy";
 }
 
@@ -86,7 +86,8 @@ function noteFor(answer: ItemAnswer, ctx: TileContext): string | null {
   const { item, blocked } = answer;
   // The cancelled banner says it all; nothing more under the amount.
   if (item.cancelled) return null;
-  if (ctx.phase === "submission") return `${item.type === "auction" ? "Bidding" : "Buying"} opens ${when(ctx.biddingOpens, ctx.now, ctx.timeZone)}.`;
+  if (ctx.phase === "unscheduled") return `${item.type === "auction" ? "Bidding" : "Buying"} dates aren't set yet.`;
+  if (beforeBidding(ctx.phase)) return `${item.type === "auction" ? "Bidding" : "Buying"} opens ${when(ctx.biddingOpens, ctx.now, ctx.timeZone)}.`;
   if (ctx.phase === "ended") return item.type === "auction" ? auctionResult(item) : "The sale has ended.";
   if (blocked?.code === "own-item") return "This is your item.";
   if (blocked?.code === "high-bidder") return "You're the high bidder.";

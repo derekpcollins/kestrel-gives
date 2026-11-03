@@ -24,6 +24,8 @@ export interface Refusal {
 /** Employees submit during the submission window; admins any time (SPEC §7.1, §7.3). */
 export function submitBlock(role: Role, phase: Phase): Refusal | null {
   if (role === "admin" || phase === "submission") return null;
+  if (phase === "unscheduled") return { code: "submissions-closed", message: "This year's dates aren't set yet, so submissions aren't open. Only admins can add items now." };
+  if (phase === "upcoming") return { code: "submissions-closed", message: "Submissions aren't open yet. Only admins can add items now." };
   return { code: "submissions-closed", message: "Submissions are closed. Only admins can add items now." };
 }
 

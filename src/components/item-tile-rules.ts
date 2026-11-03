@@ -4,7 +4,16 @@
 import { formatDollars } from "./form-rules.ts";
 import { ENDING_SOON_HOURS, LOW_STOCK } from "./thresholds.ts";
 
-export type Phase = "submission" | "live" | "ended";
+/**
+ * The event's phase (SPEC §7.1). `unscheduled`: a date is missing (as after Reset for next year);
+ * `upcoming`: dates set, submissions not open yet (v1.17; DECISIONS entry 108).
+ */
+export type Phase = "unscheduled" | "upcoming" | "submission" | "live" | "ended";
+
+/** Before bidding opens: nobody bids or buys yet. */
+export function beforeBidding(phase: Phase): boolean {
+  return phase === "unscheduled" || phase === "upcoming" || phase === "submission";
+}
 export type Tone = "neutral" | "success" | "warning" | "danger";
 
 export interface TileItem {
@@ -60,7 +69,7 @@ function amountLine(item: TileItem, phase: Phase): Pick<TileText, "amount" | "de
   const detail =
     remaining === 0 ? "None left"
     : phase === "ended" ? "Sale ended"
-    : phase === "submission" ? `${remaining} available`
+    : beforeBidding(phase) ? `${remaining} available`
     : `${remaining} left`;
   return { amount: formatDollars(item.price ?? 0), detail };
 }
@@ -73,7 +82,8 @@ export function tileStatus(item: TileItem, ctx: TileContext): TileText["status"]
     if (item.type === "auction") return item.viewerIsTopBidder ? { label: "You won", tone: "success" } : { label: "Ended", tone: "neutral" };
     return remaining === 0 ? { label: "Sold out", tone: "neutral" } : { label: "Ended", tone: "neutral" };
   }
-  if (ctx.phase === "submission") return { label: `Opens ${shortDate(ctx.biddingOpens, ctx.timeZone)}`, tone: "neutral" };
+  if (ctx.phase === "unscheduled") return { label: "Dates not set", tone: "neutral" };
+  if (beforeBidding(ctx.phase)) return { label: `Opens ${shortDate(ctx.biddingOpens, ctx.timeZone)}`, tone: "neutral" };
   // Live.
   const endingSoon = ctx.biddingCloses.getTime() - ctx.now.getTime() <= ENDING_SOON_HOURS * 3_600_000;
   if (item.type === "auction") {

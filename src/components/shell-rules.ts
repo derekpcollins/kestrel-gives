@@ -51,6 +51,7 @@ export const SHARED_NOTE = "Shared demo · resets daily";
 /** Which Jump to button shows as pressed for the event as it is now. */
 export function currentJump(event: Pick<EventView, "phase" | "endingSoon" | "proofDeadline"> | null, now: Date): JumpValue | null {
   if (!event) return null;
+  if (event.phase === "unscheduled" || event.phase === "upcoming") return null;
   if (event.phase === "submission") return "submission";
   if (event.phase === "live") return event.endingSoon ? "ending-soon" : "live";
   return event.proofDeadline && new Date(event.proofDeadline).getTime() <= now.getTime() ? "after" : "ended";

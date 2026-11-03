@@ -20,9 +20,14 @@ describe("phaseOf", () => {
     assert.equal(phaseOf(event, at(9.99)), "live");
     assert.equal(phaseOf(event, at(10)), "ended");
   });
-  test("a step with no date hasn't happened yet", () => {
-    assert.equal(phaseOf({ submissionsOpenAt: null, biddingOpensAt: null, biddingClosesAt: null }, NOW), "submission");
-    assert.equal(phaseOf({ ...event, biddingClosesAt: null }, at(1000)), "live");
+  test("not scheduled while any date is missing (SPEC v1.17, DECISIONS #108)", () => {
+    assert.equal(phaseOf({ submissionsOpenAt: null, biddingOpensAt: null, biddingClosesAt: null }, NOW), "unscheduled");
+    assert.equal(phaseOf({ ...event, biddingClosesAt: null }, at(1000)), "unscheduled");
+    assert.equal(phaseOf({ ...event, submissionsOpenAt: null }, at(0)), "unscheduled");
+  });
+  test("upcoming until submissions open, then the submission window", () => {
+    assert.equal(phaseOf(event, at(-100.01)), "upcoming");
+    assert.equal(phaseOf(event, at(-100)), "submission");
   });
   test("the proof deadline is the close plus the event's days", () => {
     assert.deepEqual(proofDeadlineOf({ biddingClosesAt: at(0), proofDeadlineDays: 7 }), at(7 * 24));

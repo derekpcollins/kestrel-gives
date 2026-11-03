@@ -1,8 +1,7 @@
 // Jump to (SPEC §3.1, DECISIONS #81): moves the current event's dates relative to now so a
 // visitor can see each phase. The clock is never faked; the real time-window rules run.
 import type { Id, Tx } from "../data/db.ts";
-import { recheckProofsIn } from "../data/totals.ts";
-import { finalizeWinnersIn } from "../data/winners.ts";
+import { setEventDatesIn, type DatesResult } from "../data/event-dates.ts";
 import { ENDING_SOON_HOURS } from "../../src/components/thresholds.ts";
 
 export const JUMP_TARGETS = ["submission", "live", "ending-soon", "ended", "after"] as const;
@@ -46,47 +45,15 @@ export function jumpDates(target: JumpTarget, now: Date): JumpDates {
   return { submissionsOpenAt: new Date(opens - SUBMISSION_WINDOW), biddingOpensAt: new Date(opens), biddingClosesAt: new Date(closes) };
 }
 
-export interface JumpResult {
-  /** Winners were cleared because bidding is open again. */
-  winnersCleared: boolean;
-  /** Winners were set now because bidding is closed. */
-  winnersFinalized: boolean;
-}
+export type JumpResult = DatesResult;
 
 /**
- * Moves the current event to the target's dates. Going back to before the close clears the
- * winners and re-checks the proofs of everyone who had won, since their totals drop; going
- * to an ended target finalizes winners at once (they'd be finalized on the next read anyway).
+ * Moves the current event to the target's dates (lib/data/event-dates.ts clears or sets the
+ * winners to match).
  */
 export async function jumpIn(tx: Tx, target: JumpTarget, now: Date): Promise<JumpResult> {
-  const { rows } = await tx.query<{ id: Id; finalized: boolean }>(
-    `SELECT id, winners_finalized_at IS NOT NULL AS finalized FROM events WHERE is_current FOR UPDATE`,
-  );
+  const { rows } = await tx.query<{ id: Id }>(`SELECT id FROM events WHERE is_current FOR UPDATE`);
   const event = rows[0];
   if (!event) throw new Error("There is no current event to move.");
-  const dates = jumpDates(target, now);
-  const open = dates.biddingClosesAt.getTime() > now.getTime();
-
-  let winnersCleared = false;
-  if (open && event.finalized) {
-    const cleared = await tx.query<{ bidder_id: Id }>(
-      `WITH old AS (
-         SELECT i.id, i.winning_bid_id FROM items i WHERE i.event_id = $1 AND i.winning_bid_id IS NOT NULL FOR UPDATE),
-       cleared AS (
-         UPDATE items i SET winning_bid_id = NULL, updated_at = now() FROM old WHERE i.id = old.id RETURNING old.winning_bid_id)
-       SELECT DISTINCT b.bidder_id FROM cleared JOIN bids b ON b.id = cleared.winning_bid_id`,
-      [event.id],
-    );
-    await tx.query(`UPDATE events SET winners_finalized_at = NULL WHERE id = $1`, [event.id]);
-    await recheckProofsIn(tx, event.id, cleared.rows.map((r) => r.bidder_id));
-    winnersCleared = true;
-  }
-
-  // Each CHECK compares two dates, so set all three in one statement.
-  await tx.query(
-    `UPDATE events SET submissions_open_at = $2, bidding_opens_at = $3, bidding_closes_at = $4 WHERE id = $1`,
-    [event.id, dates.submissionsOpenAt, dates.biddingOpensAt, dates.biddingClosesAt],
-  );
-  const winnersFinalized = open ? false : await finalizeWinnersIn(tx, event.id);
-  return { winnersCleared, winnersFinalized };
+  return setEventDatesIn(tx, event.id, jumpDates(target, now), now);
 }

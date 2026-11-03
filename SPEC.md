@@ -1,6 +1,6 @@
 # Kestrel Gives — Build Spec & Conformance Rules
 
-**Status:** v1.16 · Owner: Derek Collins · Last updated: Nov 3, 2026
+**Status:** v1.17 · Owner: Derek Collins · Last updated: Nov 3, 2026
 
 This document describes what to build and the rules every contribution must follow, whether a person or an AI agent writes it. Read it in full before writing any code. If something here conflicts with a request, stop and ask.
 
@@ -159,6 +159,7 @@ There is no inherited design system, so this project defines its own, from scrat
 ### 7.1 Event and phases
 Each year is one **event** record ("Kestrel Gives 2026," etc.) with its own settings. Phases are driven entirely by admin-set dates. There is no "close event" button.
 
+0. **Not scheduled yet** (v1.17): the event is missing any of its three dates, as it is right after Reset for next year (section 7.8). Employees can't submit, bid or buy; the phase banner says the dates for the event aren't set yet. Admins can still add items and set the dates. **Before submissions open** (dates set, submissions not yet open) works the same way, and the banner gives the date submissions open.
 1. **Submission window** (submissions open → bidding opens): anyone can submit and browse. Bidding and buying are disabled, with a clear "Bidding opens …" message.
 2. **Live** (bidding opens → bidding closes): bidding and buying are open. Submissions are closed to employees. Admins MAY still add items.
 3. **Ended** (after bidding closes): winners are determined automatically and the proof deadline starts.
@@ -237,6 +238,7 @@ Each has a name, a one-sentence description, and an original logo. The owner sup
 - **Reset for next year** wipes items, photos (including their uploaded files), bids, purchases, and proofs.
 - It keeps users, roles, charities, email templates, and event settings. It creates the next year's event as a new event record with the settings copied and the dates cleared (v1.8); the previous event record stays.
 - Locked until **30 days after bidding closes**. Requires a confirmation dialog where the admin types the event name.
+- **On the shared demo** (v1.17): after a Reset, the empty Admin Dashboard and Home both say the demo was reset for next year and offer **Restore demo data** right away (the same action as the demo bar's, with its cooldown). Nobody has to wait for the daily Restore.
 
 ### 7.9 Money
 Money MUST be stored as whole cents (integers), never floating point.
@@ -268,7 +270,7 @@ A banner just below the header shows the current phase message, for example "Sub
 - **Proof upload** (section 7.6).
 - **Giving platform stub** (section 3).
 - **Admin Dashboard:**
-  - **Totals:** silent auction total, instant sale total, and grand total, each shown as **pledged** (winning bids and purchases) and **confirmed** (approved proofs only).
+  - **Totals:** silent auction total, instant sale total, and grand total, each shown as **pledged** (winning bids and purchases) and **confirmed** (approved proofs only). (v1.17) A proof is one combined amount per person, so: the **grand confirmed** total is the sum of the amounts on approved proofs; the **silent auction** and **instant sale confirmed** totals are the winning bids and purchases owed by people whose latest proof is approved. A line under the totals shows where the approved amounts differ from what those people owe ("Approved proofs: $1,240 against $1,300 owed by those people, $60 short"). So the two sale-type figures can add up to a different number than the grand confirmed total.
   - **People:** employees with their bids, wins, purchases, and proof status.
   - **Proof review queue** (section 7.6).
   - **Items:** all items with bid history, plus remove bid and cancel.

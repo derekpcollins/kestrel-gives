@@ -7,8 +7,13 @@
 export const TEMPLATE_KEYS = ["bid_receipt", "outbid", "winner", "purchase_receipt", "proof_rejected", "item_cancelled"] as const;
 export type TemplateKey = (typeof TEMPLATE_KEYS)[number];
 
-export const VARIABLES = ["first_name", "item_name", "amount", "donation_total", "proof_deadline", "rejection_reason"] as const;
-export type Variable = (typeof VARIABLES)[number];
+import type { Variable } from "../src/components/template-rules.ts";
+
+export { VARIABLES, type Variable } from "../src/components/template-rules.ts";
+
+export function isTemplateKey(value: unknown): value is TemplateKey {
+  return typeof value === "string" && (TEMPLATE_KEYS as readonly string[]).includes(value);
+}
 
 export interface TemplateDefault {
   /** Shown in the admin editor. */

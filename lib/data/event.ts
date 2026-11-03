@@ -24,13 +24,16 @@ export interface CurrentEvent extends EventDates {
 }
 
 /**
- * Submission until bidding opens, live until it closes, ended after. A missing date means
- * that step hasn't been scheduled yet, so the event stays in the phase before it.
+ * Not scheduled while any date is missing (as after Reset for next year), upcoming until
+ * submissions open, submission until bidding opens, live until it closes, ended after
+ * (SPEC v1.17 §7.1, DECISIONS #108).
  */
 export function phaseOf(event: EventDates, now: Date): Phase {
+  if (!event.submissionsOpenAt || !event.biddingOpensAt || !event.biddingClosesAt) return "unscheduled";
   const t = now.getTime();
-  if (!event.biddingOpensAt || t < event.biddingOpensAt.getTime()) return "submission";
-  if (!event.biddingClosesAt || t < event.biddingClosesAt.getTime()) return "live";
+  if (t < event.submissionsOpenAt.getTime()) return "upcoming";
+  if (t < event.biddingOpensAt.getTime()) return "submission";
+  if (t < event.biddingClosesAt.getTime()) return "live";
   return "ended";
 }
 
