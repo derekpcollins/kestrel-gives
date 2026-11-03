@@ -1,6 +1,6 @@
 // Submitting, editing and deleting items (SPEC §7.1, §7.3; DECISIONS #94). Shared by the API
 // and the form, so both say the same thing. No DOM. Money is cents here, as stored.
-import { formatDollars } from "./form-rules.ts";
+import { atLeast, formatDollars } from "./form-rules.ts";
 import type { Phase } from "./item-tile-rules.ts";
 
 export type Role = "admin" | "employee";
@@ -69,6 +69,17 @@ export interface ItemInput {
   photoCount: number;
 }
 
+/**
+ * The starting bid's minimum in words. The form's hint, the browser's check and the server's
+ * refusal all come from the event's minimum through these, so they always name the same amount.
+ */
+export function startingBidHelp(minCents: number): string {
+  return `At least ${formatDollars(minCents / 100)}, the event minimum. Whole dollars.`;
+}
+export function startingBidTooLow(minCents: number): string {
+  return atLeast(minCents / 100);
+}
+
 export type ItemField = "type" | "title" | "description" | "startingBid" | "price" | "quantity" | "photos";
 export type FieldProblems = Partial<Record<ItemField, string>>;
 
@@ -88,7 +99,7 @@ export function itemProblems(input: ItemInput, settings: { minStartingBidCents: 
     const starting = input.startingBidCents;
     if (starting === undefined || starting === null) problems.startingBid = "Enter a starting bid.";
     else if (!wholeDollars(starting)) problems.startingBid = "Whole dollars only.";
-    else if (starting < settings.minStartingBidCents) problems.startingBid = `Enter at least ${formatDollars(settings.minStartingBidCents / 100)}.`;
+    else if (starting < settings.minStartingBidCents) problems.startingBid = startingBidTooLow(settings.minStartingBidCents);
     else if (starting > ITEM_LIMITS.amountMaxCents) problems.startingBid = `Enter ${formatDollars(ITEM_LIMITS.amountMaxCents / 100)} or less.`;
   } else {
     const price = input.priceCents;

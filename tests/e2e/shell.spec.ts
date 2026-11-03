@@ -5,7 +5,11 @@
 import { expect, test, type Page } from "@playwright/test";
 
 test.describe.configure({ mode: "serial" });
-test.beforeEach(({}, info) => test.skip(info.project.name !== "light-1280", "behavior is the same in every project"));
+// Only light-1280 runs these tests. The other projects still load this file in their own
+// workers, so anything that touches dev (the reset below) must check the project too: an
+// unguarded afterAll there once jumped the event back to live in the middle of this run.
+const RUNS_HERE = "light-1280";
+test.beforeEach(({}, info) => test.skip(info.project.name !== RUNS_HERE, "behavior is the same in every project"));
 
 const bar = (page: Page) => page.locator('[data-demo-bar="page"]');
 const banner = (page: Page) => page.locator("[data-shell-banner] .banner");
@@ -18,7 +22,8 @@ async function open(page: Page, path = "/") {
   await expect(banner(page)).toBeVisible();
 }
 
-test.afterAll(async ({ request }) => {
+test.afterAll(async ({ request }, info) => {
+  if (info.project.name !== RUNS_HERE) return;
   await request.post("/api/demo", { data: { action: "jump", to: "live" } });
   await request.post("/api/demo", { data: { action: "view-as", userId: "3" } });
 });

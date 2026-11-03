@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import { JUMP_TARGETS } from "../../lib/demo/jump.ts";
-import { JUMPS, SHARED_NOTE, currentJump, navLinks } from "../../src/components/shell-rules.ts";
+import { JUMPS, SHARED_NOTE, currentJump, navLinks, pageKeyFor } from "../../src/components/shell-rules.ts";
 
 const NOW = new Date("2026-11-02T18:30:00Z");
 
@@ -32,3 +32,15 @@ describe("shell rules", () => {
     assert.equal(SHARED_NOTE, "Shared demo · resets daily");
   });
 });
+
+describe("which nav link is current", () => {
+  test("Edit item shares the submit page's HTML but marks no nav link", () => {
+    assert.equal(pageKeyFor("submit", "/submit"), "submit");
+    assert.equal(pageKeyFor("submit", "/items/12/edit"), "item");
+    assert.equal(pageKeyFor("submit", "/items/12/edit/"), "item");
+    assert.ok(!navLinks("submission").some((l) => l.key === "item"), "no link is ever marked on an item's page");
+    assert.equal(pageKeyFor("your-items", "/your-items"), "your-items");
+    assert.equal(pageKeyFor(undefined, "/"), "home");
+  });
+});
+

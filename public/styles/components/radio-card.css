@@ -28,4 +28,7 @@
 .radio-card__input:focus-visible { outline: none; }
 .radio-card:has(:disabled) { border-color: var(--color-border); background: var(--color-surface-muted); cursor: not-allowed; }
 .radio-card:has(:disabled) .radio-card__title, .radio-card:has(:disabled) .radio-card__text { color: var(--color-text-disabled); }
+/* A locked choice (the edit page once an item has activity): the chosen card keeps its
+   checked look; only the others are disabled. */
+.radio-cards:has(:disabled) .radio-card:has(:checked) { cursor: default; }
 .radio-card:has([aria-invalid="true"]) { border-color: var(--color-danger); }

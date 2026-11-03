@@ -1,6 +1,6 @@
 // The Submit an Item and Edit item page's decisions (SPEC §7.3; DECISIONS #94, #98). No DOM,
 // so node:test covers them. Money is typed in whole dollars and sent as cents.
-import { dollarsToCents, formatDollars, parseWholeDollars } from "../components/form-rules.ts";
+import { dollarsToCents, parseWholeDollars } from "../components/form-rules.ts";
 import {
   deleteBlock, editBlock, lockedFields, submitBlock,
   type ItemField, type LockableField, type Refusal, type Role, type SaleType,
@@ -52,9 +52,7 @@ export function canEdit(viewer: { id: string; role: Role } | null, item: Pick<It
 }
 
 /** Help under the starting bid, from the event minimum (never hard-coded, SPEC §7.4). */
-export function startingBidHelp(minCents: number): string {
-  return `At least ${formatDollars(minCents / 100)}, the event minimum. Whole dollars.`;
-}
+export { startingBidHelp } from "../components/item-form-rules.ts";
 
 export interface FormValues {
   type: SaleType;

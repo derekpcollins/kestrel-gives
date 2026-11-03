@@ -4,6 +4,7 @@
 // does. tests/db/employee-flows.test.ts covers the real saves and rules.
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page, type Route } from "@playwright/test";
+import { startingBidHelp, startingBidTooLow } from "../../src/components/item-form-rules.ts";
 
 test.beforeEach(({}, info) => test.skip(info.project.name !== "light-1280" && info.project.name !== "light-390", "content is the same in every project; 390 checks the phone"));
 test.afterEach(async ({ page }) => { await page.unrouteAll({ behavior: "ignoreErrors" }); });
@@ -80,6 +81,8 @@ test("employees submit during the submission window; the form starts from the ev
   const form = page.locator("[data-submit-form]");
   await expect(form).toBeVisible();
   await expect(page.getByLabel("Title")).toBeDisabled(); // until a sale type is chosen
+  await expect(page.getByRole("group", { name: "What kind of sale is it?" })).toHaveAccessibleDescription("Choose one to fill in the rest.");
+  await expect(page.locator('.site-header a[href="/submit"]')).toHaveAttribute("aria-current", "page"); // behind Menu at 390
   await page.getByLabel("Silent auction").check();
   await expect(page.getByLabel("Title")).toBeEnabled();
   await expect(page.getByRole("textbox", { name: "Starting bid" })).toHaveValue("10");
@@ -172,14 +175,17 @@ test("an upload cap shows at the top of the form; a retry doesn't upload the sam
 test("problems the server finds show under their fields, with the summary", async ({ page }) => {
   await as(page, "3", "submission");
   await uploads(page);
-  await saves(page, () => ({ status: 422, json: { ok: false, code: "invalid", error: "Check the highlighted fields.", problems: { startingBid: "Enter at least $15.", title: "Use 80 characters or fewer." } } }));
+  // The refusal is built from the same event minimum the page reads, as the server builds it.
+  const min = ((await (await page.request.get("/api/app")).json()) as { event: { minStartingBidCents: number } }).event.minStartingBidCents;
+  await saves(page, () => ({ status: 422, json: { ok: false, code: "invalid", error: "Check the highlighted fields.", problems: { startingBid: startingBidTooLow(min), title: "Use 80 characters or fewer." } } }));
   await page.goto("/submit");
   await fillAuction(page);
   await page.getByRole("button", { name: "Submit item" }).click();
   const summary = page.locator(".error-summary");
   await expect(summary).toBeFocused();
-  await expect(summary).toContainText("Starting bid: Enter at least $15.");
-  await expect(page.locator("#item-start-error")).toHaveText("Enter at least $15.");
+  await expect(summary).toContainText(`Starting bid: ${startingBidTooLow(min)}`);
+  await expect(page.locator("#item-start-error")).toHaveText(startingBidTooLow(min));
+  await expect(page.locator("#item-start-help")).toHaveText(startingBidHelp(min));
   await expect(page.getByRole("textbox", { name: "Starting bid" })).toHaveAttribute("aria-invalid", "true");
   await expect(page.locator("#item-title-error")).toHaveText("Use 80 characters or fewer.");
 });
@@ -202,7 +208,13 @@ test("editing an item with bids: sale type and money are locked; no delete", asy
   await page.goto("/items/5/edit");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Edit item");
   await expect(page.locator("[data-locked-note]")).toContainText("Locked: this item has bids or purchases.");
-  await expect(page.getByLabel("Silent auction")).toBeDisabled();
+  // The chosen type stays clearly chosen; only the other one is greyed out, and it can't change.
+  await expect(page.getByLabel("Silent auction")).toBeChecked();
+  await expect(page.getByLabel("Silent auction")).toBeEnabled();
+  await expect(page.getByLabel("Instant sale")).toBeDisabled();
+  await page.getByLabel("Silent auction").focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(page.getByLabel("Silent auction")).toBeChecked();
   await expect(page.getByRole("textbox", { name: "Starting bid" })).toBeDisabled();
   await expect(page.getByLabel("Title")).toBeEnabled();
   await expect(page.locator("[data-delete-section]")).toBeHidden();
@@ -223,6 +235,10 @@ test("deleting an item with no activity asks first, then goes to Your Items with
   await item(page, (it) => { it.submitter.id = "3"; it.hasActivity = false; it.cancelled = false; });
   const saved = await saves(page, () => ({ status: 200, json: { ok: true, id: "5", message: "Your item is deleted." } }));
   await page.goto("/items/5/edit");
+  // Editing isn't Submit an Item: the link shows in the window, but no nav link is current.
+  await expect(page.locator('.site-header a[href="/submit"]')).toHaveCount(1); // behind Menu at 390
+  await expect(page.locator(".site-header [aria-current]")).toHaveCount(0);
+  await expect(page.getByText("Choose one to fill in the rest.")).toBeHidden();
   await page.getByRole("button", { name: "Delete item" }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toContainText("This removes the item and its photos from the auction. It can't be undone.");

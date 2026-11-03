@@ -215,7 +215,7 @@ How forms behave, for every component below:
 **Purpose:** a choice between a few big options, each with a title and a line on when to choose it: the submit form's sale type (SPEC §7.2).
 
 - **Markup:** `<fieldset class="field">` + `<legend class="field__label">` > `.radio-cards` > `<label class="radio-card">` with `<input class="radio-card__input" type="radio">`, `.radio-card__title` and `.radio-card__text`.
-- **States:** default; hover (accent border); **checked** (accent border, accent-soft fill); active (deeper fill); focus (ring around the card); disabled (muted, `cursor: not-allowed`); error (danger borders and a message under the group: "Choose a sale type."); loading and empty: N/A.
+- **States:** default; hover (accent border); **checked** (accent border, accent-soft fill); active (deeper fill); focus (ring around the card); disabled (muted, `cursor: not-allowed`); **locked** (on the edit page once an item has activity, only the unchosen cards are disabled, so the chosen card keeps its check mark and border); error (danger borders and a message under the group: "Choose a sale type."); loading and empty: N/A.
 - **Gating:** `enableWhenChosen(form, name, fieldset)` keeps the rest of a form in a `<fieldset disabled>` until an option is chosen.
 - **Accessibility:** native radios: Tab reaches the group, arrow keys move and select, and the legend names the group. The space between the legend and the cards is wider than the focus ring, so the ring never covers the question.
 - **Do:** keep to 2–4 options, each with a "when to choose it" line. **Don't:** use radio cards for long lists (use a select).
@@ -252,15 +252,15 @@ How forms behave, for every component below:
 
 - **Markup:** `form.item-form` on a raised surface at reading width, holding the sale-type radio cards, then `fieldset#item-rest` (disabled until a type is chosen) with title, description, the type's money fields, and the photo uploader. `.item-form__actions` holds the submit button (and Cancel when editing). Below the form, `.item-form__danger` holds "Delete item" (`.btn--danger`) when deleting is allowed. Behavior: `startSubmitPage()` in `src/pages/submit.ts`; decisions in `src/pages/submit-rules.ts`.
 - **States:**
-  - Default (submit, starting bid filled in with the event minimum); edit (filled in, with the item's photos).
-  - **Locked** (edit, the item has bids or purchases): an info banner with "Locked: this item has bids or purchases. You can still change the title, description and photos.", and the sale type, starting bid, price and quantity disabled and described by it.
+  - Default (submit: "Choose one to fill in the rest." under the sale type question, and the starting bid filled in with the event minimum); edit (filled in, with the item's photos; that help is hidden). The nav marks no link as current on Edit item (DECISIONS #99).
+  - **Locked** (edit, the item has bids or purchases): an info banner with "Locked: this item has bids or purchases. You can still change the title, description and photos.", and the starting bid, price, quantity and the *unchosen* sale type disabled and described by it. The chosen sale type card keeps its check mark and border (#99).
   - **Blocked:** an empty state in place of the form: "Submissions are closed. Only admins can add items now.", "Only the person who donated this item, or an admin, can change it.", "This item has been cancelled, so it can't be changed.", "That item doesn't exist."
   - **Loading:** the submit button has `aria-busy` and says "Uploading photo 1 of 2…", then "Submitting…" or "Saving…".
   - **Error:** field problems from the browser *or the server* show under each field with the error summary (`showServerProblems`). Anything else (an upload cap, uploads paused, submissions closed, no connection) shows in `.item-form__alert`, a danger banner at the top of the form (`role="alert"`) that takes focus.
   - **Success:** the page moves to the item with a toast ("Thanks. Your item is in.", "Your changes are saved."), via `flashToast()`.
   - Delete asks first in a danger dialog ("Delete “Pottery class for two”?", **Delete item** / **Keep item**), then goes to Your Items with "Your item is deleted."
 - **Accessibility:** one tab stop per control; locked controls stay visible with the reason linked by `aria-describedby`; every message is reachable from the summary or the alert, both of which take focus.
-- **Do:** keep the field messages the same as the server's (they come from `item-form-rules.ts`). **Don't:** hide locked fields; people should see what's fixed and why.
+- **Do:** keep the field messages the same as the server's (they come from `item-form-rules.ts`; the starting bid hint and refusal both come from `startingBidHelp`/`startingBidTooLow`). **Don't:** hide locked fields; people should see what's fixed and why.
 - **Figma:** *Item form* · Mode = Submit / Edit × Locked = Off / On (3 used; Submit has no lock). Built from *Radio card*, *Form field*, *Photo uploader*, *Banner* and *Button* instances.
 
 ## Error summary

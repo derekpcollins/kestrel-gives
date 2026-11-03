@@ -26,11 +26,16 @@ export function formatDollars(dollars: number): string {
   return `$${dollars.toLocaleString("en-US")}`;
 }
 
+/** The refusal for an amount under a minimum (in dollars). The browser and the server both use it. */
+export function atLeast(dollars: number): string {
+  return `Enter at least ${formatDollars(dollars)}.`;
+}
+
 export function moneyProblem(raw: string, { label, min, required }: { label: string; min?: number; required: boolean }): string {
   if (raw.trim() === "") return required ? `Enter ${lowerFirst(label)}.` : "";
   const n = parseWholeDollars(raw);
   if (n === null) return "Whole dollars only.";
-  if (min !== undefined && n < min) return `Enter at least ${formatDollars(min)}.`;
+  if (min !== undefined && n < min) return atLeast(min);
   return "";
 }
 

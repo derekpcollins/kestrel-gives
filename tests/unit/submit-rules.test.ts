@@ -1,6 +1,8 @@
 // The Submit an Item and Edit item page's decisions (SPEC §7.3; DECISIONS #94, #98).
 import { strict as assert } from "node:assert";
 import { describe, test } from "node:test";
+import { moneyProblem } from "../../src/components/form-rules.ts";
+import { itemProblems, startingBidTooLow } from "../../src/components/item-form-rules.ts";
 import { canEdit, dollarsField, editIdFromPath, editState, itemBody, pageCopy, requestFailure, startingBidHelp, submitPageBlock } from "../../src/pages/submit-rules.ts";
 
 describe("submit and edit page", () => {
@@ -50,3 +52,22 @@ describe("submit and edit page", () => {
     assert.equal(requestFailure(429, "Try again tomorrow."), "Try again tomorrow.");
   });
 });
+
+describe("the starting bid minimum reads the same everywhere", () => {
+  const amount = (text: string) => /\$\d{1,3}(?:,\d{3})*/.exec(text)?.[0];
+  for (const minCents of [200, 1_000, 3_500, 25_000, 1_000_000]) {
+    test(`minimum ${minCents / 100} dollars: hint, server and browser agree`, () => {
+      const hint = startingBidHelp(minCents);
+      const server = itemProblems(
+        { type: "auction", title: "T", description: "D", startingBidCents: minCents - 100, priceCents: null, quantity: null, photoCount: 1 },
+        { minStartingBidCents: minCents },
+      ).startingBid;
+      const browser = moneyProblem(String(minCents / 100 - 1), { label: "Starting bid", min: minCents / 100, required: true });
+      assert.equal(server, startingBidTooLow(minCents));
+      assert.equal(browser, server);
+      assert.ok(amount(hint));
+      assert.equal(amount(hint), amount(server!));
+    });
+  }
+});
+

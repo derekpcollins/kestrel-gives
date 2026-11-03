@@ -5,6 +5,18 @@ import type { EventView } from "../app-state.ts";
 /** "item" is an item page: no nav link is the current page there. */
 export type PageKey = "home" | "silent-auction" | "instant-sale" | "your-items" | "submit" | "admin" | "item";
 
+const PAGE_KEYS: readonly PageKey[] = ["home", "silent-auction", "instant-sale", "your-items", "submit", "admin", "item"];
+
+/**
+ * Which page the nav treats as current, from the body's data-page and the path. Edit item
+ * shares the submit page's HTML, but it's an item's page, not Submit an Item, so no nav
+ * link is current there.
+ */
+export function pageKeyFor(dataPage: string | undefined, path: string): PageKey {
+  const page = PAGE_KEYS.find((p) => p === dataPage) ?? "home";
+  return page === "submit" && /^\/items\/[^/]+\/edit\/?$/.test(path) ? "item" : page;
+}
+
 export interface NavLink {
   key: PageKey;
   label: string;

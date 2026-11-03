@@ -9,6 +9,8 @@ import { directUrl } from "../../scripts/migrate-lib.ts";
 import { withTransaction, type Tx } from "../../lib/data/db.ts";
 import { createItemIn, deleteItemIn, updateItemIn, type ItemWrite } from "../../lib/data/item-writes.ts";
 import { meAnswerIn } from "../../lib/data/me.ts";
+import { appStateIn } from "../../lib/api/app-state.ts";
+import { startingBidHelp, startingBidTooLow } from "../../src/components/item-form-rules.ts";
 import { submitProofIn } from "../../lib/data/proofs.ts";
 import { buyIn, placeBidIn } from "../../lib/data/sales.ts";
 import { blobOpsUsedIn, recordBlobOpsIn } from "../../lib/data/blob-budget.ts";
@@ -161,6 +163,21 @@ describe("employee flows (rolled back)", () => {
       assert.equal(why(bad), "invalid:title,price,quantity,photos");
       const low = await createItemIn(db, maya, { ...auction([{ uploadId: await upload(db, maya.id) }]), startingBidCents: 500 });
       assert.deepEqual(low.ok ? null : low, { ok: false, kind: "invalid", problems: { startingBid: "Enter at least $10." } });
+    });
+
+    test("the form's hint and the server's minimum always name the same amount", async () => {
+      const maya = await person(db, "Maya");
+      for (const minCents of [1_000, 3_500]) {
+        await db.query(`UPDATE events SET min_starting_bid_cents = $1 WHERE is_current`, [minCents]);
+        const shown = (await appStateIn(db, maya.id, {}, () => false)).event!.minStartingBidCents;
+        assert.equal(shown, minCents, "/api/app carries the event's minimum");
+        const low = await createItemIn(db, maya, { ...auction([{ uploadId: await upload(db, maya.id) }]), startingBidCents: minCents - 100 });
+        const refused = low.ok || low.kind !== "invalid" ? null : low.problems.startingBid;
+        assert.equal(refused, startingBidTooLow(shown));
+        const dollars = `$${(minCents / 100).toLocaleString("en-US")}`;
+        assert.ok(startingBidHelp(shown).includes(dollars) && refused!.includes(dollars), `both say ${dollars}`);
+        assert.ok((await createItemIn(db, maya, { ...auction([{ uploadId: await upload(db, maya.id) }]), startingBidCents: minCents })).ok, "the minimum itself is fine");
+      }
     });
 
     test("an instant item starts with all its stock; a new item can't borrow existing photos", async () => {

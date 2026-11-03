@@ -59,6 +59,11 @@ export function startSubmitPage(): void {
   $<HTMLElement>("[data-submit-title]").textContent = copy.title;
   $<HTMLElement>("[data-submit-description]").textContent = copy.description;
   submitButton.textContent = copy.submitLabel;
+  // "Choose one to fill in the rest" only means something while nothing is chosen yet.
+  if (mode === "edit") {
+    $<HTMLElement>("[data-type-help]").hidden = true;
+    typeGroup.removeAttribute("aria-describedby");
+  }
 
   let state: AppState | null = null;
   let item: ItemAnswer["item"] | null = null;
@@ -132,9 +137,12 @@ export function startSubmitPage(): void {
     const note = $<HTMLElement>("[data-locked-note]");
     note.hidden = !locked;
     $<HTMLElement>("#locked-note").textContent = locked ? LOCKED_NOTE : "";
+    // The chosen sale type stays enabled so it keeps its check mark and border (a disabled
+    // radio greys out); only the other one is disabled, and arrow keys skip disabled radios,
+    // so the choice still can't change. The server ignores locked fields either way.
     for (const control of [...typeGroup.querySelectorAll<HTMLInputElement>("input"), start, form.elements.namedItem("price") as HTMLInputElement, form.elements.namedItem("quantity") as HTMLInputElement]) {
-      control.disabled = locked;
-      if (locked) control.setAttribute("aria-describedby", [control.getAttribute("aria-describedby"), "locked-note"].filter(Boolean).join(" "));
+      control.disabled = locked && !(control.type === "radio" && control.checked);
+      if (locked && !control.getAttribute("aria-describedby")?.includes("locked-note")) control.setAttribute("aria-describedby", [control.getAttribute("aria-describedby"), "locked-note"].filter(Boolean).join(" "));
     }
   };
 

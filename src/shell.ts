@@ -6,9 +6,9 @@ import { renderDemoBar, updateDemoBar, type DemoBarActions } from "./components/
 import { el } from "./components/dom.ts";
 import { icon } from "./components/icons.ts";
 import { updatePhaseBanner } from "./components/phase-banner.ts";
-import { renderSiteHeader, type PageKey } from "./components/site-header.ts";
+import { renderSiteHeader } from "./components/site-header.ts";
+import { pageKeyFor } from "./components/shell-rules.ts";
 
-const PAGES: readonly PageKey[] = ["home", "silent-auction", "instant-sale", "your-items", "submit", "admin", "item"];
 
 export class RequestError extends Error {}
 
@@ -31,7 +31,7 @@ export interface Shell {
 }
 
 export async function startShell(): Promise<Shell> {
-  const page = PAGES.find((p) => p === document.body.dataset.page) ?? "home";
+  const page = pageKeyFor(document.body.dataset.page, location.pathname);
   const demoSlot = document.querySelector<HTMLElement>("[data-shell-demo]");
   const headerSlot = document.querySelector<HTMLElement>("[data-shell-header]");
   const bannerSlot = document.querySelector<HTMLElement>("[data-shell-banner]");
