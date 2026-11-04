@@ -165,7 +165,7 @@
   display: grid; gap: var(--space-1); margin: 0; padding: var(--space-2); list-style: none;
   border: var(--border-thin) solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface);
 }
-.admin-template__variable { justify-content: flex-start; width: 100%; text-align: left; }
+.admin-template__variables .admin-template__variable { justify-content: flex-start; width: 100%; text-align: left; }
 .admin-template__variable code { font: inherit; font-weight: var(--weight-semibold); }
 .admin-template__variable-text { font-weight: var(--weight-regular); color: var(--color-text-muted); }
 .admin-template__preview {
