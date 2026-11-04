@@ -8,6 +8,7 @@
   // start there and miss node_modules/@types (TS2688). scripts/check-vercel-ts.ts checks it.
   "compilerOptions": {
     "strict": true,
+    "noUnusedLocals": true,
     "target": "es2023",
     "lib": ["es2023"],
     "module": "nodenext",

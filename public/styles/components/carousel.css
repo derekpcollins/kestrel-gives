@@ -29,3 +29,8 @@
 .carousel__thumb[aria-current="true"] { border-color: var(--color-accent); }
 .carousel__thumb.is-focus { outline: var(--focus-width) solid var(--color-focus); outline-offset: var(--focus-offset); }
 .carousel--single .carousel__nav, .carousel--single .carousel__thumbs { display: none; }
+
+/* Windows high contrast makes every border one color, so the current thumbnail takes the system highlight. */
+@media (forced-colors: active) {
+  .carousel__thumb[aria-current="true"] { forced-color-adjust: none; border-color: Highlight; outline: var(--border-thick) solid Highlight; outline-offset: var(--border-thick); }
+}

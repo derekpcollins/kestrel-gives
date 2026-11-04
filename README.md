@@ -67,7 +67,7 @@ Every change must pass the eight conformance checks in SPEC.md section 12. `npm 
 | `npm run test:rules` | `node:test` unit tests; SPEC §7 rules not yet built are listed as todos |
 | `npm run check:a11y` | axe (WCAG 2.2 AA) on every screen in `tests/e2e/screens.ts`, light and dark, at 390px and 1280px; zero violations allowed |
 | `npm run check:reflow` | Every screen at 320px wide: no sideways scrolling and nothing cut off (WCAG 2.2 reflow); scroll regions and ellipsis truncation allowed |
-| `npm run check:visual` | Full-page screenshots of every screen, light and dark, at 390px and 1280px, with `?demo=off`, saved to `visual-review/` for a person to review |
+| `npm run check:visual` | Full-page screenshots of every screen as seeded, then of each other phase and the "just reset" state on the screens it changes, light and dark, at 390px and 1280px, with `?demo=off`, saved to `visual-review/` for a person to review. Runs one test at a time, since each sets the shared dev database's phase |
 
 The browser checks start `npm start` themselves (or reuse one that's running) and reseed the `dev` database first. One-time setup for them:
 

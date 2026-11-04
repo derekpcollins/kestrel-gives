@@ -1,7 +1,8 @@
 // The Admin Dashboard page's words (SPEC §8, v1.17; DECISIONS #107, #112; Stage 6B).
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { bidRow, cancelItemDialog, cancelPurchaseDialog, purchaseRow, deadlineLine, gapText, groupItems, itemRow, itemsLine, removeBidDialog, standingBids, glanceLine, groupProofs, initials, leadingBids, pageTitle, proofCell, proofReview, queueLine, rejectDialog, SECTIONS, sectionFor, totalCards } from "../../src/pages/admin-rules.ts";
+import { deadlineLine, gapText, glanceLine, groupProofs, initials, leadingBids, pageTitle, proofCell, proofReview, queueLine, rejectDialog, SECTIONS, sectionFor, totalCards } from "../../src/pages/admin-rules.ts";
+import { bidRow, cancelItemDialog, cancelPurchaseDialog, purchaseRow, groupItems, itemRow, itemsLine, removeBidDialog, standingBids } from "../../src/pages/admin-items-rules.ts";
 import type { AdminBid, AdminItem, AdminProof, AdminPurchase } from "../../src/admin-api.ts";
 
 const totals = (over: Record<string, unknown> = {}) => ({

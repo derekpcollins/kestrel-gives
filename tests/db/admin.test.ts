@@ -7,10 +7,10 @@ import { Pool, type PoolClient } from "@neondatabase/serverless";
 import { databaseUrl } from "../../scripts/db-target.ts";
 import { directUrl } from "../../scripts/migrate-lib.ts";
 import type { Tx } from "../../lib/data/db.ts";
-import {
-  adminCancelItemIn, adminCancelPurchaseIn, adminItemsIn, adminPeopleIn, adminProofsIn, adminRemoveBidIn, adminSettingsIn, adminSummaryIn, adminTemplatesIn,
-  approveProofIn, rejectProofIn, resetYearIn, restoreTemplateIn, saveSettingsIn, saveTemplateIn,
-} from "../../lib/data/admin.ts";
+import { adminPeopleIn, adminSummaryIn } from "../../lib/data/admin.ts";
+import { adminCancelItemIn, adminCancelPurchaseIn, adminItemsIn, adminRemoveBidIn } from "../../lib/data/admin-items.ts";
+import { adminProofsIn, approveProofIn, rejectProofIn } from "../../lib/data/admin-proofs.ts";
+import { adminSettingsIn, adminTemplatesIn, resetYearIn, restoreTemplateIn, saveSettingsIn, saveTemplateIn } from "../../lib/data/admin-settings.ts";
 import { appStateIn } from "../../lib/api/app-state.ts";
 import { currentEventIn, phaseOf } from "../../lib/data/event.ts";
 import { createItemIn } from "../../lib/data/item-writes.ts";
@@ -45,7 +45,7 @@ const winningBid = async (tx: Tx, title: string) =>
   (await one<{ id: string; first_name: string }>(tx, `SELECT b.id, u.first_name FROM items i JOIN bids b ON b.id = i.winning_bid_id JOIN users u ON u.id = b.bidder_id WHERE i.title = $1`, [title]));
 const summary = async (tx: Tx) => (await adminSummaryIn(tx))!;
 
-/** Pledged by sale type, straight from the tables (not through lib/data/admin.ts). */
+/** Pledged by sale type, straight from the tables (not through lib/data/admin*.ts). */
 async function pledgedSql(tx: Tx): Promise<{ auction: number; instant: number }> {
   const r = await one<{ auction: string; instant: string }>(
     tx,
@@ -532,10 +532,43 @@ describe("/api/admin handler (reads only; refusals write nothing)", () => {
     const get = await GET(new Request("http://localhost/api/admin?view=people", { headers: cookie(jules) }));
     assert.equal(get.status, 403);
     assert.equal(((await get.json()) as { code: string }).code, "admins-only");
-    const post = await POST(new Request("http://localhost/api/admin", {
-      method: "POST", headers: { ...cookie(jules), "content-type": "application/json" }, body: JSON.stringify({ action: "restore-template", key: "outbid" }),
-    }));
-    assert.equal(post.status, 403);
+    // Every write, the cancels included (SPEC §7.3: cancel is admin-only), with real ids.
+    const c = await pool.connect();
+    let before: string;
+    let actions: object[];
+    const snapshot = `SELECT (SELECT count(*) FROM items WHERE status = 'cancelled')::text || '/' ||
+      (SELECT count(*) FROM purchases WHERE cancelled_at IS NOT NULL)::text || '/' ||
+      (SELECT count(*) FROM bids WHERE removed_at IS NOT NULL)::text || '/' ||
+      (SELECT count(*) FROM items)::text AS s`;
+    try {
+      const item = (await one<{ id: string }>(c, `SELECT id FROM items WHERE status = 'active' ORDER BY id LIMIT 1`)).id;
+      const purchase = (await one<{ id: string }>(c, `SELECT id FROM purchases WHERE cancelled_at IS NULL ORDER BY id LIMIT 1`)).id;
+      const bid = (await one<{ id: string }>(c, `SELECT id FROM bids WHERE removed_at IS NULL ORDER BY id LIMIT 1`)).id;
+      const name = (await one<{ name: string }>(c, `SELECT name FROM events WHERE is_current`)).name;
+      before = (await one<{ s: string }>(c, snapshot)).s;
+      actions = [
+        { action: "cancel-item", itemId: item },
+        { action: "cancel-purchase", purchaseId: purchase },
+        { action: "remove-bid", bidId: bid },
+        { action: "restore-template", key: "outbid" },
+        { action: "reset-year", confirmName: name },
+      ];
+    } finally {
+      c.release();
+    }
+    for (const body of actions) {
+      const post = await POST(new Request("http://localhost/api/admin", {
+        method: "POST", headers: { ...cookie(jules), "content-type": "application/json" }, body: JSON.stringify(body),
+      }));
+      assert.equal(post.status, 403, JSON.stringify(body));
+      assert.equal(((await post.json()) as { code: string }).code, "admins-only");
+    }
+    const after = await pool.connect();
+    try {
+      assert.equal((await one<{ s: string }>(after, snapshot)).s, before, "nothing was cancelled, removed or reset");
+    } finally {
+      after.release();
+    }
   });
 
   test("admins read each view; bad views and actions get 400", async () => {

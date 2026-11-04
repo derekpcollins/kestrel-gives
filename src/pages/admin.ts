@@ -3,22 +3,25 @@
 // section nav is plain links with aria-current (DECISIONS entry 59). Employees see why they
 // can't use it, both from the app state and from the API's 403. Redraws when the demo bar
 // changes who's viewing or the phase; only the newest answer is drawn.
-import type { AdminBid, AdminItem, AdminItems, AdminPurchase, AdminPeople, AdminProof, AdminProofs, AdminSettings, AdminSummary, AdminTemplates } from "../admin-api.ts";
+import type { AdminItems, AdminPeople, AdminProof, AdminProofs, AdminSettings, AdminSummary, AdminTemplates } from "../admin-api.ts";
 import type { AppState } from "../app-state.ts";
 import { renderAvatar } from "../components/avatar.ts";
 import { el } from "../components/dom.ts";
+import { pill } from "../components/pill.ts";
 import { hydrateIcons, icon } from "../components/icons.ts";
 import { confirmDialog } from "../components/dialog.ts";
 import { enhanceTableScroll } from "../components/table.ts";
 import { fetchWithTimeout, pageLoading } from "../components/loading.ts";
 import { showToast } from "../components/toast.ts";
-import {
-  bidRow, cancelItemDialog, cancelPurchaseDialog, purchaseRow, deadlineLine, GENERAL_DESCRIPTION, groupItems, itemRow, itemsLine, removeBidDialog, gapText, glanceLine, groupProofs, proofReview, queueLine, rejectDialog, initials, leadingBids, money, NOT_ADMIN, pageTitle, proofCell, SECTIONS, sectionFor, totalCards, TOTALS_KEY, type Section,
-} from "./admin-rules.ts";
+import { GENERAL_DESCRIPTION, gapText, glanceLine, rejectDialog, initials, leadingBids, money, NOT_ADMIN, pageTitle, proofCell, SECTIONS, sectionFor, totalCards, TOTALS_KEY, type Section } from "./admin-rules.ts";
+import { cancelItemDialog, cancelPurchaseDialog, removeBidDialog } from "./admin-items-rules.ts";
 import { adminResetOffer, resetSection } from "./admin-reset.ts";
-import { settingsSection, templatesSection, type SectionHost, type TemplateState } from "./admin-settings.ts";
+import type { SectionHost } from "./admin-section.ts";
+import { settingsSection } from "./admin-settings.ts";
+import { templatesSection, type TemplateState } from "./admin-templates.ts";
+import { proofs, type ProofActions } from "./admin-proofs.ts";
+import { items, type ItemActions } from "./admin-items.ts";
 
-const pill = (label: string, tone: string) => el("span", { className: `pill${tone === "neutral" ? "" : ` pill--${tone}`}`, text: label });
 
 function nav(current: Section): HTMLLIElement[] {
   return SECTIONS.map((s) => {
@@ -92,222 +95,6 @@ function people(answer: AdminPeople): Node[] {
   return [el("p", { className: "admin-glance", text: `${answer.people.length} people. Admins bid and buy too, so they're listed.` }), wrap];
 }
 
-/** What a proof card's buttons do; the page supplies them so the card stays a drawing. */
-interface ProofActions {
-  approve(proof: AdminProof, button: HTMLButtonElement): void;
-  reject(proof: AdminProof): void;
-}
-
-let shotCount = 0;
-
-function proofCard(p: AdminProof, answer: AdminProofs, actions: ProofActions): HTMLLIElement {
-  const t = proofReview(p, { now: new Date(answer.now), deadline: answer.proofDeadline });
-  const headingId = `proof-${p.id}-name`;
-  const panelId = `proof-shot-${++shotCount}`;
-  const toggle = el("button", { className: "btn btn--secondary btn--sm proof-review__toggle", attrs: { type: "button", "aria-expanded": "false", "aria-controls": panelId } },
-    "View larger", el("span", { className: "visually-hidden", text: ` screenshot from ${t.name}` }));
-  const large = el("figure", { className: "proof-review__large", attrs: { id: panelId, hidden: "" } },
-    el("img", { className: "proof-review__large-img", attrs: { src: p.imageUrl, alt: `${t.shotAlt}, larger`, loading: "lazy" } }));
-  toggle.addEventListener("click", () => {
-    const open = toggle.getAttribute("aria-expanded") !== "true";
-    toggle.setAttribute("aria-expanded", String(open));
-    large.hidden = !open;
-    toggle.firstChild!.textContent = open ? "View smaller" : "View larger";
-  });
-
-  const card = el("li", { className: `card card--flat proof-review proof-review--${p.status}`, attrs: { "aria-labelledby": headingId } },
-    el("div", { className: "proof-review__head" },
-      renderAvatar(initials(p.person.firstName, p.person.lastName), { size: "sm" }),
-      el("h3", { className: "proof-review__name", text: t.name, attrs: { id: headingId } }),
-      pill(t.status.label, t.status.tone),
-    ),
-    el("p", { className: "proof-review__uploaded", text: t.uploaded }),
-    el("div", { className: "proof-review__main" },
-      el("img", { className: "proof-review__thumb", attrs: { src: p.imageUrl, alt: t.shotAlt, loading: "lazy" } }),
-      el("div", { className: "proof-review__details" },
-        el("dl", { className: "proof-review__figures" },
-          el("div", {}, el("dt", { text: "Amount donated" }), el("dd", { className: "proof-review__amount", text: t.amount })),
-          el("div", {}, el("dt", { text: "Donation total" }), el("dd", { className: "proof-review__amount", text: t.total })),
-        ),
-        ...t.notes.map((n) => el("p", { className: `proof-review__note proof-review__note--${n.tone}` }, icon(n.tone === "warning" ? "alert" : "info", { size: "sm" }), el("span", { text: n.text }))),
-        ...(t.reviewed ? [el("p", { className: "proof-review__reviewed", text: t.reviewed })] : []),
-        ...(t.reason ? [el("p", { className: "proof-review__reason", text: t.reason })] : []),
-        toggle,
-      ),
-    ),
-    large,
-  );
-  if (t.canReview) {
-    const approve = el("button", { className: "btn", attrs: { type: "button" } }, "Approve", el("span", { className: "visually-hidden", text: ` ${t.name}'s proof` }));
-    const reject = el("button", { className: "btn btn--secondary", attrs: { type: "button" } }, "Reject", el("span", { className: "visually-hidden", text: ` ${t.name}'s proof` }));
-    approve.addEventListener("click", () => actions.approve(p, approve));
-    reject.addEventListener("click", () => actions.reject(p));
-    card.append(el("div", { className: "proof-review__actions" }, approve, reject));
-  } else if (t.instead) {
-    // Reverse a decision (owner, 6C review): secondary, since it overturns one already made.
-    // Shown "Approve instead"; read "Approve instead (Owen Achterberg's proof)" (the visible words first, WCAG 2.5.3).
-    const button = el("button", { className: "btn btn--secondary", attrs: { type: "button" } },
-      t.instead === "approve" ? "Approve instead" : "Reject instead", el("span", { className: "visually-hidden", text: ` (${t.name}'s proof)` }));
-    button.addEventListener("click", () => (t.instead === "approve" ? actions.approve(p, button) : actions.reject(p)));
-    card.append(el("div", { className: "proof-review__actions" }, button));
-  }
-  return card;
-}
-
-function proofs(answer: AdminProofs, actions: ProofActions): Node[] {
-  const { waiting, reviewed } = groupProofs(answer.proofs);
-  const group = (id: string, title: string, list: AdminProof[], empty: string) =>
-    el("section", { className: "proof-queue", attrs: { "aria-labelledby": id } },
-      el("h3", { className: "proof-queue__title", text: `${title} (${list.length})`, attrs: { id } }),
-      list.length ? el("ul", { className: "proof-queue__list" }, ...list.map((p) => proofCard(p, answer, actions))) : el("p", { className: "admin-glance", text: empty }),
-    );
-  return [
-    el("p", { className: "admin-glance", text: `${queueLine(answer.proofs)}. ${deadlineLine(answer.proofDeadline, new Date(answer.now))}` }),
-    el("div", { className: "admin-alert", attrs: { "data-admin-alert": "" } }),
-    group("queue-waiting", "Waiting for review", waiting, "Nothing is waiting for review."),
-    group("queue-reviewed", "Reviewed", reviewed, answer.proofs.length ? "Nothing reviewed yet." : "No one has uploaded proof yet. Proofs show up here when people upload them."),
-  ];
-}
-
-/** What an item row's buttons do. `open` holds the items whose bid history is showing, kept across redraws. */
-interface ItemActions {
-  removeBid(item: AdminItem, bid: AdminBid, phase: AdminItems["phase"]): void;
-  cancel(item: AdminItem, phase: AdminItems["phase"]): void;
-  cancelPurchase(item: AdminItem, purchase: AdminPurchase, phase: AdminItems["phase"]): void;
-  open: Set<string>;
-}
-
-function bidTable(item: AdminItem, answer: AdminItems, actions: ItemActions): HTMLElement {
-  const ctx = { phase: answer.phase, now: new Date(answer.now) };
-  const rows = item.bids.length
-    ? item.bids.map((b) => {
-        const t = bidRow(b, item, ctx);
-        const remove = el("button", { className: "btn btn--secondary btn--sm", attrs: { type: "button" } }, "Remove", el("span", { className: "visually-hidden", text: t.removeLabel }));
-        remove.addEventListener("click", () => actions.removeBid(item, b, answer.phase));
-        return el("tr", { className: t.removed ? "admin-bid--removed" : "" },
-          el("th", { attrs: { scope: "row" } },
-            el("span", { className: "admin-person" },
-              renderAvatar(initials(b.bidder.firstName, b.bidder.lastName), { size: "sm", crowned: Boolean(t.top) }),
-              el("span", { className: "admin-bid__who" },
-                el("span", { className: "admin-person__name", text: t.name }),
-                ...(t.top ? [pill(t.top, "success")] : []),
-                ...(t.removed ? [pill("Removed", "neutral"), el("span", { className: "admin-bid__note", text: t.removed })] : []),
-                // Below 40rem the Time column hides and the time shows here instead (only one is ever displayed).
-                el("span", { className: "admin-bid__note admin-bid__when-inline", text: t.when })))),
-          el("td", { className: "table__num admin-bid__amount", text: t.amount }),
-          el("td", { className: "admin-bid__when", text: t.when }),
-          el("td", { className: "admin-bid__action" }, ...(t.canRemove ? [remove] : [])));
-      })
-    : [el("tr", {}, el("td", { className: "table__empty", attrs: { colspan: "4" }, text: "No bids yet." }))];
-  const captionId = `item-${item.id}-history`;
-  const wrap = el("div", { className: "table-wrap", attrs: { role: "region", "aria-labelledby": captionId, "data-table-scroll": "" } },
-    el("table", { className: "table admin-bids", attrs: { "aria-labelledby": captionId } },
-      el("thead", {}, el("tr", {},
-        el("th", { attrs: { scope: "col" }, text: "Bidder" }),
-        el("th", { className: "table__num", attrs: { scope: "col" }, text: "Amount" }),
-        el("th", { className: "admin-bid__when", attrs: { scope: "col" }, text: "Time" }),
-        el("th", { attrs: { scope: "col" } }, el("span", { className: "visually-hidden", text: "Actions" })))),
-      el("tbody", {}, ...rows)));
-  enhanceTableScroll(wrap);
-  return el("div", { className: "admin-item__history" },
-    el("p", { className: "visually-hidden", attrs: { id: captionId }, text: `Bid history for ${item.title}, newest first` }), wrap);
-}
-
-/** Instant sale: each purchase (owner, 6D review; DECISIONS #115), laid out like the bid history. */
-function purchaseTable(item: AdminItem, answer: AdminItems, actions: ItemActions): HTMLElement {
-  const ctx = { now: new Date(answer.now) };
-  const rows = item.purchaseList.length
-    ? item.purchaseList.map((p) => {
-        const t = purchaseRow(p, item, ctx);
-        const cancel = el("button", { className: "btn btn--secondary btn--sm", attrs: { type: "button" } }, "Cancel purchase", el("span", { className: "visually-hidden", text: t.cancelLabel }));
-        cancel.addEventListener("click", () => actions.cancelPurchase(item, p, answer.phase));
-        return el("tr", { className: t.cancelled ? "admin-bid--removed" : "" },
-          el("th", { attrs: { scope: "row" } },
-            el("span", { className: "admin-person" },
-              renderAvatar(initials(p.buyer.firstName, p.buyer.lastName), { size: "sm" }),
-              el("span", { className: "admin-bid__who" },
-                el("span", { className: "admin-person__name", text: t.name }),
-                ...(t.cancelled ? [pill("Cancelled", "neutral"), el("span", { className: "admin-bid__note", text: t.cancelled })] : []),
-                // Phones: price and date as a caption, so Cancel purchase fits.
-                el("span", { className: "admin-bid__note admin-bid__when-inline", text: `${t.amount} · ${t.when}` })))),
-          el("td", { className: "table__num admin-bid__amount admin-purchase__price", text: t.amount }),
-          el("td", { className: "admin-bid__when", text: t.when }),
-          el("td", { className: "admin-bid__action" }, ...(t.canCancel ? [cancel] : [])));
-      })
-    : [el("tr", {}, el("td", { className: "table__empty", attrs: { colspan: "4" }, text: "No purchases yet." }))];
-  const captionId = `item-${item.id}-purchases`;
-  const wrap = el("div", { className: "table-wrap", attrs: { role: "region", "aria-labelledby": captionId, "data-table-scroll": "" } },
-    el("table", { className: "table admin-bids admin-purchases", attrs: { "aria-labelledby": captionId } },
-      el("thead", {}, el("tr", {},
-        el("th", { attrs: { scope: "col" }, text: "Buyer" }),
-        el("th", { className: "table__num admin-purchase__price", attrs: { scope: "col" }, text: "Price" }),
-        el("th", { className: "admin-bid__when", attrs: { scope: "col" }, text: "Bought" }),
-        el("th", { attrs: { scope: "col" } }, el("span", { className: "visually-hidden", text: "Actions" })))),
-      el("tbody", {}, ...rows)));
-  enhanceTableScroll(wrap);
-  return el("div", { className: "admin-item__history" },
-    el("p", { className: "visually-hidden", attrs: { id: captionId }, text: `Purchases of ${item.title}, newest first` }), wrap);
-}
-
-function itemCard(item: AdminItem, answer: AdminItems, actions: ItemActions): HTMLLIElement {
-  const t = itemRow(item, { phase: answer.phase, now: new Date(answer.now) });
-  const headingId = `item-${item.id}-title`;
-  const card = el("li", { className: `card card--flat admin-item${item.cancelled ? " admin-item--cancelled" : ""}`, attrs: { "aria-labelledby": headingId, "data-item-id": item.id } },
-    el("div", { className: "admin-item__main" },
-      item.coverUrl ? el("img", { className: "admin-item__thumb", attrs: { src: item.coverUrl, alt: "", loading: "lazy" } }) : el("span", { className: "admin-item__thumb", attrs: { "aria-hidden": "true" } }),
-      el("div", { className: "admin-item__text" },
-        el("div", { className: "admin-item__head" },
-          el("h4", { className: "admin-item__title", attrs: { id: headingId, tabindex: "-1" } }, el("a", { attrs: { href: `/items/${item.id}` }, text: item.title })),
-          ...(t.status ? [pill(t.status.label, t.status.tone)] : [])),
-        el("p", { className: "admin-item__figures", text: t.figures }),
-        el("p", { className: "admin-item__donor", text: t.donor }),
-        ...(t.cancelled ? [el("p", { className: "admin-item__donor", text: t.cancelled })] : []),
-      ),
-    ),
-  );
-  const buttons: HTMLElement[] = [];
-  let panel: HTMLElement | null = null;
-  const label = t.history ?? t.purchasesLabel;
-  if (label) {
-    const panelId = `item-${item.id}-panel`;
-    const isOpen = actions.open.has(item.id);
-    const toggle = el("button", { className: "btn btn--secondary admin-item__toggle", attrs: { type: "button", "aria-expanded": String(isOpen), "aria-controls": panelId } },
-      el("span", { text: `${isOpen ? "Hide" : "Show"} ${label}` }), el("span", { className: "visually-hidden", text: ` for ${item.title}` }));
-    const shown = el("div", { className: "admin-item__panel", attrs: { id: panelId, ...(isOpen ? {} : { hidden: "" }) } },
-      item.type === "auction" ? bidTable(item, answer, actions) : purchaseTable(item, answer, actions));
-    panel = shown;
-    toggle.addEventListener("click", () => {
-      const open = toggle.getAttribute("aria-expanded") !== "true";
-      toggle.setAttribute("aria-expanded", String(open));
-      toggle.firstChild!.textContent = `${open ? "Hide" : "Show"} ${label}`;
-      shown.hidden = !open;
-      if (open) actions.open.add(item.id); else actions.open.delete(item.id);
-    });
-    buttons.push(toggle);
-  }
-  if (t.canCancel) {
-    const cancel = el("button", { className: "btn btn--secondary", attrs: { type: "button" } }, "Cancel item", el("span", { className: "visually-hidden", text: ` (${item.title})` }));
-    cancel.addEventListener("click", () => actions.cancel(item, answer.phase));
-    buttons.push(cancel);
-  }
-  if (buttons.length) card.append(el("div", { className: "admin-item__actions" }, ...buttons));
-  if (panel) card.append(panel);
-  return card;
-}
-
-function items(answer: AdminItems, actions: ItemActions): Node[] {
-  const { auction, instant } = groupItems(answer.items);
-  const group = (id: string, title: string, list: AdminItem[]) =>
-    el("section", { className: "admin-items", attrs: { "aria-labelledby": id } },
-      el("h3", { className: "proof-queue__title", text: `${title} (${list.length})`, attrs: { id } }),
-      list.length ? el("ul", { className: "admin-items__list" }, ...list.map((i) => itemCard(i, answer, actions))) : el("p", { className: "admin-glance", text: "No items yet." }));
-  return [
-    el("p", { className: "admin-glance", text: `${itemsLine(answer.items)}. Removing a bid or cancelling a purchase or item asks first, and can't be undone.` }),
-    el("div", { className: "admin-alert", attrs: { "data-admin-alert": "" } }),
-    group("items-auction", "Silent auction", auction),
-    group("items-instant", "Instant sale", instant),
-  ];
-}
 
 /** POST /api/admin; resolves with the answer, or throws an Error with the message to show. */
 async function post(body: Record<string, unknown>): Promise<{ message: string; answer: unknown }> {
@@ -502,7 +289,7 @@ export function startAdminPage(): void {
     cancelPurchase: (item, purchase, phase) => void confirmThenPost(cancelPurchaseDialog(item, purchase, phase), "Cancelling…", { action: "cancel-purchase", purchaseId: purchase.id }, item.id),
   };
 
-  // Event settings and Email templates (src/pages/admin-settings.ts).
+  // Event settings and Email templates (src/pages/admin-settings.ts, admin-templates.ts).
   const templateState: TemplateState = { drafts: new Map() };
   /** After saving settings or a Reset the app state is fetched again; its redraw puts focus back here (a selector). */
   let refocus: string | null = null;

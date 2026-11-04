@@ -1,5 +1,5 @@
 // The shapes of GET and POST /api/admin answers (SPEC §8 › Admin Dashboard). Types only:
-// shared by the server (lib/data/admin.ts) and the admin pages, so the two can't drift.
+// shared by the server (lib/data/admin*.ts) and the admin pages, so the two can't drift.
 import type { Phase } from "./components/item-tile-rules.ts";
 import type { ProofStatus } from "./components/proof-rules.ts";
 import type { SettingsInput } from "./components/settings-rules.ts";

@@ -195,3 +195,8 @@
 @media (min-width: 40rem) {
   .admin-reset__lists { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* Windows high contrast replaces the fill, so the current section takes the system highlight. */
+@media (forced-colors: active) {
+  .admin-nav__link[aria-current="page"] { forced-color-adjust: none; background: Highlight; border-color: Highlight; color: HighlightText; }
+}

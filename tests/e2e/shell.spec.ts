@@ -202,3 +202,17 @@ test("phase banner in dark mode: calm phases get the dark butter surface; ending
   await expect(banner(page)).not.toHaveClass(/banner--urgent/);
   expect((await colors())[0]).toBe(BUTTER);
 });
+
+test("forced colors: the pressed phase, the current admin section and the current page still stand out (DECISIONS #123)", async ({ page, baseURL }) => {
+  await page.emulateMedia({ forcedColors: "active" });
+  await page.context().addCookies([{ name: "kg_viewer", value: "1", url: baseURL ?? "http://localhost:3000" }]);
+  await page.goto("/admin");
+  await expect(page.locator(".admin-nav__link[aria-current='page']")).toBeVisible();
+  const background = (selector: string) => page.evaluate(`getComputedStyle(document.querySelector("${selector.replace(/"/g, '\\"')}")).backgroundColor`);
+  // The marked one has a fill (Highlight); the others are the page's own background.
+  expect(await background(".admin-nav__link[aria-current='page']")).not.toBe(await background(".admin-nav__link:not([aria-current])"));
+  expect(await background(".demo-bar__jump-buttons .btn[aria-pressed='true']")).not.toBe(await background(".demo-bar__jump-buttons .btn[aria-pressed='false']"));
+  await page.goto("/your-items");
+  const line = await page.evaluate(`getComputedStyle(document.querySelector(".site-header__link[aria-current='page']")).textDecorationLine`);
+  expect(line).toBe("underline");
+});

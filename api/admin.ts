@@ -9,10 +9,10 @@ import { parseAdminAction, parseAdminView, type AdminAction } from "../lib/api/a
 import { deleteOwnFiles } from "../lib/api/files.ts";
 import { json, problem, readJson, withDatabase } from "../lib/api/http.ts";
 import { actingUserIn, resolvePhoto } from "../lib/api/item-answer.ts";
-import {
-  adminCancelItemIn, adminCancelPurchaseIn, adminItemsIn, adminPeopleIn, adminProofsIn, adminRemoveBidIn, adminSettingsIn, adminSummaryIn, adminTemplatesIn,
-  approveProofIn, rejectProofIn, resetYearIn, restoreTemplateIn, saveSettingsIn, saveTemplateIn,
-} from "../lib/data/admin.ts";
+import { adminPeopleIn, adminSummaryIn } from "../lib/data/admin.ts";
+import { adminCancelItemIn, adminCancelPurchaseIn, adminItemsIn, adminRemoveBidIn } from "../lib/data/admin-items.ts";
+import { adminProofsIn, approveProofIn, rejectProofIn } from "../lib/data/admin-proofs.ts";
+import { adminSettingsIn, adminTemplatesIn, resetYearIn, restoreTemplateIn, saveSettingsIn, saveTemplateIn } from "../lib/data/admin-settings.ts";
 import { withRetriedTransaction, withTransaction, type Tx } from "../lib/data/db.ts";
 import { tryDemoLockIn } from "../lib/demo/restore.ts";
 import { viewerIdFrom } from "../lib/demo/viewer.ts";

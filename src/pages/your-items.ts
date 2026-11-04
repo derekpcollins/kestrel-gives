@@ -5,6 +5,7 @@
 import { fetchWithTimeout, pageLoading } from "../components/loading.ts";
 import type { AppState } from "../app-state.ts";
 import { el } from "../components/dom.ts";
+import { pill } from "../components/pill.ts";
 import { hydrateIcons, icon } from "../components/icons.ts";
 import { renderItemTile } from "../components/item-tile.ts";
 import type { MeAnswer } from "../me-api.ts";
@@ -14,7 +15,6 @@ import {
   bidText, cancelledText, donatedText, groupCancelled, groupWins, proofSummary, SECTIONS, showsEdit, totalChangedBanner, winText, type MineText,
 } from "./your-items-rules.ts";
 
-const pill = (label: string, tone: string) => el("span", { className: `pill${tone === "neutral" ? "" : ` pill--${tone}`}`, text: label });
 
 function tile(itemId: string, title: string, photo: string, text: MineText, state: AppState): HTMLLIElement {
   return renderItemTile({ type: "auction", title, href: ITEM_LINK(itemId), ...(photo ? { photo } : {}) }, tileContext(state), text);

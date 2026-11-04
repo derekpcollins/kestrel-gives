@@ -5,13 +5,13 @@
 import type { AdminSummary } from "../admin-api.ts";
 import { confirmDialog } from "../components/dialog.ts";
 import { el } from "../components/dom.ts";
+import { pill } from "../components/pill.ts";
 import { icon } from "../components/icons.ts";
 import { renderResetOffer } from "../components/reset-offer.ts";
 import { showToast } from "../components/toast.ts";
 import { resetDeletes, resetDialog, resetKeeps, resetStatus } from "./admin-reset-rules.ts";
-import type { SectionHost } from "./admin-settings.ts";
+import type { SectionHost } from "./admin-section.ts";
 
-const pill = (label: string, tone: string) => el("span", { className: `pill${tone === "neutral" ? "" : ` pill--${tone}`}`, text: label });
 const statusOf = (error: unknown) => (error as { status?: number }).status;
 const codeOf = (error: unknown) => (error as { code?: string }).code;
 const messageOf = (error: unknown) => (error instanceof Error ? error.message : "Something went wrong. Please try again.");

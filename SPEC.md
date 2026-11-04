@@ -1,6 +1,6 @@
 # Kestrel Gives — Build Spec & Conformance Rules
 
-**Status:** v1.18 · Owner: Derek Collins · Last updated: Nov 3, 2026
+**Status:** v1.19 · Owner: Derek Collins · Last updated: Nov 4, 2026
 
 This document describes what to build and the rules every contribution must follow, whether a person or an AI agent writes it. Read it in full before writing any code. If something here conflicts with a request, stop and ask.
 
@@ -24,7 +24,7 @@ This is a **from-memory recreation** of a tool I designed and built at a previou
   - **Exception 2:** "Kestrel" is used as a generic word (a bird). It does not refer to any real company. The logo MUST be an original wordmark that doesn't resemble any existing Kestrel brand.
 - MUST NOT imitate any real company's visual identity.
 - The README MUST include: "Recreated from memory after leaving Netflix. No original code, designs, or data were used."
-- The site footer MUST include: "Kestrel is a fictional organization. Demo only."
+- The site footer MUST include: "Kestrel is a fictional organization, and this is a demo." (v1.19)
 
 ## 3. Scope
 

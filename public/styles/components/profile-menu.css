@@ -45,3 +45,8 @@
 .profile-menu__link { display: flex; align-items: center; gap: var(--space-2); min-height: var(--size-target); padding: var(--space-2); border-radius: var(--radius-md); color: var(--color-text); font: var(--type-label); text-decoration: none; }
 .profile-menu__link:hover, .profile-menu__link.is-hover { background: var(--color-surface-muted); }
 .profile-menu__link[aria-current="page"] { color: var(--color-link); }
+
+/* Windows high contrast replaces the link color, so the current page is underlined instead. */
+@media (forced-colors: active) {
+  .profile-menu__link[aria-current="page"] { text-decoration: underline; text-decoration-thickness: var(--border-thick); }
+}

@@ -61,3 +61,8 @@
   .site-header__nav.is-enhanced .site-header__links, .site-header__nav.is-enhanced.is-open .site-header__links { position: static; display: flex; flex-wrap: nowrap; padding: 0; background: none; border: 0; box-shadow: none; }
   .site-header__link[aria-current="page"] { box-shadow: inset 0 calc(var(--border-thick) * -1) 0 var(--color-accent); border-radius: var(--radius-md) var(--radius-md) 0 0; }
 }
+
+/* Windows high contrast drops box shadows, so the current page is underlined instead. */
+@media (forced-colors: active) {
+  .site-header__link[aria-current="page"] { text-decoration: underline; text-decoration-thickness: var(--border-thick); text-underline-offset: var(--space-1); }
+}

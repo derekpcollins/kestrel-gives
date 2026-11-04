@@ -42,3 +42,8 @@
   .demo-bar__note { order: 0; flex-basis: auto; }
 }
 .demo-bar { container: demo-bar / inline-size; }
+
+/* Windows high contrast replaces the fill, so the current phase takes the system highlight. */
+@media (forced-colors: active) {
+  .demo-bar__jump-buttons .btn[aria-pressed="true"] { forced-color-adjust: none; background: Highlight; border-color: Highlight; color: HighlightText; }
+}
