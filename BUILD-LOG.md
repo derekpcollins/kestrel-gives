@@ -871,3 +871,14 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 - **Accessibility sweep:** every tab stop on 17 screens at 1280 and at 200% zoom shows a focus ring (tiles and radio cards draw it on the card); nothing scrolls sideways at 640px; nothing animates with reduced motion; forced colors fixed as above.
 - **Tests:** unit 310 (0 todo), DB 118, browser 288 a11y and keyboard, 21 reflow, 24 visual tests (290 screenshots), run one after the other. `npm audit`: only the accepted advisory.
 - **Needs the owner:** charity logos (SPEC §5 says token-built SVGs; §7.2 and the owner say their own files, unmodified); test files over 300 lines kept as they are; seeded bids showing during the submission window after Jump to.
+
+### 2026-11-04 — 7A review and Stage 7C: README and the final DESIGN-SYSTEM pass (12:19 – 13:15 EST)
+- **Owner stepped in:** approved 7A with four answers: SPEC §5 names their own charity logo files, unmodified (DECISIONS #125); long test files stay one per area; Jump to "Submissions open" clears bids, purchases and proofs, asking first, under Restore's lock and cooldown (#81 amended, #124); go on 7C, with 7B when the logos arrive.
+- **Built:**
+  - The clearing jump: migration 008 (the restore log may record `jump`), `tryJumpIn` (lock, cooldown, clear, jump, log), proof files deleted after the commit, and a danger dialog in the demo bar ("Open submissions and clear activity?"). Other jumps are unchanged. SPEC v1.20.
+  - README: the live demo link, four screenshots (`docs/screenshots/`), a tour of the demo controls, "How this was built", a `test:db` row, and the deploy steps with env var names only.
+  - DESIGN-SYSTEM: removed stage labels and stale "comes in Milestone N" notes; the loading lines now match DECISIONS #119; the date-time input matches Event settings; the admin, Home and item section classes are documented; the Giving stub has its states.
+- **Caught or hard:** the Giving stub entry had no States line and an error description from before its Try again; both fixed from the code. Two of the stale notes described plans the build later changed (grid skeletons, the "ET" affix in Event settings).
+- **Tests:** unit 310 (0 todo), DB 120 (the new jump tests), browser 288 a11y and keyboard, 21 reflow, 25 visual tests including the real clearing jump (290 screenshots), run one after the other on a fresh dev server; exit 0. `npm audit`: only the accepted advisory.
+- **Screenshots:** the submission-phase set retaken: no bids, a $0 total, $0 in Totals (`.review/m7-7c/submission/`).
+- **Preview:** not this stage; migration 008 runs in the production build at the 7D push.

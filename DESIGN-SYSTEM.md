@@ -36,7 +36,7 @@ The same pattern applies to every component below. Each entry's **Figma** line g
 - **Keep each variant matrix under about 30 combinations.** When a component would need more, split it into separate components and say so in its Figma line (as *Icon button* is split from *Button*).
 - **Layout-only modifiers aren't variants** when Figma can do the same with instance settings (Fill width for `--block`).
 - **Icons are instance-swapped**, not variants (see Icon).
-- **Variables** mirror `public/styles/tokens.css` (the source of truth) with matching names, `color/accent` ↔ `--color-accent`. As of Milestone 3 the library has **103**, including `color/banner-calm`, `color/banner-calm-border`, `color/on-banner-calm`, `size/charity-logo` and `size/step-number`.
+- **Variables** mirror `public/styles/tokens.css` (the source of truth) with matching names, `color/accent` ↔ `--color-accent`. At the last count (the Milestone 3 drift check) the library had **103**, including `color/banner-calm`, `color/banner-calm-border`, `color/on-banner-calm`, `size/charity-logo` and `size/step-number`.
 
 ---
 
@@ -123,7 +123,7 @@ The same pattern applies to every component below. Each entry's **Figma** line g
 **Purpose:** a contained group of content: an item, an event, a summary.
 
 - **Classes:** `.card` with optional `__media`, `__header` > `__title`, `__body`, `__footer`. Modifiers: `--flat` (no shadow, for cards on other surfaces) and `--link` (the whole card opens the title's link).
-- **States:** default. For `--link`: hover (deeper shadow, stronger border, underlined title); focus (ring around the whole card when its title link is focused); active (shadow settles). Disabled: N/A (don't link to something unavailable; show a status pill instead). Loading: N/A for now; skeletons come with the item tile in stage C. Empty: use the empty state inside the list, not an empty card. Error: N/A.
+- **States:** default. For `--link`: hover (deeper shadow, stronger border, underlined title); focus (ring around the whole card when its title link is focused); active (shadow settles). Disabled: N/A (don't link to something unavailable; show a status pill instead). Loading: N/A; a page shows its *Loading* line until its cards draw, with no skeletons (DECISIONS #119). Empty: use the empty state inside the list, not an empty card. Error: N/A.
 - **Accessibility:** the title is a heading at the right level. In `--link` cards the title's `<a>` is the only tab stop, and its `::after` stretches over the card, so other content in the card shouldn't be interactive.
 - **Do:** keep footers to status and one figure. **Don't:** nest cards; don't put buttons inside a linked card.
 - **Figma:** *Card* · Style = Raised / Flat × Media = On / Off (4). **Split:** *Linked card* (`--link`) · Style × Media × State = Default / Hover / Focus / Active (16). One combined matrix would be 32, and states only apply to linked cards.
@@ -154,14 +154,14 @@ The same pattern applies to every component below. Each entry's **Figma** line g
 **Purpose:** a person's initials on a token-colored circle. The current high bidder wears the crown (SPEC §5).
 
 - **Classes:** `.avatar`, `--sm` (bid history), md default (header), `--lg` (profile menu); `.avatar__crown` (inline SVG with `__crown-shape` and `__crown-band`). Built by `renderAvatar()` in `src/components/avatar.ts`.
-- **States:** default, and *crowned* (top bidder). Hover, focus and active: N/A (avatars sit inside buttons or rows that have their own states, such as the profile menu button in stage C). Disabled, loading, error and empty: N/A; with no name, show no avatar.
-- **Accessibility:** `aria-hidden="true"`, because it always sits next to the person's name. The name carries "(top bidder)" as visually hidden text. The crown edge passes 3:1 against the avatar and the page in both modes (BUILD-LOG, stage A part 1).
+- **States:** default, and *crowned* (top bidder). Hover, focus and active: N/A (avatars sit inside buttons or rows that have their own states, such as the profile menu button). Disabled, loading, error and empty: N/A; with no name, show no avatar.
+- **Accessibility:** `aria-hidden="true"`, because it always sits next to the person's name. The name carries "(top bidder)" as visually hidden text. The crown edge passes 3:1 against the avatar and the page in both modes (BUILD-LOG, Milestone 1).
 - **Do:** show the crown everywhere that person's avatar appears in the item's bid history. **Don't:** use the crown for anything but the current high bid.
 - **Figma:** *Avatar* · Size = Small / Medium / Large × Crown = On / Off (6).
 
 ---
 
-## Forms (stage B)
+## Forms
 
 How forms behave, for every component below:
 - **Native controls and built-in checks.** `required`, `maxlength`, `pattern` and `accept` sit on the controls. `src/components/forms.ts` (`enhanceForm`) turns off the browser's bubbles (`novalidate`), reads the browser's own validity, and shows our messages inline.
@@ -216,7 +216,7 @@ How forms behave, for every component below:
 
 **Purpose:** an event date and time, entered in the event's time zone (SPEC §7.1).
 
-- **Markup:** `.input-group` > `<input class="input" type="datetime-local">` + `.input-group__affix` with the zone abbreviation ("ET"). Help names the zone in full. Converting to and from UTC comes with event settings (Milestone 6).
+- **Markup:** `<input class="input" type="datetime-local">`, alone or in an `.input-group` with an `.input-group__affix` for the zone abbreviation ("ET", the gallery's variant). In Event settings the three dates share one help line that names the zone in full ("Times are in Eastern Time (New York), currently EST."), so they carry no affix. The browser sends the wall time; the server reads it in the event's zone and stores UTC (DECISIONS #116, #117).
 - **States:** as text input. Error for an incomplete value: "Enter a complete date and time."
 - **Accessibility:** native, so each part (month, day, year, time) works with the keyboard and announces itself.
 - **Do:** always show the zone. **Don't:** show a time without saying which zone it's in.
@@ -308,14 +308,16 @@ How forms behave, for every component below:
 
 **Purpose:** where "Go to the giving page" lands in the demo (`/giving`, the seeded giving platform URL; SPEC §3). It explains that the real event links out to one donation page whose funds are split equally among the three charities, and that no money moves here.
 
-- **Markup:** *Page header*, an info *Banner* ("This is a stand-in"), *Steps* (check your total, donate once, upload proof), then `.giving__you` (`aria-live="polite"`): the viewer's total ("Your total: $35", `.giving__total`) and an "Upload proof" button to `/your-items/proof`. When the viewer owes nothing, the button is hidden and `.giving__none` says "You don't owe anything yet. Bid or buy to have a total." Last, the three *Charity card*s (filled by `showCharities()`, shared with Home). Behavior: `startGivingPage()` in `src/pages/giving.ts`, from `/api/me`, redrawn when the demo bar changes the person; if it can't load, the total is left out and the button stays. No nav link is current (DECISIONS #104).
+- **Markup:** *Page header*, an info *Banner* ("This is a stand-in"), *Steps* (check your total, donate once, upload proof), then `.giving__you` (`aria-live="polite"`): the viewer's total ("Your total: $35", `.giving__total`) and an "Upload proof" button to `/your-items/proof`. When the viewer owes nothing, the button is hidden and `.giving__none` says "You don't owe anything yet. Bid or buy to have a total." Last, the three *Charity card*s (filled by `showCharities()`, shared with Home). Behavior: `startGivingPage()` in `src/pages/giving.ts`, from `/api/me`, redrawn when the demo bar changes the person; the states are below. No nav link is current (DECISIONS #104).
+- **States:** loading (a *Loading* line until `/api/me` answers, DECISIONS #119; the cards fill from the app state); owes nothing (the *none* line, button hidden); error (the total is left out, a line says it didn't load with Try again, and the button stays). Hover, focus, active and disabled come from *Button*.
 - **Don't:** link a charity on its own (no charity choice, SPEC §7.2), or use words about paying in the app.
 - **Figma:** *Giving stub* page, built from *Banner*, *Steps*, *Button* and *Charity card*.
 
 ## Admin Dashboard
 
-**Purpose:** the admin's sections (SPEC §8): Totals and People in 6B, Proof review in 6C, Items in 6D; Event settings and Email templates in 6E, Reset for next year in 6F. One page, `admin.html`, serves every section URL (`/admin` is Totals, `/admin/people`, `/admin/proofs`, `/admin/items`, `/admin/settings`, `/admin/templates`, `/admin/reset`, by rewrites), and reads its section from the path (DECISIONS #112).
+**Purpose:** the admin's seven sections (SPEC §8): Totals, People, Proof review, Items, Event settings, Email templates and Reset for next year. One page, `admin.html`, serves every section URL (`/admin` is Totals, `/admin/people`, `/admin/proofs`, `/admin/items`, `/admin/settings`, `/admin/templates`, `/admin/reset`, by rewrites), and reads its section from the path (DECISIONS #112).
 
+- **Layout:** each section is a `section.admin-section` (a grid with even gaps) holding a muted one-line summary (`.admin-glance`, such as "1 proof waiting for review · 15 active items") and an alert slot (`.admin-alert`, `role="alert"`, hidden while empty) for refusals and reloads. In tables, a person is `.admin-person`: a small *Avatar*, the name, and a *Pill* when it applies.
 - **Admin section nav:** `nav.admin-nav` (`aria-label="Admin sections"`) > `ul.admin-nav__list` of plain links (`.admin-nav__link`), the current one with `aria-current="page"` and the accent fill. They wrap onto more lines when narrow. Not tabs (DECISIONS entry 59): each section is its own page, so the browser's back button and links work.
 - **Total card:** `li.card.card--flat.total-card` in `ul.total-cards` (one column, three from `--breakpoint-sm`), one each for Silent auction, Instant sale and Grand total (`.total-card--grand` has the stronger border). A `dl` holds Pledged (text color) and Confirmed (success color), both in the amount type with tabular figures. A $0 amount, pledged or confirmed, takes `.total-card__amount--zero` (muted text color): green is only for confirmed amounts above $0 (owner, 6B review). Below: the gap line (`.admin-gap`, info icon) and a key (`dl.admin-key`) saying what Pledged and Confirmed mean (DECISIONS #107).
 - **Leading bids note:** live only. `section.leading-note`, a dashed muted box *outside* the cards, titled "Leading bids so far, not final until bidding closes", with the amount in plain text color (not the amount style) and a line saying they aren't in the totals (owner, 6A review).
@@ -346,7 +348,7 @@ How forms behave, for every component below:
 
 ---
 
-## Page structure (stage C1)
+## Page structure
 
 ## Skip link
 
@@ -427,9 +429,9 @@ How forms behave, for every component below:
 
 ## Page layout and footer
 
-**Purpose:** the frame every app page shares (Milestone 3B): demo bar, site header, phase banner, the page's content column, and the footer.
+**Purpose:** the frame every app page shares: demo bar, site header, phase banner, the page's content column, and the footer.
 
-- **Markup:** `<body data-page="…">` > skip link, `[data-shell-demo]`, `[data-shell-header]`, `[data-shell-banner]`, `<main class="page" id="main" tabindex="-1">`, `footer.site-footer`. `src/shell.ts` fills the three slots from `GET /api/app`; the banner sits in `.phase-banner` (the content width, under the header).
+- **Markup:** `<body data-page="…">` > skip link, `[data-shell-demo]`, `[data-shell-header]`, `[data-shell-banner]`, `<main class="page" id="main" tabindex="-1">`, `footer.site-footer`. `src/shell.ts` fills the three slots from `GET /api/app`; the banner sits in `.phase-banner` (the content width, under the header). Inside the column, Home and the Giving page group their content in `section.home-section` (named by its `h2`), with a fixed gap inside and space above each.
 - **Phase banner words** come from `phaseBanner()` (`src/components/phase-banner-rules.ts`), one per phase: "Submissions are open", "Bidding is open", "Bidding ends soon" (alert icon), "Bidding has ended" (proof due, or the deadline passed). While live, the page's sale picks the wording (DECISIONS #90): Instant Sale and instant-sale item pages (`<body data-sale="instant">`, set by the item page once it knows) say "The instant sale is open" / "It ends in 47 hours, on …" and "The instant sale ends soon" / "It closes in …"; every other page uses the bidding words. Submission and ended are shared. Times are in the viewer's zone with the zone labeled ("today at 5:00 PM EST", "on Wednesday, November 4 at 1:00 PM EST").
 - **States:** default. Loading: the header draws at once without the person or Submit an Item, then fills in. **Error:** if the state can't load, a danger banner (`role="alert"`) takes the banner slot. Hover, focus, active, disabled and empty: N/A.
 - **Accessibility:** one `<main>`; the phase banner is `role="status"`, so a phase change is announced. The `hidden` attribute always wins over a component's `display` (base.css).
@@ -438,7 +440,7 @@ How forms behave, for every component below:
 
 ## Browse toolbar
 
-**Purpose:** the item count and the sort above a browse grid (Silent Auction, Instant Sale; SPEC §8, Milestone 4B).
+**Purpose:** the item count and the sort above a browse grid (Silent Auction, Instant Sale; SPEC §8).
 
 - **Markup:** `.browse-toolbar` > `p.browse-toolbar__count` ("9 items") and a *Field* with a *Select* (`.browse-toolbar__sort`, label "Sort by"), then a visually hidden `role="status"`, the `ul.item-grid` and two *Empty states* (no items; couldn't load, with **Try again**). Built by `src/pages/browse.ts`; the words come from `src/pages/browse-rules.ts`.
 - **Sorts:** Newest, Price: low to high, and (silent auction only) Most bids. The sort is kept in `?sort=` (Newest leaves the URL clean), so a sorted page can be bookmarked; an unknown value falls back to Newest.
@@ -492,7 +494,7 @@ How forms behave, for every component below:
 
 ---
 
-## Overlays and data (stage C2)
+## Overlays and data
 
 ## Dialog
 
@@ -524,7 +526,7 @@ How forms behave, for every component below:
   - Silent auction: "$40 / Starting bid · No bids yet", "$240 / Top bid · 6 bids"; after close "$310 / Winning bid · 9 bids" or "$40 / Starting bid · No bids".
   - Instant sale: "$20 / 2 left"; "12 available" during submissions; "None left"; after close "Sale ended" for unsold stock (sold out stays "None left" with the Sold out pill).
 - **Status (one, most important first):** Cancelled (danger) › after close: You won (success), Ended, Sold out › during submissions: "Opens Nov 17" › live silent auction: You're winning (success), Outbid (danger) › live instant sale: Sold out, "2 left" (warning, at 3 or fewer) › Ending soon (warning, within 24 hours of close). No status if none applies. Both thresholds live in `src/components/thresholds.ts` (SPEC §10, DECISIONS #61).
-- **States:** the card link's default, hover (lift), active and focus (ring). **Muted** (`.item-tile--muted`, ended and cancelled): the photo fades and the amount turns muted; the pill keeps full contrast. **Cancelled** appears only in Your Items, never in browse grids. Disabled: N/A (a tile always opens its item). Loading: Milestone 3 decides whether grids need skeletons. Empty: the grid's *Empty state*, not the tile. Error: N/A.
+- **States:** the card link's default, hover (lift), active and focus (ring). **Muted** (`.item-tile--muted`, ended and cancelled): the photo fades and the amount turns muted; the pill keeps full contrast. **Cancelled** appears only in Your Items, never in browse grids. Disabled: N/A (a tile always opens its item). Loading: N/A; the grid's page shows its *Loading* line until the tiles draw, with no skeletons (DECISIONS #119). Empty: the grid's *Empty state*, not the tile. Error: N/A.
 - **Accessibility:** the whole tile is one link, named by an `aria-label` of the title and the status ("Sourdough starter and a loaf a month, Outbid"; visually hidden text read with a stray space before the comma); the pill itself is `aria-hidden` so it isn't read twice. Status isn't shown by color alone: the pill has words.
 - **Layout:** tiles in a row stretch to the tallest one, with their content top-aligned, so a two-line title doesn't leave a ragged row.
 - **Do:** keep titles to two lines in the design; long ones wrap. **Don't:** show more than one status, or put buttons inside the tile.
@@ -532,14 +534,14 @@ How forms behave, for every component below:
 
 ## Item page
 
-**Purpose:** one item (SPEC §7.3, §8; Milestone 4C): its photos, the amount, where the viewer stands, why they can or can't act, the description and the public bid history.
+**Purpose:** one item (SPEC §7.3, §8): its photos, the amount, where the viewer stands, why they can or can't act, the description and the public bid history.
 
-- **Markup:** `/items/<id>` serves `item.html` (DECISIONS #86); `src/pages/item.ts` draws into `.item-page`: a *Page header* (back link to the item's browse page, title, "Donated by …"), a danger *Banner* when cancelled, `.item-layout` (the *Photo carousel* beside `section.card.card--flat.item-panel` from `--breakpoint-lg`, stacked below it), "About this item", and for auctions "Bid history" as a *Table* (`table.bid-history`, newest first). It has no caption: the visible "Bid history (6 bids)" heading names the table and its scroll region (`aria-labelledby`), because a visually hidden `<caption>` still takes a line of height and the table's full width. The panel has the status *Pill*, `.item-panel__amount` (only the number), `.item-panel__detail`, `.item-panel__note` and `.item-panel__actions`.
+- **Markup:** `/items/<id>` serves `item.html` (DECISIONS #86); `src/pages/item.ts` draws into `.item-page`: a *Page header* (back link to the item's browse page, title, "Donated by …"), a danger *Banner* when cancelled, `.item-layout` (the *Photo carousel* beside `section.card.card--flat.item-panel` from `--breakpoint-lg`, stacked below it), "About this item", and for auctions "Bid history" as a *Table* (`table.bid-history`, newest first). It has no caption: the visible "Bid history (6 bids)" heading names the table and its scroll region (`aria-labelledby`), because a visually hidden `<caption>` still takes a line of height and the table's full width. "About this item" and "Bid history" are each a `section.item-section` (`__title` `h2`, `__text`, and `__count` for "(6 bids)"). The panel has the status *Pill*, `.item-panel__amount` (only the number), `.item-panel__detail`, `.item-panel__note` and `.item-panel__actions`.
 - **Words come from data:** the amount, detail and status use the tile rules, so a tile and its page agree; the note comes from `panelText()` in `src/pages/item-rules.ts`: the minimum ("At least $245. Bids go up by $5."), "You're the high bidder.", "This is your item.", "Sold out.", "Bidding opens tomorrow at 9:00 AM EST.", "Won by Priya Natarajan for $240." or "The sale has ended." The winner also gets `a.item-panel__link` under "You won this item for $85.": "Donate and upload proof in Your Items" → `/your-items`.
 - **Bid history:** each row's header is the bidder (small *Avatar* and name); the top bid's avatar wears the crown and its name carries visually hidden "(top bidder)". A cancelled item has no winner, so no crown. Times are in the viewer's zone, labeled once beside the heading ("Bid history (6 bids) · times in EST"); a row from the other side of a clock change keeps its own zone ("Oct 31 at 7:00 PM EDT"). Below `--breakpoint-sm` the table has two columns (bidder, amount): the Time column hides and the time shows as a caption line (`.bid-history__when`) under the name; only one of the two is ever displayed. No bids: one "No bids yet." row.
 - **States:** default. **Loading:** `aria-busy` on `.item-page`. **Muted** (ended, cancelled): the amount turns muted. **Not found:** an *Empty state* with links to both browse pages. **Error:** an *Empty state* with **Try again**; a failed refresh keeps the page as it was.
 - **Refresh:** every 30 seconds while the tab is visible (SPEC §7.4), and when it becomes visible again. The carousel is kept when the photos haven't changed, so the photo the visitor is on stays. Only a change in the viewer's own standing is announced, through a visually hidden `role="status"` ("You've been outbid. The top bid is now $300."); redraws after view-as or a jump are silent (DECISIONS #88).
-- **Actions (Stage 4D; DECISIONS #88, #89):** `src/pages/item-actions.ts`.
+- **Actions (DECISIONS #88, #89):** `src/pages/item-actions.ts`.
   - **Bid form** (live, nothing in the way): `form.bid-form` > a *Form field* "Your bid" whose help is the computed minimum ("At least $245. Bids go up by $5.") > a *Money input* (`inputmode="numeric"`), starting at the minimum > **Place bid**. While the form shows, the minimum isn't repeated as the note.
   - **Buy button:** **Buy one**.
   - **Confirm dialogs:** "Place a $250 bid?" or "Buy the Hand-knit scarf for $45?", with the item's cover, title and where it stands, the amount, and "Bids can't be taken back." or "One per purchase. Purchases can't be taken back."
@@ -555,7 +557,7 @@ How forms behave, for every component below:
 **Purpose:** an item's 1–5 photos on its page, one at a time.
 
 - **Markup:** `<section class="carousel" aria-label="Photos of …" data-carousel>` > `.carousel__stage` (4:3) with `figure.carousel__slide`s (all but one `hidden`), `button.carousel__nav.carousel__nav--prev` and `--next` (round icon buttons over the photo), and `p.carousel__count` ("Photo 2 of 5", `aria-live="polite"`); then `ul.carousel__thumbs` of `button.carousel__thumb` (named "Photo 2 of 5", the current one `aria-current="true"`). Behavior: `enhanceCarousel()` in `src/components/carousel.ts`. With one photo, `.carousel--single` hides the arrows and thumbnails.
-- **States:** arrows and thumbnails have hover, active and focus (ring). **Current** thumbnail: a strong border and `aria-current`. At either end the arrow is **inactive** (`aria-disabled="true"`, faded) but stays focusable, so focus never vanishes. Loading: Milestone 5 decides (real photos replace the placeholders then); no spinner. Error and empty: N/A (an item always has at least one photo, SPEC §7).
+- **States:** arrows and thumbnails have hover, active and focus (ring). **Current** thumbnail: a strong border and `aria-current`. At either end the arrow is **inactive** (`aria-disabled="true"`, faded) but stays focusable, so focus never vanishes. Loading: N/A; the stage keeps a 4:3 frame in the muted surface while a photo loads, so nothing shifts, with no spinner. Error and empty: N/A (an item always has at least one photo, SPEC §7).
 - **Accessibility:** no autoplay and no swipe-only control. Every change is announced through the count. Arrows and thumbnails are 44px tall. The thumbnails stay on one row: at 390px all five narrow to fit, never below 44px wide. Each photo has alt text from the submitter's title ("Photo 2 of 5" until real photos land).
 - **Do:** keep the cover photo first. **Don't:** add autoplay or arrow-key shortcuts on the page.
 - **Figma:** *Photo carousel* · Photos = Single with Position = Only, plus Photos = Multiple × Position = First / Middle / Last (4 variants). *Carousel thumbnail* · State = Default / Hover / Focus / Current (4).
@@ -566,7 +568,7 @@ How forms behave, for every component below:
 
 - **Markup:** `<div class="table-wrap" role="region" aria-labelledby="(caption id)" data-table-scroll>` > `table.table` with a `caption`, `th scope="col"` headers, `th scope="row"` for each row's name, `.table__num` on number columns (right-aligned, tabular figures), and `.table__actions` in the last column (its header is visually hidden "Actions"). An empty table has one row: `td.table__empty` spanning every column. Behavior: `enhanceTableScroll()` in `src/components/table.ts`.
 - **Narrow screens:** the table keeps its columns and scrolls inside `.table-wrap` (WCAG's exception for two-dimensional content). The region joins the tab order (`tabindex="0"`) only while it actually scrolls, so keyboard users can scroll it with the arrow keys. The wrap is positioned so visually hidden text inside it can't widen the page.
-- **States:** rows have a hover fill. Row actions are *Button* Small (`--size-target-sm`, allowed in dense rows by SPEC §6) with the row's name in their label (visible "View bids", read as "View bids by Maya Okafor"). **Empty:** the message row, and the headers wrap so the message stays in view. Loading and error: Milestone 3 (an error uses a danger banner above the table). Disabled: N/A.
+- **States:** rows have a hover fill. Row actions are *Button* Small (`--size-target-sm`, allowed in dense rows by SPEC §6) with the row's name in their label (visible "View bids", read as "View bids by Maya Okafor"). **Empty:** the message row, and the headers wrap so the message stays in view. Loading and error: the page's own (its *Loading* line, then its error with Try again; DECISIONS #119). Disabled: N/A.
 - **Accessibility:** the caption names the table and the region. Column and row headers are real `th` elements. No sorting until a screen needs it.
 - **Do:** keep row actions to one or two. **Don't:** hide columns on small screens; scroll instead.
 - **Figma:** *Table* · Rows = Filled / Empty (2), built from *Table row* · State = Header / Default / Hover (3) and *Table cell* · Kind = Header / Text / Number / Link (4), with a *Value* text property.
