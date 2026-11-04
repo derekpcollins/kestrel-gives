@@ -64,11 +64,13 @@ async function everyonesTotal(tx: Tx): Promise<number> {
 
 describe("admin (rolled back)", () => {
   let maya: string;
+  let theo: string;
   beforeEach(async () => {
     db = await pool.connect();
     await db.query("BEGIN");
     await seedIn(db, new Date());
     maya = await userId(db, "Maya");
+    theo = await userId(db, "Theo");
   });
   afterEach(async () => {
     await db.query("ROLLBACK");
@@ -104,7 +106,7 @@ describe("admin (rolled back)", () => {
 
     test("approving a short proof: covered totals by sale type, approved amounts in the grand figure, and the gap", async () => {
       const rosa = await latestProofId(db, "Rosa"); // owes $65 (hot sauce twice, candles), uploaded $60
-      assert.deepEqual(await approveProofIn(db, rosa, maya, 6_500), { ok: true });
+      assert.deepEqual(await approveProofIn(db, rosa, maya, 6_500, "pending"), { ok: true, from: "pending" });
       const s = await summary(db);
       assert.deepEqual(s.totals.confirmed, { auctionCents: 0, instantCents: 17_000, grandCents: 16_500 });
       assert.equal(s.totals.approvedOwedCents, 17_000);
@@ -135,18 +137,18 @@ describe("admin (rolled back)", () => {
 
     test("approve refuses a changed total, a reviewed proof and a superseded one", async () => {
       const rosa = await latestProofId(db, "Rosa");
-      assert.equal((await approveProofIn(db, rosa, maya, 9_900) as { code: string }).code, "total-changed");
-      assert.equal((await approveProofIn(db, await latestProofId(db, "Dev"), maya, 10_500) as { code: string }).code, "already-reviewed");
+      assert.equal((await approveProofIn(db, rosa, maya, 9_900, "pending") as { code: string }).code, "total-changed");
+      assert.deepEqual(await approveProofIn(db, await latestProofId(db, "Dev"), maya, 10_500, "approved"), { ok: false, code: "already-reviewed", message: "That proof is already approved." });
       await db.query(`INSERT INTO proofs (event_id, user_id, amount_cents, owed_cents, image_path, created_at)
                       SELECT event_id, user_id, 6500, 6500, image_path, created_at + interval '1 minute' FROM proofs WHERE id = $1`, [rosa]);
-      assert.equal((await approveProofIn(db, rosa, maya, 6_500) as { code: string }).code, "superseded");
-      assert.equal((await approveProofIn(db, "999999999", maya, 6_500) as { code: string }).code, "not-found");
+      assert.equal((await approveProofIn(db, rosa, maya, 6_500, "pending") as { code: string }).code, "superseded");
+      assert.equal((await approveProofIn(db, "999999999", maya, 6_500, "pending") as { code: string }).code, "not-found");
     });
 
     test("approving records the total it covers, so the person sees it approved after a change while pending", async () => {
       await adminCancelItemIn(db, await itemId(db, "Hand-poured candles, set of three")); // Rosa: $65 → $40
       const rosa = await latestProofId(db, "Rosa");
-      assert.deepEqual(await approveProofIn(db, rosa, maya, 4_000), { ok: true });
+      assert.deepEqual(await approveProofIn(db, rosa, maya, 4_000, "pending"), { ok: true, from: "pending" });
       const row = await one<{ status: string; owed_cents: number; reviewed_by: string }>(db, `SELECT status, owed_cents, reviewed_by FROM proofs WHERE id = $1`, [rosa]);
       assert.deepEqual(row, { status: "approved", owed_cents: 4_000, reviewed_by: maya });
       const view = await proofViewIn(db, (await currentEventIn(db))!, await userId(db, "Rosa"), asIs);
@@ -156,11 +158,61 @@ describe("admin (rolled back)", () => {
 
     test("reject needs a reason, which the person sees", async () => {
       const rosa = await latestProofId(db, "Rosa");
-      assert.equal((await rejectProofIn(db, rosa, maya, "   ") as { code: string }).code, "invalid");
-      assert.deepEqual(await rejectProofIn(db, rosa, maya, "  The amount is cut off.  "), { ok: true });
+      assert.equal((await rejectProofIn(db, rosa, maya, "   ", "pending") as { code: string }).code, "invalid");
+      assert.deepEqual(await rejectProofIn(db, rosa, maya, "  The amount is cut off.  ", "pending"), { ok: true, from: "pending" });
       const view = await proofViewIn(db, (await currentEventIn(db))!, await userId(db, "Rosa"), asIs);
       assert.deepEqual([view.latest?.status, view.latest?.rejectionReason], ["rejected", "The amount is cut off."]);
-      assert.equal((await rejectProofIn(db, rosa, maya, "again") as { code: string }).code, "already-reviewed");
+      assert.equal((await rejectProofIn(db, rosa, maya, "again", "rejected") as { code: string }).code, "already-reviewed");
+    });
+
+    // Reversible decisions (owner, 6C review; DECISIONS #113).
+    test("reject instead: an approved proof leaves the confirmed totals, and the person sees the reason and can upload again", async () => {
+      const before = (await summary(db)).totals;
+      const dev = await latestProofId(db, "Dev"); // approved, $105 against $105
+      assert.equal((await rejectProofIn(db, dev, theo, " ", "approved") as { code: string }).code, "invalid");
+      assert.deepEqual(await rejectProofIn(db, dev, theo, "Wrong screenshot: this is a different donation.", "approved"), { ok: true, from: "approved" });
+      const row = await one<{ status: string; rejection_reason: string; reviewed_by: string; owed_cents: number }>(db, `SELECT status, rejection_reason, reviewed_by, owed_cents FROM proofs WHERE id = $1`, [dev]);
+      assert.deepEqual(row, { status: "rejected", rejection_reason: "Wrong screenshot: this is a different donation.", reviewed_by: theo, owed_cents: 10_500 });
+      const after = (await summary(db)).totals;
+      assert.equal(after.confirmed.grandCents, before.confirmed.grandCents - 10_500);
+      assert.equal(after.approvedOwedCents, before.approvedOwedCents - 10_500);
+      assert.equal(after.approvedPeople, before.approvedPeople - 1);
+      assert.equal(after.pledged.grandCents, before.pledged.grandCents, "pledged doesn't depend on proofs");
+      const view = await proofViewIn(db, (await currentEventIn(db))!, await userId(db, "Dev"), asIs);
+      assert.deepEqual([view.latest?.status, view.latest?.rejectionReason, view.blocked], ["rejected", "Wrong screenshot: this is a different donation.", null]);
+    });
+
+    test("approve instead: a rejected proof, against the total seen; the reason is cleared and the covered total recorded", async () => {
+      const before = (await summary(db)).totals;
+      const owen = await latestProofId(db, "Owen"); // rejected, $35 against $35
+      assert.equal((await approveProofIn(db, owen, theo, 9_900, "rejected") as { code: string }).code, "total-changed");
+      assert.deepEqual(await approveProofIn(db, owen, theo, 3_500, "rejected"), { ok: true, from: "rejected" });
+      const row = await one<{ status: string; rejection_reason: string | null; reviewed_by: string; owed_cents: number }>(db, `SELECT status, rejection_reason, reviewed_by, owed_cents FROM proofs WHERE id = $1`, [owen]);
+      assert.deepEqual(row, { status: "approved", rejection_reason: null, reviewed_by: theo, owed_cents: 3_500 });
+      const after = (await summary(db)).totals;
+      assert.equal(after.confirmed.grandCents, before.confirmed.grandCents + 3_500);
+      assert.equal(after.approvedPeople, before.approvedPeople + 1);
+      const view = await proofViewIn(db, (await currentEventIn(db))!, await userId(db, "Owen"), asIs);
+      assert.deepEqual([view.latest?.status, view.blocked?.code, view.totalChanged], ["approved", "approved", false]);
+    });
+
+    test("a stale page can't overturn another decision: the status seen must still hold", async () => {
+      const rosa = await latestProofId(db, "Rosa"); // pending
+      assert.deepEqual(await approveProofIn(db, rosa, maya, 6_500, "rejected"), { ok: false, code: "already-reviewed", message: "That proof is waiting for review now." });
+      assert.deepEqual(await rejectProofIn(db, await latestProofId(db, "Dev"), maya, "Not clear.", "pending"), { ok: false, code: "already-reviewed", message: "That proof is approved now." });
+      assert.deepEqual(await rejectProofIn(db, await latestProofId(db, "Owen"), maya, "Not clear.", "rejected"), { ok: false, code: "already-reviewed", message: "That proof is already rejected." });
+      assert.equal(await one<{ status: string }>(db, `SELECT status FROM proofs WHERE id = $1`, [rosa]).then((r) => r.status), "pending");
+    });
+
+    test("only the person's latest proof can be reversed", async () => {
+      const owen = await latestProofId(db, "Owen");
+      await db.query(`INSERT INTO proofs (event_id, user_id, amount_cents, owed_cents, image_path, created_at)
+                      SELECT event_id, user_id, 3500, 3500, image_path, created_at + interval '1 minute' FROM proofs WHERE id = $1`, [owen]);
+      assert.equal((await approveProofIn(db, owen, maya, 3_500, "rejected") as { code: string }).code, "superseded");
+      const dev = await latestProofId(db, "Dev");
+      await db.query(`INSERT INTO proofs (event_id, user_id, amount_cents, owed_cents, image_path, created_at)
+                      SELECT event_id, user_id, 10500, 10500, image_path, created_at + interval '1 minute' FROM proofs WHERE id = $1`, [dev]);
+      assert.equal((await rejectProofIn(db, dev, maya, "Not clear.", "approved") as { code: string }).code, "superseded");
     });
   });
 

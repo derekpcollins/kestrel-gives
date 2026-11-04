@@ -167,7 +167,7 @@ test("Proof review: waiting first with the short warning, then reviewed with who
   const owenCard = page.getByRole("listitem", { name: "Owen Achterberg" });
   await expect(owenCard).toContainText("Rejected by Maya Okafor");
   await expect(owenCard).toContainText("Reason: The screenshot doesn't show the donation amount.");
-  await expect(owenCard.getByRole("button", { name: /Approve/ })).toHaveCount(0);
+  await expect(owenCard.getByRole("button")).toHaveText([/View larger/, "Approve Owen Achterberg's proof instead"]);
   await axe(page);
 });
 
@@ -198,7 +198,7 @@ test("Approve sends the total seen, then redraws with a toast; the short note dr
   await page.goto("/admin/proofs");
   await page.getByRole("button", { name: "Approve Rosa Delgado's proof" }).click();
   await expect(page.getByText("Proof approved.")).toBeVisible();
-  expect(sent).toEqual({ action: "approve-proof", proofId: "1", totalCents: 6_500 });
+  expect(sent).toEqual({ action: "approve-proof", proofId: "1", totalCents: 6_500, fromStatus: "pending" });
   await expect(page.locator(".proof-queue__title")).toHaveText(["Waiting for review (0)", "Reviewed (2)"]);
   await expect(page.locator("#queue-waiting")).toBeFocused();
   const rosa = page.getByRole("listitem", { name: "Rosa Delgado" });
@@ -229,7 +229,7 @@ test("Reject needs a reason: an inline error first, then it sends the reason", a
   await expect(reason).not.toHaveAttribute("aria-invalid", /.*/);
   await dialog.getByRole("button", { name: "Reject proof" }).click();
   await expect(dialog).toBeHidden();
-  expect(sent).toEqual({ action: "reject-proof", proofId: "1", reason: "The amount is cut off." });
+  expect(sent).toEqual({ action: "reject-proof", proofId: "1", reason: "The amount is cut off.", fromStatus: "pending" });
   await expect(page.getByText("Proof rejected. Rosa can upload a new one.")).toBeVisible();
   await expect(page.getByRole("listitem", { name: "Rosa Delgado" })).toContainText("Reason: The amount is cut off.");
 });
@@ -243,6 +243,70 @@ test("a refused approve (the total moved) reloads the queue and says why", async
   await page.getByRole("button", { name: "Approve Rosa Delgado's proof" }).click();
   await expect(page.getByRole("alert").filter({ hasText: "Their donation total is now $40" })).toHaveText("Their donation total is now $40. Check the proof again. The queue has been updated.");
   expect(loads).toBe(2);
+});
+
+test("reviewed cards offer the other decision; buttons are the regular 44px size", async ({ page }) => {
+  await viewAs(page, "1");
+  await stubProofs(page, [proof({}), dev, owen]);
+  await page.goto("/admin/proofs");
+  const rosa = page.getByRole("listitem", { name: "Rosa Delgado" });
+  await expect(rosa.getByRole("button", { name: /instead/ })).toHaveCount(0);
+  const reverse = [
+    page.getByRole("listitem", { name: "Dev Kapoor" }).getByRole("button", { name: "Reject Dev Kapoor's proof instead" }),
+    page.getByRole("listitem", { name: "Owen Achterberg" }).getByRole("button", { name: "Approve Owen Achterberg's proof instead" }),
+  ];
+  for (const b of reverse) await expect(b).toBeVisible();
+  for (const b of [rosa.getByRole("button", { name: /^Approve/ }), rosa.getByRole("button", { name: /^Reject/ }), ...reverse]) {
+    expect((await b.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  }
+  await expect(reverse[0]!).toHaveText("Reject Dev Kapoor's proof instead"); // visible text is "Reject instead"
+  await expect(reverse[0]!.locator(".visually-hidden")).toHaveText(" Dev Kapoor's proof");
+});
+
+test("Reject instead: the same dialog with a required reason, saying it leaves the confirmed totals", async ({ page }) => {
+  await viewAs(page, "1");
+  await stubProofs(page, [proof({}), dev, owen]);
+  const devRejected = { ...dev, status: "rejected", rejectionReason: "Wrong screenshot.", reviewedAt: "2026-11-03T22:30:00.000Z" };
+  let sent: unknown = null;
+  await page.route(/\/api\/admin$/, (route) => {
+    sent = route.request().postDataJSON();
+    return route.fulfill({ json: { ok: true, message: "Proof rejected instead. It's no longer confirmed, and they'll see your reason.", view: "proofs", answer: proofsAnswer([proof({}), devRejected, owen]) } });
+  });
+  await page.goto("/admin/proofs");
+  await page.getByRole("button", { name: "Reject Dev Kapoor's proof instead" }).click();
+  const dialog = page.getByRole("dialog", { name: "Reject Dev Kapoor's approved proof?" });
+  await expect(dialog).toContainText("takes its $105 out of the confirmed totals");
+  await dialog.getByRole("button", { name: "Reject instead" }).click();
+  await expect(dialog.getByText("Enter a reason. The person will see it.")).toBeVisible();
+  expect(sent).toBeNull();
+  await axe(page);
+  await dialog.getByLabel("Reason (shown to Dev)").fill("Wrong screenshot.");
+  await dialog.getByRole("button", { name: "Reject instead" }).click();
+  await expect(dialog).toBeHidden();
+  expect(sent).toEqual({ action: "reject-proof", proofId: "2", reason: "Wrong screenshot.", fromStatus: "approved" });
+  const card = page.getByRole("listitem", { name: "Dev Kapoor" });
+  await expect(card).toContainText("Reason: Wrong screenshot.");
+  await expect(card.getByRole("button", { name: "Approve Dev Kapoor's proof instead" })).toBeVisible();
+  await expect(page.locator("#proof-2-name")).toBeFocused();
+});
+
+test("Approve instead: one click, with the total seen and the status it reverses", async ({ page }) => {
+  await viewAs(page, "1");
+  await stubProofs(page, [proof({}), dev, owen]);
+  const owenApproved = { ...owen, status: "approved", rejectionReason: null, reviewedAt: "2026-11-03T22:30:00.000Z" };
+  let sent: unknown = null;
+  await page.route(/\/api\/admin$/, (route) => {
+    sent = route.request().postDataJSON();
+    return route.fulfill({ json: { ok: true, message: "Proof approved instead. The rejection is cleared.", view: "proofs", answer: proofsAnswer([proof({}), dev, owenApproved]) } });
+  });
+  await page.goto("/admin/proofs");
+  await page.getByRole("button", { name: "Approve Owen Achterberg's proof instead" }).click();
+  await expect(page.getByText("Proof approved instead. The rejection is cleared.")).toBeVisible();
+  expect(sent).toEqual({ action: "approve-proof", proofId: "3", totalCents: 3_500, fromStatus: "rejected" });
+  const card = page.getByRole("listitem", { name: "Owen Achterberg" });
+  await expect(card).not.toContainText("Reason:");
+  await expect(card.getByRole("button", { name: "Reject Owen Achterberg's proof instead" })).toBeVisible();
+  await expect(page.locator("#proof-3-name")).toBeFocused();
 });
 
 test("no proofs yet: both groups say so", async ({ page }) => {

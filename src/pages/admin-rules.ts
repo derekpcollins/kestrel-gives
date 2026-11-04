@@ -175,6 +175,12 @@ export interface ProofReviewText {
   reason: string | null;
   /** Approve and Reject show only while it's waiting. */
   canReview: boolean;
+  /**
+   * A reviewed proof can be reversed (owner, 6C review): "Reject instead" when approved,
+   * "Approve instead" when rejected. The queue lists only each person's latest proof, and the
+   * server refuses one that's been superseded.
+   */
+  instead: "approve" | "reject" | null;
   /** For the screenshot's alt text and the buttons' hidden labels. */
   shotAlt: string;
 }
@@ -202,15 +208,24 @@ export function proofReview(p: AdminProof, ctx: { now: Date; deadline: string | 
     amount: dollars(p.amountCents), total: dollars(p.totalCents), notes, reviewed,
     reason: p.status === "rejected" && p.rejectionReason ? `Reason: ${p.rejectionReason}` : null,
     canReview: p.status === "pending",
+    instead: p.status === "approved" ? "reject" : p.status === "rejected" ? "approve" : null,
     shotAlt: `Donation screenshot from ${name}`,
   };
 }
 
-/** The reject dialog's words; the reason is required and shown to the person (SPEC §7.6). */
-export function rejectDialog(p: Pick<AdminProof, "person">): { title: string; body: string; label: string; help: string; maxLength: number; check: (v: string) => string | null } {
+/**
+ * The reject dialog's words; the reason is required and shown to the person (SPEC §7.6).
+ * Rejecting an approved proof ("Reject instead") says it leaves the confirmed totals.
+ */
+export function rejectDialog(p: Pick<AdminProof, "person" | "status" | "amountCents">): { title: string; body: string; confirmLabel: string; label: string; help: string; maxLength: number; check: (v: string) => string | null } {
+  const name = `${p.person.firstName} ${p.person.lastName}`;
+  const instead = p.status === "approved";
   return {
-    title: `Reject ${p.person.firstName} ${p.person.lastName}'s proof?`,
-    body: `${p.person.firstName} will see your reason on Your Items and can upload a new proof.`,
+    title: instead ? `Reject ${name}'s approved proof?` : `Reject ${name}'s proof?`,
+    body: instead
+      ? `It's approved now. Rejecting it takes its ${dollars(p.amountCents)} out of the confirmed totals. ${p.person.firstName} will see your reason on Your Items and can upload a new proof.`
+      : `${p.person.firstName} will see your reason on Your Items and can upload a new proof.`,
+    confirmLabel: instead ? "Reject instead" : "Reject proof",
     label: `Reason (shown to ${p.person.firstName})`,
     help: `For example, "The screenshot doesn't show the amount." Up to ${REASON_MAX} characters.`,
     maxLength: REASON_MAX,

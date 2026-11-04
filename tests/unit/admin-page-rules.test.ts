@@ -122,6 +122,18 @@ describe("proof review", () => {
     assert.equal(t.notes[1]!.text, "Their total was $40 when they uploaded this proof. It's $65 now.");
     assert.match(t.notes[2]!.text, /^Uploaded after the proof deadline/);
   });
+  test("reviewed proofs offer the other decision; waiting ones don't", () => {
+    assert.equal(proofReview(p(), { now, deadline }).instead, null);
+    assert.equal(proofReview(p({ status: "approved" }), { now, deadline }).instead, "reject");
+    assert.equal(proofReview(p({ status: "rejected", rejectionReason: "x" }), { now, deadline }).instead, "approve");
+  });
+  test("rejecting an approved proof says it leaves the confirmed totals", () => {
+    const d = rejectDialog(p({ status: "approved" }));
+    assert.equal(d.title, "Reject Rosa Delgado's approved proof?");
+    assert.equal(d.body, "It's approved now. Rejecting it takes its $60 out of the confirmed totals. Rosa will see your reason on Your Items and can upload a new proof.");
+    assert.equal(d.confirmLabel, "Reject instead");
+    assert.equal(rejectDialog(p()).confirmLabel, "Reject proof");
+  });
   test("the reject dialog names the person and needs a reason", () => {
     const d = rejectDialog(p());
     assert.equal(d.title, "Reject Rosa Delgado's proof?");

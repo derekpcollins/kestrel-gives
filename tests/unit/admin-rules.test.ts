@@ -156,9 +156,12 @@ describe("/api/admin input checks", () => {
     assert.ok("error" in (parseAdminView(new URLSearchParams("view=secrets")) as object));
   });
   test("actions need their fields, in their types", () => {
-    assert.deepEqual(parseAdminAction({ action: "approve-proof", proofId: "4", totalCents: 3500 }), { action: "approve-proof", proofId: "4", totalCents: 3500 });
-    assert.ok("error" in parseAdminAction({ action: "approve-proof", proofId: "4" }));
-    assert.ok("error" in parseAdminAction({ action: "reject-proof", proofId: "x", reason: "r" }));
+    assert.deepEqual(parseAdminAction({ action: "approve-proof", proofId: "4", totalCents: 3500, fromStatus: "rejected" }), { action: "approve-proof", proofId: "4", totalCents: 3500, fromStatus: "rejected" });
+    assert.deepEqual(parseAdminAction({ action: "reject-proof", proofId: "4", reason: "r", fromStatus: "approved" }), { action: "reject-proof", proofId: "4", reason: "r", fromStatus: "approved" });
+    assert.ok("error" in parseAdminAction({ action: "approve-proof", proofId: "4", fromStatus: "pending" }));
+    assert.ok("error" in parseAdminAction({ action: "approve-proof", proofId: "4", totalCents: 3500 }), "the status seen is required");
+    assert.ok("error" in parseAdminAction({ action: "reject-proof", proofId: "4", reason: "r", fromStatus: "done" }));
+    assert.ok("error" in parseAdminAction({ action: "reject-proof", proofId: "x", reason: "r", fromStatus: "pending" }));
     assert.deepEqual(parseAdminAction({ action: "remove-bid", bidId: 12 }), { action: "remove-bid", bidId: "12" });
     assert.ok("error" in parseAdminAction({ action: "cancel-item" }));
     assert.ok("error" in parseAdminAction({ action: "save-settings", settings: { name: "x" } }));

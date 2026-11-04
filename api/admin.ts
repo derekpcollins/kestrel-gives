@@ -59,12 +59,12 @@ type Outcome = { ok: true; message: string; files?: string[] } | AdminRefusal | 
 async function act(tx: Tx, adminId: string, a: AdminAction): Promise<Outcome> {
   switch (a.action) {
     case "approve-proof": {
-      const r = await approveProofIn(tx, a.proofId, adminId, a.totalCents);
-      return r.ok ? { ok: true, message: "Proof approved." } : r;
+      const r = await approveProofIn(tx, a.proofId, adminId, a.totalCents, a.fromStatus);
+      return r.ok ? { ok: true, message: r.from === "rejected" ? "Proof approved instead. The rejection is cleared." : "Proof approved." } : r;
     }
     case "reject-proof": {
-      const r = await rejectProofIn(tx, a.proofId, adminId, a.reason);
-      return r.ok ? { ok: true, message: "Proof rejected. They'll see your reason." } : r;
+      const r = await rejectProofIn(tx, a.proofId, adminId, a.reason, a.fromStatus);
+      return r.ok ? { ok: true, message: r.from === "approved" ? "Proof rejected instead. It's no longer confirmed, and they'll see your reason." : "Proof rejected. They'll see your reason." } : r;
     }
     case "remove-bid": {
       const r = await adminRemoveBidIn(tx, a.bidId, adminId);

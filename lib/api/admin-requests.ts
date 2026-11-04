@@ -4,6 +4,7 @@
 import { asId } from "./item-requests.ts";
 import type { AdminView } from "../../src/admin-api.ts";
 import type { SettingsInput } from "../../src/components/settings-rules.ts";
+import type { ProofStatus } from "../../src/components/proof-rules.ts";
 
 export const ADMIN_VIEWS: readonly AdminView[] = ["summary", "people", "proofs", "items", "settings", "templates"];
 
@@ -13,8 +14,8 @@ export function parseAdminView(params: URLSearchParams): AdminView | { error: st
 }
 
 export type AdminAction =
-  | { action: "approve-proof"; proofId: string; totalCents: number }
-  | { action: "reject-proof"; proofId: string; reason: string }
+  | { action: "approve-proof"; proofId: string; totalCents: number; fromStatus: ProofStatus }
+  | { action: "reject-proof"; proofId: string; reason: string; fromStatus: ProofStatus }
   | { action: "remove-bid"; bidId: string }
   | { action: "cancel-item"; itemId: string }
   | { action: "save-settings"; settings: SettingsInput }
@@ -23,6 +24,11 @@ export type AdminAction =
   | { action: "reset-year"; confirmName: string };
 
 const TEXT_MAX = 20_000;
+
+const STATUSES: readonly ProofStatus[] = ["pending", "approved", "rejected"];
+function statusOf(v: unknown): ProofStatus | null {
+  return typeof v === "string" && (STATUSES as readonly string[]).includes(v) ? (v as ProofStatus) : null;
+}
 
 function text(b: Record<string, unknown>, key: string, max = TEXT_MAX): string | null {
   const v = b[key];
@@ -41,14 +47,16 @@ export function parseAdminAction(body: unknown): AdminAction | { error: string }
     case "approve-proof": {
       const proofId = asId(b["proofId"]);
       const totalCents = whole(b, "totalCents");
-      if (!proofId || totalCents === null) return { error: "approve-proof needs proofId and totalCents." };
-      return { action: "approve-proof", proofId, totalCents };
+      const fromStatus = statusOf(b["fromStatus"]);
+      if (!proofId || totalCents === null || !fromStatus) return { error: "approve-proof needs proofId, totalCents and fromStatus." };
+      return { action: "approve-proof", proofId, totalCents, fromStatus };
     }
     case "reject-proof": {
       const proofId = asId(b["proofId"]);
       const reason = text(b, "reason", 2_000);
-      if (!proofId || reason === null) return { error: "reject-proof needs proofId and reason." };
-      return { action: "reject-proof", proofId, reason };
+      const fromStatus = statusOf(b["fromStatus"]);
+      if (!proofId || reason === null || !fromStatus) return { error: "reject-proof needs proofId, reason and fromStatus." };
+      return { action: "reject-proof", proofId, reason, fromStatus };
     }
     case "remove-bid": {
       const bidId = asId(b["bidId"]);

@@ -197,8 +197,12 @@ export async function adminProofsIn(tx: Tx, resolve: ResolvePhoto): Promise<Admi
   return { ok: true, now: now.toISOString(), proofDeadline: iso(proofDeadlineOf(event)), proofs };
 }
 
-/** Locks a proof and checks it's the person's latest and still waiting for review. */
-async function reviewableProofIn(tx: Tx, proofId: Id): Promise<{ eventId: Id; userId: Id; amountCents: number } | AdminRefusal> {
+/**
+ * Locks a proof and checks it's the person's latest and still in the status the admin saw
+ * (`seenStatus`), so a stale page can't overturn another admin's decision. Reviewed proofs can
+ * be reversed (owner, 6C review; DECISIONS #113): approved to rejected, rejected to approved.
+ */
+async function reviewableProofIn(tx: Tx, proofId: Id, seenStatus: ProofStatus, to: "approved" | "rejected"): Promise<{ eventId: Id; userId: Id; amountCents: number; status: ProofStatus } | AdminRefusal> {
   const event = await currentEventIn(tx);
   if (!event) return refuse("not-found", "There's no current event.");
   const { rows } = await tx.query<{ user_id: Id; status: ProofStatus; amount_cents: number }>(
@@ -213,18 +217,19 @@ async function reviewableProofIn(tx: Tx, proofId: Id): Promise<{ eventId: Id; us
     [event.id, proof.user_id],
   );
   if (latest[0]?.id !== proofId) return refuse("superseded", "They've uploaded a newer proof since. Review that one instead.");
-  if (proof.status !== "pending") return refuse("already-reviewed", `That proof was already ${proof.status}.`);
-  return { eventId: event.id, userId: proof.user_id, amountCents: Number(proof.amount_cents) };
+  if (proof.status === to) return refuse("already-reviewed", `That proof is already ${to}.`);
+  if (proof.status !== seenStatus) return refuse("already-reviewed", `That proof is ${proof.status === "pending" ? "waiting for review" : proof.status} now.`);
+  return { eventId: event.id, userId: proof.user_id, amountCents: Number(proof.amount_cents), status: proof.status };
 }
 
 /**
- * Approves a waiting proof. `seenTotalCents` is the total the admin was shown: if it has
+ * Approves a waiting or rejected proof (`seenStatus` is the one the admin saw). `seenTotalCents` is the total the admin was shown: if it has
  * changed since, nothing is approved and the queue reloads. Approving records the current
  * total as the one the proof covers (DECISIONS #111), so it stays approved until the total
  * changes again (§7.6).
  */
-export async function approveProofIn(tx: Tx, proofId: Id, adminId: Id, seenTotalCents: number): Promise<{ ok: true } | AdminRefusal> {
-  const proof = await reviewableProofIn(tx, proofId);
+export async function approveProofIn(tx: Tx, proofId: Id, adminId: Id, seenTotalCents: number, seenStatus: ProofStatus): Promise<{ ok: true; from: ProofStatus } | AdminRefusal> {
+  const proof = await reviewableProofIn(tx, proofId, seenStatus, "approved");
   if ("ok" in proof) return proof;
   const total = await donationTotalIn(tx, proof.eventId, proof.userId);
   if (total !== seenTotalCents) return refuse("total-changed", `Their donation total is now $${(total / 100).toLocaleString("en-US")}. Check the proof again.`);
@@ -232,20 +237,24 @@ export async function approveProofIn(tx: Tx, proofId: Id, adminId: Id, seenTotal
     `UPDATE proofs SET status = 'approved', owed_cents = $3, reviewed_by = $2, reviewed_at = now(), rejection_reason = NULL WHERE id = $1`,
     [proofId, adminId, total],
   );
-  return { ok: true };
+  return { ok: true, from: proof.status };
 }
 
-/** Rejects a waiting proof with a reason the person will see (SPEC §7.6). */
-export async function rejectProofIn(tx: Tx, proofId: Id, adminId: Id, reason: string): Promise<{ ok: true } | AdminRefusal> {
+/**
+ * Rejects a waiting or approved proof with a reason the person will see (SPEC §7.6). The total
+ * isn't checked: a rejection doesn't depend on it. The approval's covered total (`owed_cents`)
+ * is kept, as for any rejection.
+ */
+export async function rejectProofIn(tx: Tx, proofId: Id, adminId: Id, reason: string, seenStatus: ProofStatus): Promise<{ ok: true; from: ProofStatus } | AdminRefusal> {
   const problem = reasonProblem(reason);
   if (problem) return refuse("invalid", problem);
-  const proof = await reviewableProofIn(tx, proofId);
+  const proof = await reviewableProofIn(tx, proofId, seenStatus, "rejected");
   if ("ok" in proof) return proof;
   await tx.query(
     `UPDATE proofs SET status = 'rejected', rejection_reason = $3, reviewed_by = $2, reviewed_at = now() WHERE id = $1`,
     [proofId, adminId, reason.trim()],
   );
-  return { ok: true };
+  return { ok: true, from: proof.status };
 }
 
 // ---------------------------------------------------------------------------------------------

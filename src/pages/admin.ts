@@ -133,11 +133,18 @@ function proofCard(p: AdminProof, answer: AdminProofs, actions: ProofActions): H
     large,
   );
   if (t.canReview) {
-    const approve = el("button", { className: "btn btn--sm", attrs: { type: "button" } }, "Approve", el("span", { className: "visually-hidden", text: ` ${t.name}'s proof` }));
-    const reject = el("button", { className: "btn btn--secondary btn--sm", attrs: { type: "button" } }, "Reject", el("span", { className: "visually-hidden", text: ` ${t.name}'s proof` }));
+    const approve = el("button", { className: "btn", attrs: { type: "button" } }, "Approve", el("span", { className: "visually-hidden", text: ` ${t.name}'s proof` }));
+    const reject = el("button", { className: "btn btn--secondary", attrs: { type: "button" } }, "Reject", el("span", { className: "visually-hidden", text: ` ${t.name}'s proof` }));
     approve.addEventListener("click", () => actions.approve(p, approve));
     reject.addEventListener("click", () => actions.reject(p));
     card.append(el("div", { className: "proof-review__actions" }, approve, reject));
+  } else if (t.instead) {
+    // Reverse a decision (owner, 6C review): secondary, since it overturns one already made.
+    // Shown "Approve instead"; read "Approve Owen Achterberg's proof instead".
+    const button = el("button", { className: "btn btn--secondary", attrs: { type: "button" } },
+      t.instead === "approve" ? "Approve" : "Reject", el("span", { className: "visually-hidden", text: ` ${t.name}'s proof` }), " instead");
+    button.addEventListener("click", () => (t.instead === "approve" ? actions.approve(p, button) : actions.reject(p)));
+    card.append(el("div", { className: "proof-review__actions" }, button));
   }
   return card;
 }
@@ -238,6 +245,15 @@ export function startAdminPage(): void {
     box.replaceChildren(banner);
     banner.focus();
   };
+  /**
+   * After a decision: from the waiting queue, focus goes to its heading (the next proof);
+   * after reversing a reviewed one, to that person's card, which stays in Reviewed.
+   */
+  const focusAfter = (proof: AdminProof) => {
+    const target = proof.status === "pending" ? content.querySelector<HTMLElement>("#queue-waiting") : content.querySelector<HTMLElement>(`#proof-${proof.id}-name`);
+    target?.setAttribute("tabindex", "-1");
+    target?.focus();
+  };
   const redrawProofs = (answer: AdminProofs) => {
     content.replaceChildren(...proofs(answer, actions));
     hydrateIcons(content);
@@ -248,11 +264,10 @@ export function startAdminPage(): void {
       button.setAttribute("aria-busy", "true");
       button.setAttribute("aria-disabled", "true");
       try {
-        const done = await post({ action: "approve-proof", proofId: proof.id, totalCents: proof.totalCents });
+        const done = await post({ action: "approve-proof", proofId: proof.id, totalCents: proof.totalCents, fromStatus: proof.status });
         redrawProofs(done.answer as AdminProofs);
         showToast(done.message, { tone: "success" });
-        content.querySelector<HTMLElement>("#queue-waiting")?.setAttribute("tabindex", "-1");
-        content.querySelector<HTMLElement>("#queue-waiting")?.focus();
+        focusAfter(proof);
       } catch (error) {
         button.removeAttribute("aria-busy");
         button.removeAttribute("aria-disabled");
@@ -271,11 +286,11 @@ export function startAdminPage(): void {
       let message = "";
       let stale = false;
       const done = await confirmDialog({
-        variant: "danger", title: words.title, body: words.body, confirmLabel: "Reject proof", busyLabel: "Rejecting…",
+        variant: "danger", title: words.title, body: words.body, confirmLabel: words.confirmLabel, busyLabel: "Rejecting…",
         reason: { label: words.label, help: words.help, maxLength: words.maxLength, check: words.check },
         onConfirm: async (reason) => {
           try {
-            const r = await post({ action: "reject-proof", proofId: proof.id, reason });
+            const r = await post({ action: "reject-proof", proofId: proof.id, reason, fromStatus: proof.status });
             answer = r.answer as AdminProofs;
             message = r.message;
           } catch (error) {
@@ -288,8 +303,7 @@ export function startAdminPage(): void {
       if (done && answer) {
         redrawProofs(answer);
         showToast(message, { tone: "success" });
-        content.querySelector<HTMLElement>("#queue-waiting")?.setAttribute("tabindex", "-1");
-        content.querySelector<HTMLElement>("#queue-waiting")?.focus();
+        focusAfter(proof);
       } else if (stale) {
         await load();
       }
