@@ -12,6 +12,7 @@ import { currentEventIn, phaseOf } from "../../lib/data/event.ts";
 import { donationTotalIn } from "../../lib/data/totals.ts";
 import { JUMP_TARGETS, jumpIn, tryJumpIn } from "../../lib/demo/jump.ts";
 import { RESTORE_COOLDOWN_SECONDS, cooldownLeftIn, restoreIn, tryDemoLockIn, tryRestoreIn } from "../../lib/demo/restore.ts";
+import { CHARITIES } from "../../lib/seed/data.ts";
 import { seedIn } from "../../lib/seed/seed.ts";
 
 let pool: Pool;
@@ -112,11 +113,14 @@ describe("demo controls (rolled back)", () => {
     await db.query(`DELETE FROM demo_restores`);
     await jumpIn(db, "after", new Date());
     await db.query(`UPDATE items SET title = 'Changed by a visitor' WHERE id = 1`);
+    await db.query(`UPDATE charities SET logo_path = '/seed/charities/placeholder-logo.png'`); // main before 7B
     const now = new Date();
     assert.deepEqual(await tryRestoreIn(db, "manual", now), { status: "restored", hadUploads: false });
     assert.equal((await appStateIn(db, null, {}, noCopies)).event?.phase, "live");
     assert.notEqual((await db.query<{ title: string }>(`SELECT title FROM items WHERE id = 1`)).rows[0]!.title, "Changed by a visitor");
     assert.deepEqual((await db.query<{ source: string }>(`SELECT source FROM demo_restores`)).rows, [{ source: "manual" }]);
+    // Each charity's own logo (DECISIONS entry 130), from the seed.
+    assert.deepEqual((await db.query(`SELECT name, logo_path FROM charities ORDER BY position`)).rows, CHARITIES.map((c) => ({ name: c.name, logo_path: c.logo })));
 
     const soon = new Date(now.getTime() + 3_000);
     assert.deepEqual(await tryRestoreIn(db, "manual", soon), { status: "cooldown", retryAfterSeconds: RESTORE_COOLDOWN_SECONDS - 3 });
