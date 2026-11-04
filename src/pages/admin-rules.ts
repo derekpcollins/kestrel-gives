@@ -2,12 +2,15 @@
 // node:test covers them. Each section is its own URL (`/admin`, `/admin/people`, …), reached
 // through a section nav of plain links (DECISIONS entry 59), not tabs.
 import { formatDollars } from "../components/form-rules.ts";
-import type { Tone } from "../components/item-tile-rules.ts";
-import type { AdminPerson, AdminSummary } from "../admin-api.ts";
+import type { Phase, Tone } from "../components/item-tile-rules.ts";
+import { deadlineWords } from "../components/proof-rules.ts";
+import type { AdminPerson, AdminProof, AdminSummary } from "../admin-api.ts";
+import { when } from "../components/phase-banner-rules.ts";
+import { reasonProblem, REASON_MAX } from "../components/admin-rules.ts";
 
 const dollars = (cents: number) => formatDollars(cents / 100);
 
-export type SectionKey = "totals" | "people";
+export type SectionKey = "totals" | "people" | "proofs";
 
 export interface Section {
   key: SectionKey;
@@ -20,6 +23,7 @@ export interface Section {
 export const SECTIONS: readonly Section[] = [
   { key: "totals", label: "Totals", href: "/admin", description: "Pledged and confirmed donations, by sale type." },
   { key: "people", label: "People", href: "/admin/people", description: "Everyone's bids, wins, purchases, donation total and proof." },
+  { key: "proofs", label: "Proof review", href: "/admin/proofs", description: "Approve or reject each person's donation proof." },
 ];
 
 /** Which section a path shows; null for an admin path that isn't a section. */
@@ -46,15 +50,20 @@ export interface TotalCard {
   title: string;
   pledged: string;
   confirmed: string;
+  /** Zero amounts are drawn muted; green is only for confirmed amounts above $0 (owner, 6B review). */
+  pledgedZero: boolean;
+  confirmedZero: boolean;
 }
 
 /** Three cards: silent auction, instant sale, grand total; each pledged and confirmed. */
 export function totalCards(summary: Pick<AdminSummary, "totals">): TotalCard[] {
   const { pledged, confirmed } = summary.totals;
+  const card = (key: TotalCard["key"], title: string, p: number, c: number): TotalCard =>
+    ({ key, title, pledged: dollars(p), confirmed: dollars(c), pledgedZero: p === 0, confirmedZero: c === 0 });
   return [
-    { key: "auction", title: "Silent auction", pledged: dollars(pledged.auctionCents), confirmed: dollars(confirmed.auctionCents) },
-    { key: "instant", title: "Instant sale", pledged: dollars(pledged.instantCents), confirmed: dollars(confirmed.instantCents) },
-    { key: "grand", title: "Grand total", pledged: dollars(pledged.grandCents), confirmed: dollars(confirmed.grandCents) },
+    card("auction", "Silent auction", pledged.auctionCents, confirmed.auctionCents),
+    card("instant", "Instant sale", pledged.instantCents, confirmed.instantCents),
+    card("grand", "Grand total", pledged.grandCents, confirmed.grandCents),
   ];
 }
 
@@ -94,10 +103,27 @@ export interface ProofCell {
   detail: string | null;
 }
 
-/** The People table's Proof column: the latest proof's status and amount, or why there's none. */
-export function proofCell(person: Pick<AdminPerson, "totalCents" | "proof">): ProofCell {
+export interface ProofTiming {
+  phase: Phase;
+  /** The proof deadline (ISO), or null before a close is set. */
+  deadline: string | null;
+  now: Date;
+}
+
+/**
+ * The People table's Proof column: the latest proof's status and amount, or why there's none.
+ * With no proof, it follows the phase like Your Items (owner, 6B review): neutral before
+ * bidding closes, a warning after, and Late (danger) past the proof deadline.
+ */
+export function proofCell(person: Pick<AdminPerson, "totalCents" | "proof">, timing: ProofTiming): ProofCell {
   const p = person.proof;
-  if (!p) return person.totalCents > 0 ? { label: "Not uploaded", tone: "warning", detail: null } : { label: "Nothing owed", tone: "neutral", detail: null };
+  if (!p) {
+    if (person.totalCents <= 0) return { label: "Nothing owed", tone: "neutral", detail: null };
+    if (timing.phase !== "ended") return { label: "Not uploaded", tone: "neutral", detail: null };
+    const due = deadlineWords(timing.deadline ? new Date(timing.deadline) : null, timing.now);
+    if (due?.endsWith("late")) return { label: "Late", tone: "danger", detail: due };
+    return { label: "Not uploaded", tone: "warning", detail: due };
+  }
   const label = p.status === "approved" ? "Approved" : p.status === "pending" ? "Waiting for review" : "Rejected";
   const tone: Tone = p.status === "approved" ? "success" : p.status === "pending" ? "warning" : "danger";
   const detail = p.amountCents === person.totalCents ? dollars(p.amountCents) : `${dollars(p.amountCents)} of ${dollars(person.totalCents)}`;
@@ -109,3 +135,85 @@ export function initials(first: string, last: string): string {
 }
 
 export const money = dollars;
+
+// ---------------------------------------------------------------------------------------------
+// Proof review (SPEC §7.6; DECISIONS #113)
+
+/** Waiting for review first (oldest first, as the API sends them), then the rest. */
+export function groupProofs(proofs: readonly AdminProof[]): { waiting: AdminProof[]; reviewed: AdminProof[] } {
+  return { waiting: proofs.filter((p) => p.status === "pending"), reviewed: proofs.filter((p) => p.status !== "pending") };
+}
+
+/** "1 waiting for review · 2 reviewed". */
+export function queueLine(proofs: readonly AdminProof[]): string {
+  const { waiting, reviewed } = groupProofs(proofs);
+  return `${waiting.length} waiting for review · ${reviewed.length} reviewed`;
+}
+
+/** "Proof deadline: Tuesday, November 10 at 6:00 PM EST", in the viewer's zone. */
+export function deadlineLine(deadline: string | null, now: Date, timeZone?: string): string {
+  if (!deadline) return "There's no proof deadline yet: it's set when bidding closes.";
+  const d = new Date(deadline);
+  return `Proof deadline: ${when(d, now, timeZone, false)}${d.getTime() < now.getTime() ? " (passed)" : ""}.`;
+}
+
+export interface Note {
+  tone: "warning" | "info";
+  text: string;
+}
+
+export interface ProofReviewText {
+  name: string;
+  status: { label: string; tone: Tone };
+  uploaded: string;
+  amount: string;
+  total: string;
+  /** Short, over, a changed total, a late upload: most important first. */
+  notes: Note[];
+  /** "Approved by Maya Okafor today at 2:00 PM EST." */
+  reviewed: string | null;
+  reason: string | null;
+  /** Approve and Reject show only while it's waiting. */
+  canReview: boolean;
+  /** For the screenshot's alt text and the buttons' hidden labels. */
+  shotAlt: string;
+}
+
+export function proofReview(p: AdminProof, ctx: { now: Date; deadline: string | null; timeZone?: string }): ProofReviewText {
+  const name = `${p.person.firstName} ${p.person.lastName}`;
+  const notes: Note[] = [];
+  if (p.amountCents < p.totalCents) {
+    notes.push({ tone: "warning", text: `${dollars(p.totalCents - p.amountCents)} short of their ${dollars(p.totalCents)} donation total.${p.status === "pending" ? " You can still approve it." : ""}` });
+  } else if (p.amountCents > p.totalCents) {
+    notes.push({ tone: "info", text: `${dollars(p.amountCents - p.totalCents)} more than their ${dollars(p.totalCents)} donation total.` });
+  }
+  if (p.totalChanged) notes.push({ tone: "info", text: `Their total was ${dollars(p.owedCents)} when they uploaded this proof. It's ${dollars(p.totalCents)} now.` });
+  if (ctx.deadline && new Date(p.createdAt).getTime() > new Date(ctx.deadline).getTime()) {
+    notes.push({ tone: "info", text: "Uploaded after the proof deadline. Late proofs are allowed; you decide." });
+  }
+  const uploadedAt = new Date(p.createdAt);
+  const status = p.status === "pending" ? { label: "Waiting for review", tone: "warning" as const }
+    : p.status === "approved" ? { label: "Approved", tone: "success" as const } : { label: "Rejected", tone: "danger" as const };
+  const by = p.reviewer ? ` by ${p.reviewer.firstName} ${p.reviewer.lastName}` : "";
+  const reviewed = p.status === "pending" || !p.reviewedAt ? null : `${status.label}${by} ${when(new Date(p.reviewedAt), ctx.now, ctx.timeZone)}.`;
+  return {
+    name, status,
+    uploaded: `Uploaded ${when(uploadedAt, ctx.now, ctx.timeZone)}`,
+    amount: dollars(p.amountCents), total: dollars(p.totalCents), notes, reviewed,
+    reason: p.status === "rejected" && p.rejectionReason ? `Reason: ${p.rejectionReason}` : null,
+    canReview: p.status === "pending",
+    shotAlt: `Donation screenshot from ${name}`,
+  };
+}
+
+/** The reject dialog's words; the reason is required and shown to the person (SPEC §7.6). */
+export function rejectDialog(p: Pick<AdminProof, "person">): { title: string; body: string; label: string; help: string; maxLength: number; check: (v: string) => string | null } {
+  return {
+    title: `Reject ${p.person.firstName} ${p.person.lastName}'s proof?`,
+    body: `${p.person.firstName} will see your reason on Your Items and can upload a new proof.`,
+    label: `Reason (shown to ${p.person.firstName})`,
+    help: `For example, "The screenshot doesn't show the amount." Up to ${REASON_MAX} characters.`,
+    maxLength: REASON_MAX,
+    check: reasonProblem,
+  };
+}

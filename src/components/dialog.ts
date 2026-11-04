@@ -1,7 +1,7 @@
 // Dialog (DESIGN-SYSTEM.md › Dialog): a native modal <dialog>, so the browser moves focus
 // in, keeps it inside, and makes the rest of the page inert. Three variants: confirm (bid
 // confirmation), danger (restore demo data, cancel item) and type-to-confirm (the yearly
-// reset, SPEC §7.8). Escape closes it, except while the request runs; focus returns to
+// reset, SPEC §7.8). Any variant may ask for a required reason (rejecting a proof, §7.6). Escape closes it, except while the request runs; focus returns to
 // the control that opened it.
 import { icon } from "./icons.ts";
 
@@ -17,8 +17,13 @@ export interface ConfirmOptions {
   busyLabel?: string;
   /** type-to-confirm only: the exact text to type (the event name). */
   confirmText?: string;
+  /**
+   * A required text the person writes (a rejection reason). `check` returns the inline error,
+   * or null; the dialog won't confirm until it passes. Its value goes to onConfirm.
+   */
+  reason?: { label: string; help?: string; maxLength: number; check: (value: string) => string | null };
   /** The work to do on confirm. Throw an Error with a plain message to show it in the dialog. */
-  onConfirm: () => Promise<void>;
+  onConfirm: (reason: string) => Promise<void>;
 }
 
 let count = 0;
@@ -64,6 +69,49 @@ export function confirmDialog(options: ConfirmOptions): Promise<boolean> {
     field.append(label, input);
   }
 
+  let textarea: HTMLTextAreaElement | null = null;
+  const reasonField = document.createElement("div");
+  const reasonError = document.createElement("p");
+  if (options.reason) {
+    reasonField.className = "field";
+    const label = document.createElement("label");
+    label.className = "field__label";
+    label.htmlFor = `${id}-reason`;
+    label.textContent = options.reason.label;
+    textarea = document.createElement("textarea");
+    textarea.className = "input";
+    textarea.id = `${id}-reason`;
+    textarea.rows = 3;
+    textarea.maxLength = options.reason.maxLength;
+    textarea.required = true;
+    const described: string[] = [];
+    reasonField.append(label);
+    if (options.reason.help) {
+      const help = document.createElement("p");
+      help.className = "field__help";
+      help.id = `${id}-reason-help`;
+      help.textContent = options.reason.help;
+      described.push(help.id);
+      reasonField.append(help);
+    }
+    reasonError.className = "field__message field__message--error";
+    reasonError.id = `${id}-reason-error`;
+    reasonError.hidden = true;
+    described.push(reasonError.id);
+    textarea.setAttribute("aria-describedby", described.join(" "));
+    reasonField.append(textarea, reasonError);
+  }
+  const reasonProblem = () => (options.reason && textarea ? options.reason.check(textarea.value) : null);
+  const showReasonProblem = (message: string | null) => {
+    if (!textarea) return;
+    reasonError.replaceChildren(...(message ? [icon("alert", { size: "sm" }), document.createTextNode(message)] : []));
+    reasonError.hidden = !message;
+    if (message) textarea.setAttribute("aria-invalid", "true");
+    else textarea.removeAttribute("aria-invalid");
+  };
+  // Once shown, the message updates as the person types, and clears when it's fixed (#53).
+  textarea?.addEventListener("input", () => { if (!reasonError.hidden) showReasonProblem(reasonProblem()); });
+
   const error = document.createElement("p");
   error.className = "field__message field__message--error dialog__error";
   error.setAttribute("role", "alert");
@@ -77,7 +125,7 @@ export function confirmDialog(options: ConfirmOptions): Promise<boolean> {
   confirm.type = "submit";
   actions.append(cancel, confirm);
 
-  form.append(title, body, ...(input ? [field] : []), error, actions);
+  form.append(title, body, ...(input ? [field] : []), ...(textarea ? [reasonField] : []), error, actions);
   dialog.append(form);
   document.body.append(dialog);
 
@@ -108,6 +156,12 @@ export function confirmDialog(options: ConfirmOptions): Promise<boolean> {
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       if (busy || confirm.getAttribute("aria-disabled") === "true") return;
+      const problem = reasonProblem();
+      showReasonProblem(problem);
+      if (problem) {
+        textarea?.focus();
+        return;
+      }
       busy = true;
       error.hidden = true;
       dialog.setAttribute("aria-busy", "true");
@@ -117,7 +171,7 @@ export function confirmDialog(options: ConfirmOptions): Promise<boolean> {
       const label = confirm.textContent;
       if (options.busyLabel) confirm.textContent = options.busyLabel;
       try {
-        await options.onConfirm();
+        await options.onConfirm(textarea ? textarea.value.trim() : "");
         confirmed = true;
         busy = false;
         dialog.close();
@@ -137,7 +191,7 @@ export function confirmDialog(options: ConfirmOptions): Promise<boolean> {
     dialog.showModal();
     // First focus: the input to type into; Cancel for destructive actions; otherwise the
     // confirm button (the person just chose to act).
-    (input ?? (danger ? cancel : confirm)).focus();
+    (input ?? textarea ?? (danger ? cancel : confirm)).focus();
   });
 }
 

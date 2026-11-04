@@ -30,6 +30,8 @@
 .total-card__figure dd { margin: 0; }
 .total-card__amount { font: var(--type-amount); color: var(--color-text); font-variant-numeric: var(--figures-amount); }
 .total-card__amount--confirmed { color: var(--color-success); }
+/* $0 reads as "nothing yet", not as good news (owner, 6B review). */
+.total-card__amount--zero { color: var(--color-text-muted); }
 @media (min-width: 40rem) {
   .total-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
@@ -58,3 +60,41 @@
 .admin-person .pill { margin-left: var(--space-1); }
 .admin-proof { display: inline-flex; align-items: center; gap: var(--space-2); }
 .admin-proof__detail { font-variant-numeric: var(--figures-amount); color: var(--color-text); }
+
+/* Proof review (DESIGN-SYSTEM.md › Proof review card): one card per person's latest proof,
+   waiting first. The thumbnail is always shown; View larger opens the full-width picture in
+   place (a disclosure, not a dialog: there's no decision in looking). */
+.proof-queue { display: grid; gap: var(--space-4); }
+.proof-queue__title { margin: 0; font: var(--type-heading-3); color: var(--color-text); }
+.proof-queue__title:focus-visible { outline: var(--focus-width) solid var(--color-focus); outline-offset: var(--focus-offset); }
+.proof-queue__list { display: grid; gap: var(--space-4); margin: 0; padding: 0; list-style: none; }
+.proof-review { display: grid; gap: var(--space-3); padding: var(--space-5); }
+.proof-review--pending { border-color: var(--color-border-strong); }
+.proof-review__head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
+.proof-review__name { margin: 0; font: var(--type-heading-3); color: var(--color-text); }
+.proof-review__uploaded { margin: 0; font: var(--type-caption); color: var(--color-text-muted); }
+.proof-review__main { display: grid; gap: var(--space-4); }
+.proof-review__thumb {
+  display: block; width: calc(var(--size-target) * 3); aspect-ratio: 3 / 4; object-fit: cover; object-position: top;
+  border: var(--border-thin) solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-muted);
+}
+.proof-review__details { display: grid; gap: var(--space-3); align-content: start; justify-items: start; }
+.proof-review__figures { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-8); margin: 0; }
+.proof-review__figures dt { font: var(--type-label); color: var(--color-text-muted); }
+.proof-review__figures dd { margin: 0; }
+.proof-review__amount { font: var(--type-heading-2); color: var(--color-text); font-variant-numeric: var(--figures-amount); }
+.proof-review__note { display: flex; align-items: flex-start; gap: var(--space-2); margin: 0; font: var(--type-body); }
+.proof-review__note svg { flex: none; margin-top: var(--space-1); }
+.proof-review__note--warning { padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); background: var(--color-warning-soft); color: var(--color-text); font-weight: var(--weight-semibold); }
+.proof-review__note--warning svg { color: var(--color-warning); }
+.proof-review__note--info { color: var(--color-text); }
+.proof-review__note--info svg { color: var(--color-text-muted); }
+.proof-review__reviewed { margin: 0; font: var(--type-body); color: var(--color-text-muted); }
+.proof-review__reason { margin: 0; font: var(--type-body); color: var(--color-text); }
+.proof-review__large { margin: 0; }
+.proof-review__large-img { display: block; max-width: 100%; height: auto; border: var(--border-thin) solid var(--color-border); border-radius: var(--radius-md); }
+.proof-review__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); padding-top: var(--space-2); border-top: var(--border-thin) solid var(--color-border); }
+.admin-alert:empty { display: none; }
+@media (min-width: 40rem) {
+  .proof-review__main { grid-template-columns: auto 1fr; }
+}

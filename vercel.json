@@ -16,6 +16,10 @@
       "destination": "/admin"
     },
     {
+      "source": "/admin/proofs",
+      "destination": "/admin"
+    },
+    {
       "source": "/your-items/proof",
       "destination": "/proof"
     },

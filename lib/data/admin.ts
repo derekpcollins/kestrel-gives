@@ -148,6 +148,8 @@ export async function adminPeopleIn(tx: Tx): Promise<AdminPeople | null> {
   return {
     ok: true,
     now: now.toISOString(),
+    phase: phaseOf(event, now),
+    proofDeadline: iso(proofDeadlineOf(event)),
     people: rows.map((p) => ({
       id: p.id, firstName: p.first_name, lastName: p.last_name, role: p.role,
       bidCount: Number(p.bid_count), wins: Number(p.wins), purchases: Number(p.purchases),

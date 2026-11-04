@@ -88,6 +88,8 @@ export interface AdminPerson extends PersonName {
 export interface AdminPeople {
   ok: true;
   now: string;
+  phase: Phase;
+  proofDeadline: string | null;
   people: AdminPerson[];
 }
 

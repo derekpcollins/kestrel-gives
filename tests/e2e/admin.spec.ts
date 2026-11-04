@@ -128,3 +128,142 @@ test("a failed load says so and Try again recovers", async ({ page }) => {
   await expect(page.locator(".total-card")).toHaveCount(3);
   await expect(page.getByRole("heading", { name: "We couldn't load this section" })).toBeHidden();
 });
+
+// ---------------------------------------------------------------------------------------------
+// Proof review (SPEC §7.6; DECISIONS #113; Stage 6C). The answers and every POST are stubbed, so
+// nothing writes; tests/db/admin.test.ts covers approve and reject against the database.
+
+const person = (id: string, firstName: string, lastName: string) => ({ id, firstName, lastName });
+const maya = person("1", "Maya", "Okafor");
+const shot = "/seed/proofs/placeholder-proof.png";
+
+function proof(over: Record<string, unknown>) {
+  return { id: "1", status: "pending", amountCents: 6_000, owedCents: 6_500, totalCents: 6_500, short: true, totalChanged: false,
+    createdAt: "2026-11-03T21:00:00.000Z", person: person("6", "Rosa", "Delgado"), rejectionReason: null, imageUrl: shot, reviewedAt: null, reviewer: null, ...over };
+}
+
+const rosaApproved = proof({ status: "approved", reviewedAt: "2026-11-03T22:00:00.000Z", reviewer: maya });
+const rosaRejected = proof({ status: "rejected", reviewedAt: "2026-11-03T22:00:00.000Z", reviewer: maya, rejectionReason: "The amount is cut off." });
+const dev = proof({ id: "2", status: "approved", amountCents: 10_500, owedCents: 10_500, totalCents: 10_500, short: false, createdAt: "2026-11-03T19:00:00.000Z", person: person("4", "Dev", "Kapoor"), reviewedAt: "2026-11-03T20:00:00.000Z", reviewer: maya });
+const owen = proof({ id: "3", status: "rejected", amountCents: 3_500, owedCents: 3_500, totalCents: 3_500, short: false, createdAt: "2026-11-03T16:00:00.000Z", person: person("7", "Owen", "Achterberg"), reviewedAt: "2026-11-03T17:00:00.000Z", reviewer: maya, rejectionReason: "The screenshot doesn't show the donation amount." });
+
+const proofsAnswer = (list: unknown[]) => ({ ok: true, now: "2026-11-03T23:00:00.000Z", proofDeadline: "2026-11-13T00:00:00.000Z", proofs: list });
+
+async function stubProofs(page: Page, list: unknown[]): Promise<void> {
+  await page.route(/\/api\/admin\?view=proofs$/, (route) => route.fulfill({ json: proofsAnswer(list) }));
+}
+
+test("Proof review: waiting first with the short warning, then reviewed with who and why", async ({ page }) => {
+  await viewAs(page, "1");
+  await stubProofs(page, [proof({}), dev, owen]);
+  await page.goto("/admin/proofs");
+  await expect(page).toHaveTitle("Proof review · Admin Dashboard · Kestrel Gives");
+  await expect(page.getByRole("navigation", { name: "Admin sections" }).getByRole("link", { name: "Proof review" })).toHaveAttribute("aria-current", "page");
+  await expect(page.locator(".proof-queue__title")).toHaveText(["Waiting for review (1)", "Reviewed (2)"]);
+  await expect(page.locator(".proof-review__name")).toHaveText(["Rosa Delgado", "Dev Kapoor", "Owen Achterberg"]);
+  const rosa = page.getByRole("listitem", { name: "Rosa Delgado" });
+  await expect(rosa.locator(".proof-review__note--warning")).toHaveText("$5 short of their $65 donation total. You can still approve it.");
+  await expect(rosa.getByRole("button", { name: "Approve Rosa Delgado's proof" })).toBeVisible();
+  const owenCard = page.getByRole("listitem", { name: "Owen Achterberg" });
+  await expect(owenCard).toContainText("Rejected by Maya Okafor");
+  await expect(owenCard).toContainText("Reason: The screenshot doesn't show the donation amount.");
+  await expect(owenCard.getByRole("button", { name: /Approve/ })).toHaveCount(0);
+  await axe(page);
+});
+
+test("View larger opens the screenshot in place and says so", async ({ page }) => {
+  await viewAs(page, "1");
+  await stubProofs(page, [proof({}), dev]);
+  await page.goto("/admin/proofs");
+  const rosa = page.getByRole("listitem", { name: "Rosa Delgado" });
+  const toggle = rosa.getByRole("button", { name: "View larger screenshot from Rosa Delgado" });
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await expect(rosa.getByRole("img", { name: "Donation screenshot from Rosa Delgado, larger" })).toBeHidden();
+  await toggle.click();
+  await expect(rosa.getByRole("button", { name: /View smaller/ })).toHaveAttribute("aria-expanded", "true");
+  await expect(rosa.getByRole("img", { name: "Donation screenshot from Rosa Delgado, larger" })).toBeVisible();
+  await axe(page);
+  await rosa.getByRole("button", { name: /View smaller/ }).click();
+  await expect(rosa.getByRole("img", { name: "Donation screenshot from Rosa Delgado, larger" })).toBeHidden();
+});
+
+test("Approve sends the total seen, then redraws with a toast; the short note drops its nudge", async ({ page }) => {
+  await viewAs(page, "1");
+  await stubProofs(page, [proof({}), dev]);
+  let sent: unknown = null;
+  await page.route(/\/api\/admin$/, (route) => {
+    sent = route.request().postDataJSON();
+    return route.fulfill({ json: { ok: true, message: "Proof approved.", view: "proofs", answer: proofsAnswer([rosaApproved, dev]) } });
+  });
+  await page.goto("/admin/proofs");
+  await page.getByRole("button", { name: "Approve Rosa Delgado's proof" }).click();
+  await expect(page.getByText("Proof approved.")).toBeVisible();
+  expect(sent).toEqual({ action: "approve-proof", proofId: "1", totalCents: 6_500 });
+  await expect(page.locator(".proof-queue__title")).toHaveText(["Waiting for review (0)", "Reviewed (2)"]);
+  await expect(page.locator("#queue-waiting")).toBeFocused();
+  const rosa = page.getByRole("listitem", { name: "Rosa Delgado" });
+  await expect(rosa).toContainText("Approved by Maya Okafor");
+  await expect(rosa.locator(".proof-review__note--warning")).toHaveText("$5 short of their $65 donation total.");
+});
+
+test("Reject needs a reason: an inline error first, then it sends the reason", async ({ page }) => {
+  await viewAs(page, "1");
+  await stubProofs(page, [proof({}), dev]);
+  let sent: unknown = null;
+  await page.route(/\/api\/admin$/, (route) => {
+    sent = route.request().postDataJSON();
+    return route.fulfill({ json: { ok: true, message: "Proof rejected. Rosa can upload a new one.", view: "proofs", answer: proofsAnswer([rosaRejected, dev]) } });
+  });
+  await page.goto("/admin/proofs");
+  await page.getByRole("button", { name: "Reject Rosa Delgado's proof" }).click();
+  const dialog = page.getByRole("dialog", { name: "Reject Rosa Delgado's proof?" });
+  const reason = dialog.getByLabel("Reason (shown to Rosa)");
+  await expect(reason).toBeFocused();
+  await dialog.getByRole("button", { name: "Reject proof" }).click();
+  await expect(dialog.getByText("Enter a reason. The person will see it.")).toBeVisible();
+  await expect(reason).toHaveAttribute("aria-invalid", "true");
+  await expect(reason).toBeFocused();
+  expect(sent).toBeNull();
+  await axe(page);
+  await reason.fill("The amount is cut off.");
+  await expect(reason).not.toHaveAttribute("aria-invalid", /.*/);
+  await dialog.getByRole("button", { name: "Reject proof" }).click();
+  await expect(dialog).toBeHidden();
+  expect(sent).toEqual({ action: "reject-proof", proofId: "1", reason: "The amount is cut off." });
+  await expect(page.getByText("Proof rejected. Rosa can upload a new one.")).toBeVisible();
+  await expect(page.getByRole("listitem", { name: "Rosa Delgado" })).toContainText("Reason: The amount is cut off.");
+});
+
+test("a refused approve (the total moved) reloads the queue and says why", async ({ page }) => {
+  await viewAs(page, "1");
+  let loads = 0;
+  await page.route(/\/api\/admin\?view=proofs$/, (route) => { loads++; return route.fulfill({ json: proofsAnswer([proof({}), dev]) }); });
+  await page.route(/\/api\/admin$/, (route) => route.fulfill({ status: 409, json: { ok: false, code: "total-changed", error: "Their donation total is now $40. Check the proof again." } }));
+  await page.goto("/admin/proofs");
+  await page.getByRole("button", { name: "Approve Rosa Delgado's proof" }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "Their donation total is now $40" })).toHaveText("Their donation total is now $40. Check the proof again. The queue has been updated.");
+  expect(loads).toBe(2);
+});
+
+test("no proofs yet: both groups say so", async ({ page }) => {
+  await viewAs(page, "1");
+  await stubProofs(page, []);
+  await page.goto("/admin/proofs");
+  await expect(page.getByText("Nothing is waiting for review.")).toBeVisible();
+  await expect(page.getByText("No one has uploaded proof yet.")).toBeVisible();
+});
+
+test("6B fixes: zero totals are muted, and People's Not uploaded is neutral while live", async ({ page }) => {
+  await viewAs(page, "1");
+  await stubSummary(page, "live");
+  await page.goto("/admin");
+  await expect(page.locator(".total-card").nth(0).locator(".total-card__amount--zero")).toHaveCount(2);
+  await expect(page.locator(".total-card").nth(1).locator(".total-card__amount--zero")).toHaveCount(0);
+  await page.route(/\/api\/admin\?view=people$/, (route) => route.fulfill({ json: {
+    ok: true, now: "2026-11-03T23:00:00.000Z", phase: "live", proofDeadline: null,
+    people: [{ ...person("3", "Jules", "Ferreira"), role: "employee", bidCount: 2, wins: 0, purchases: 1, totalCents: 4_000, proof: null }],
+  } }));
+  await page.goto("/admin/people");
+  await expect(page.getByRole("row", { name: /Jules Ferreira/ }).locator(".pill")).toHaveText("Not uploaded");
+  await expect(page.getByRole("row", { name: /Jules Ferreira/ }).locator(".pill")).toHaveAttribute("class", "pill");
+});

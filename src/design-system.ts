@@ -6,6 +6,7 @@ import { confirmDialog, type ConfirmOptions } from "./components/dialog.ts";
 import { enhanceSiteHeader } from "./components/disclosure.ts";
 import { enableWhenChosen, enhanceForm } from "./components/forms.ts";
 import { formatDollars } from "./components/form-rules.ts";
+import { REASON_MAX, reasonProblem } from "./components/admin-rules.ts";
 import { hydrateIcons } from "./components/icons.ts";
 import { renderItemTile, type TileView } from "./components/item-tile.ts";
 import type { TileContext } from "./components/item-tile-rules.ts";
@@ -120,6 +121,9 @@ const dialogs: Record<string, () => ConfirmOptions> = {
     onConfirm: async () => { await wait(1000); showToast("Demo data restored.", { tone: "success" }); } }),
   cancel: () => ({ variant: "danger", title: "Cancel this item?", body: `${bidItem.title} comes off the listings. Its page stays up, marked as cancelled, and everyone who bid sees it on their dashboard.`, confirmLabel: "Cancel item", cancelLabel: "Keep item", busyLabel: "Cancelling…",
     onConfirm: async () => { await wait(1000); showToast("Item cancelled.", { tone: "success" }); } }),
+  reject: () => ({ variant: "danger", title: "Reject Rosa Delgado's proof?", body: "Rosa will see your reason on Your Items and can upload a new proof.", confirmLabel: "Reject proof", busyLabel: "Rejecting…",
+    reason: { label: "Reason (shown to Rosa)", help: `For example, "The screenshot doesn't show the amount." Up to ${REASON_MAX} characters.`, maxLength: REASON_MAX, check: reasonProblem },
+    onConfirm: async () => { await wait(1000); showToast("Proof rejected. Rosa can upload a new one.", { tone: "success" }); } }),
   reset: () => ({ variant: "type-to-confirm", title: "Reset for next year?", body: `This deletes every item, photo, bid, purchase and proof from ${settings.name}. Users, charities, email templates and settings stay. This can't be undone.`, confirmText: settings.name, confirmLabel: "Reset for next year", busyLabel: "Resetting…",
     onConfirm: async () => { await wait(1000); showToast("Reset done. The event is ready for next year.", { tone: "success" }); } }),
 };

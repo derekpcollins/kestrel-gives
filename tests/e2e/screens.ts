@@ -29,6 +29,7 @@ export const SCREENS: readonly Screen[] = [
   // Milestone 6B: the Admin Dashboard as Maya (the plain "admin" screen above is Jules: For admins only).
   { name: "admin-totals", path: "/admin", viewer: "1" },
   { name: "admin-people", path: "/admin/people", viewer: "1" },
+  { name: "admin-proofs", path: "/admin/proofs", viewer: "1" },
   { name: "design-system", path: "/design-system/" }, // every component, every state
 ];
 

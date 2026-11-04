@@ -3,14 +3,16 @@
 // section nav is plain links with aria-current (DECISIONS entry 59). Employees see why they
 // can't use it, both from the app state and from the API's 403. Redraws when the demo bar
 // changes who's viewing or the phase; only the newest answer is drawn.
-import type { AdminPeople, AdminSummary } from "../admin-api.ts";
+import type { AdminPeople, AdminProof, AdminProofs, AdminSummary } from "../admin-api.ts";
 import type { AppState } from "../app-state.ts";
 import { renderAvatar } from "../components/avatar.ts";
 import { el } from "../components/dom.ts";
 import { hydrateIcons, icon } from "../components/icons.ts";
+import { confirmDialog } from "../components/dialog.ts";
 import { enhanceTableScroll } from "../components/table.ts";
+import { showToast } from "../components/toast.ts";
 import {
-  GENERAL_DESCRIPTION, gapText, glanceLine, initials, leadingBids, money, NOT_ADMIN, pageTitle, proofCell, SECTIONS, sectionFor, totalCards, TOTALS_KEY, type Section,
+  deadlineLine, GENERAL_DESCRIPTION, gapText, glanceLine, groupProofs, proofReview, queueLine, rejectDialog, initials, leadingBids, money, NOT_ADMIN, pageTitle, proofCell, SECTIONS, sectionFor, totalCards, TOTALS_KEY, type Section,
 } from "./admin-rules.ts";
 
 const pill = (label: string, tone: string) => el("span", { className: `pill${tone === "neutral" ? "" : ` pill--${tone}`}`, text: label });
@@ -28,8 +30,8 @@ function totals(summary: AdminSummary): Node[] {
     el("li", { className: `card card--flat total-card total-card--${c.key}` },
       el("h3", { className: "total-card__title", text: c.title, attrs: { id: `total-${c.key}` } }),
       el("dl", { className: "total-card__figures", attrs: { "aria-labelledby": `total-${c.key}` } },
-        el("div", { className: "total-card__figure" }, el("dt", { text: "Pledged" }), el("dd", { className: "total-card__amount", text: c.pledged })),
-        el("div", { className: "total-card__figure" }, el("dt", { text: "Confirmed" }), el("dd", { className: "total-card__amount total-card__amount--confirmed", text: c.confirmed })),
+        el("div", { className: "total-card__figure" }, el("dt", { text: "Pledged" }), el("dd", { className: `total-card__amount${c.pledgedZero ? " total-card__amount--zero" : ""}`, text: c.pledged })),
+        el("div", { className: "total-card__figure" }, el("dt", { text: "Confirmed" }), el("dd", { className: `total-card__amount ${c.confirmedZero ? "total-card__amount--zero" : "total-card__amount--confirmed"}`, text: c.confirmed })),
       ),
     ));
   const nodes: Node[] = [
@@ -61,7 +63,7 @@ function people(answer: AdminPeople): Node[] {
       el("th", { text: h, attrs: { scope: "col" }, className: i >= 1 && i <= 4 ? "table__num" : "" })),
   );
   const rows = answer.people.map((p) => {
-    const cell = proofCell(p);
+    const cell = proofCell(p, { phase: answer.phase, deadline: answer.proofDeadline, now: new Date(answer.now) });
     const name = el("th", { attrs: { scope: "row" } },
       el("span", { className: "admin-person" },
         renderAvatar(initials(p.firstName, p.lastName), { size: "sm" }),
@@ -83,6 +85,89 @@ function people(answer: AdminPeople): Node[] {
   );
   enhanceTableScroll(wrap);
   return [el("p", { className: "admin-glance", text: `${answer.people.length} people. Admins bid and buy too, so they're listed.` }), wrap];
+}
+
+/** What a proof card's buttons do; the page supplies them so the card stays a drawing. */
+interface ProofActions {
+  approve(proof: AdminProof, button: HTMLButtonElement): void;
+  reject(proof: AdminProof): void;
+}
+
+let shotCount = 0;
+
+function proofCard(p: AdminProof, answer: AdminProofs, actions: ProofActions): HTMLLIElement {
+  const t = proofReview(p, { now: new Date(answer.now), deadline: answer.proofDeadline });
+  const headingId = `proof-${p.id}-name`;
+  const panelId = `proof-shot-${++shotCount}`;
+  const toggle = el("button", { className: "btn btn--secondary btn--sm proof-review__toggle", attrs: { type: "button", "aria-expanded": "false", "aria-controls": panelId } },
+    "View larger", el("span", { className: "visually-hidden", text: ` screenshot from ${t.name}` }));
+  const large = el("figure", { className: "proof-review__large", attrs: { id: panelId, hidden: "" } },
+    el("img", { className: "proof-review__large-img", attrs: { src: p.imageUrl, alt: `${t.shotAlt}, larger`, loading: "lazy" } }));
+  toggle.addEventListener("click", () => {
+    const open = toggle.getAttribute("aria-expanded") !== "true";
+    toggle.setAttribute("aria-expanded", String(open));
+    large.hidden = !open;
+    toggle.firstChild!.textContent = open ? "View smaller" : "View larger";
+  });
+
+  const card = el("li", { className: `card card--flat proof-review proof-review--${p.status}`, attrs: { "aria-labelledby": headingId } },
+    el("div", { className: "proof-review__head" },
+      renderAvatar(initials(p.person.firstName, p.person.lastName), { size: "sm" }),
+      el("h3", { className: "proof-review__name", text: t.name, attrs: { id: headingId } }),
+      pill(t.status.label, t.status.tone),
+    ),
+    el("p", { className: "proof-review__uploaded", text: t.uploaded }),
+    el("div", { className: "proof-review__main" },
+      el("img", { className: "proof-review__thumb", attrs: { src: p.imageUrl, alt: t.shotAlt, loading: "lazy" } }),
+      el("div", { className: "proof-review__details" },
+        el("dl", { className: "proof-review__figures" },
+          el("div", {}, el("dt", { text: "Amount donated" }), el("dd", { className: "proof-review__amount", text: t.amount })),
+          el("div", {}, el("dt", { text: "Donation total" }), el("dd", { className: "proof-review__amount", text: t.total })),
+        ),
+        ...t.notes.map((n) => el("p", { className: `proof-review__note proof-review__note--${n.tone}` }, icon(n.tone === "warning" ? "alert" : "info", { size: "sm" }), el("span", { text: n.text }))),
+        ...(t.reviewed ? [el("p", { className: "proof-review__reviewed", text: t.reviewed })] : []),
+        ...(t.reason ? [el("p", { className: "proof-review__reason", text: t.reason })] : []),
+        toggle,
+      ),
+    ),
+    large,
+  );
+  if (t.canReview) {
+    const approve = el("button", { className: "btn btn--sm", attrs: { type: "button" } }, "Approve", el("span", { className: "visually-hidden", text: ` ${t.name}'s proof` }));
+    const reject = el("button", { className: "btn btn--secondary btn--sm", attrs: { type: "button" } }, "Reject", el("span", { className: "visually-hidden", text: ` ${t.name}'s proof` }));
+    approve.addEventListener("click", () => actions.approve(p, approve));
+    reject.addEventListener("click", () => actions.reject(p));
+    card.append(el("div", { className: "proof-review__actions" }, approve, reject));
+  }
+  return card;
+}
+
+function proofs(answer: AdminProofs, actions: ProofActions): Node[] {
+  const { waiting, reviewed } = groupProofs(answer.proofs);
+  const group = (id: string, title: string, list: AdminProof[], empty: string) =>
+    el("section", { className: "proof-queue", attrs: { "aria-labelledby": id } },
+      el("h3", { className: "proof-queue__title", text: `${title} (${list.length})`, attrs: { id } }),
+      list.length ? el("ul", { className: "proof-queue__list" }, ...list.map((p) => proofCard(p, answer, actions))) : el("p", { className: "admin-glance", text: empty }),
+    );
+  return [
+    el("p", { className: "admin-glance", text: `${queueLine(answer.proofs)}. ${deadlineLine(answer.proofDeadline, new Date(answer.now))}` }),
+    el("div", { className: "admin-alert", attrs: { "data-admin-alert": "" } }),
+    group("queue-waiting", "Waiting for review", waiting, "Nothing is waiting for review."),
+    group("queue-reviewed", "Reviewed", reviewed, answer.proofs.length ? "Nothing reviewed yet." : "No one has uploaded proof yet. Proofs show up here when people upload them."),
+  ];
+}
+
+/** POST /api/admin; resolves with the answer, or throws an Error with the message to show. */
+async function post(body: Record<string, unknown>): Promise<{ message: string; answer: unknown }> {
+  let response: Response;
+  try {
+    response = await fetch("/api/admin", { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, credentials: "same-origin", body: JSON.stringify(body) });
+  } catch {
+    throw new Error("We couldn't reach the server. Check your connection and try again.");
+  }
+  const json = (await response.json().catch(() => ({}))) as { message?: string; error?: string; answer?: unknown };
+  if (!response.ok) throw Object.assign(new Error(json.error ?? "Something went wrong. Please try again."), { status: response.status });
+  return { message: json.message ?? "Done.", answer: json.answer };
 }
 
 export function startAdminPage(): void {
@@ -119,7 +204,7 @@ export function startAdminPage(): void {
     denied.hidden = true;
     body.hidden = false;
     content.setAttribute("aria-busy", "true");
-    const view = section.key === "totals" ? "summary" : section.key;
+    const view = section.key === "totals" ? "summary" : section.key;  // people, proofs
     let status: number | null = null;
     let answer: unknown = null;
     try {
@@ -138,8 +223,77 @@ export function startAdminPage(): void {
       return;
     }
     failed.hidden = true;
-    content.replaceChildren(...(section.key === "totals" ? totals(answer as AdminSummary) : people(answer as AdminPeople)));
+    content.replaceChildren(...(section.key === "totals" ? totals(answer as AdminSummary)
+      : section.key === "people" ? people(answer as AdminPeople)
+      : proofs(answer as AdminProofs, actions)));
     hydrateIcons(content);
+  };
+
+  /** A refusal or failure, at the top of the section, read out; then the queue is reloaded. */
+  const alertWith = (message: string) => {
+    const box = content.querySelector<HTMLElement>("[data-admin-alert]");
+    if (!box) return;
+    const banner = el("div", { className: "banner banner--danger", attrs: { role: "alert", tabindex: "-1" } },
+      icon("alert"), el("div", { className: "banner__body" }, el("p", { className: "banner__text", text: message })));
+    box.replaceChildren(banner);
+    banner.focus();
+  };
+  const redrawProofs = (answer: AdminProofs) => {
+    content.replaceChildren(...proofs(answer, actions));
+    hydrateIcons(content);
+  };
+  const actions: ProofActions = {
+    approve: async (proof, button) => {
+      if (button.getAttribute("aria-busy") === "true") return;
+      button.setAttribute("aria-busy", "true");
+      button.setAttribute("aria-disabled", "true");
+      try {
+        const done = await post({ action: "approve-proof", proofId: proof.id, totalCents: proof.totalCents });
+        redrawProofs(done.answer as AdminProofs);
+        showToast(done.message, { tone: "success" });
+        content.querySelector<HTMLElement>("#queue-waiting")?.setAttribute("tabindex", "-1");
+        content.querySelector<HTMLElement>("#queue-waiting")?.focus();
+      } catch (error) {
+        button.removeAttribute("aria-busy");
+        button.removeAttribute("aria-disabled");
+        const message = error instanceof Error ? error.message : "Something went wrong. Please try again.";
+        const status = (error as { status?: number }).status;
+        if (status === 403) return showDenied();
+        if (status === 409 || status === 404) {
+          await load();
+          alertWith(`${message} The queue has been updated.`);
+        } else alertWith(message);
+      }
+    },
+    reject: async (proof) => {
+      const words = rejectDialog(proof);
+      let answer: AdminProofs | null = null;
+      let message = "";
+      let stale = false;
+      const done = await confirmDialog({
+        variant: "danger", title: words.title, body: words.body, confirmLabel: "Reject proof", busyLabel: "Rejecting…",
+        reason: { label: words.label, help: words.help, maxLength: words.maxLength, check: words.check },
+        onConfirm: async (reason) => {
+          try {
+            const r = await post({ action: "reject-proof", proofId: proof.id, reason });
+            answer = r.answer as AdminProofs;
+            message = r.message;
+          } catch (error) {
+            const status = (error as { status?: number }).status;
+            if (status === 409 || status === 404) stale = true;
+            throw error;
+          }
+        },
+      });
+      if (done && answer) {
+        redrawProofs(answer);
+        showToast(message, { tone: "success" });
+        content.querySelector<HTMLElement>("#queue-waiting")?.setAttribute("tabindex", "-1");
+        content.querySelector<HTMLElement>("#queue-waiting")?.focus();
+      } else if (stale) {
+        await load();
+      }
+    },
   };
 
   failed.querySelector("button")?.addEventListener("click", () => void load());
