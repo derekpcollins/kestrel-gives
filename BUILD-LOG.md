@@ -13,7 +13,7 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 - ~~**DECISIONS #68 details from the owner**~~ recorded 2026-11-02: only `neondb_owner` on all three branches; restore branch created 12:42:01 Eastern; never "Reset from parent" on it.
 - ~~**Drop `app_meta`**~~ done: migration 003, live 2026-11-02 (#79).
 - ~~**`error TS2688` in Vercel's function compile**~~ fixed, live 2026-11-02 (#79).
-- **Milestone 6:** whether an admin-cancelled purchase returns the unit to stock (owner's lean: yes while the sale is open, not after close; #74).
+- ~~**Milestone 6:** whether an admin-cancelled purchase returns the unit to stock~~ decided in the 6D review: yes while the sale is open, not after close (#74, #115; SPEC v1.18).
 
 ---
 
@@ -845,3 +845,19 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   - 30+ days after: a wrong name was refused (422). Two admins resetting at the same moment gave one success and one refusal, because the new event has no close date.
   - After the Reset: the app state showed Kestrel Gives 2027, Not scheduled yet, `demoReset` true, no items. Restore brought back the seed.
   - Function logs: 4 info, 0 errors (`.review/m6-6f/preview-checks.txt`).
+
+### 2026-11-04 — Milestone 6 live (09:05 – 09:20 EST)
+- **Owner stepped in:** approved Milestone 6 and the push to main.
+- **Pushed:** `main` fast-forwarded `7947840..199d40e`: 16 commits, 6A–6F, their review changes, the M5-close entry (`e00312c`), BUILD-LOG and DECISIONS #106–#119. Deployment `kestrel-gives-dt7b45j0k`, production, Ready. No new migrations (schema 007).
+- **Build log:** unit tests 307 pass, 0 fail. `deploy-db: production build; DATABASE_URL_UNPOOLED confirmed as the main branch (direct connection).`, `Up to date.`, `deploy-db: an event exists; not seeding.`, `deploy-db: step m3-land-live-demo already ran; skipped.` No error lines; only Vercel's known `npm warn Unknown env config "cache-dir"`.
+- **Health:** `{"ok":true,"db":"main","schema":"007","seedPhotos":true}` on `kestrel-gives.vercel.app` and on `kestrel-gives-derek-p-collins-projects.vercel.app` (via `vercel curl`).
+- **Live pages:** a view-only look on the public domain as Maya (the viewer cookie only), at 1280 and 390. The browser aborted anything other than GET, and nothing else was attempted. No admin actions (`.review/m6-prod/view-checks.txt`, 14 PNGs).
+  - Totals: 1 proof waiting, 15 active items; instant sale pledged $515, confirmed $105, with the gap line.
+  - People (7), Proof review (Rosa waiting, 2 reviewed), Items (16, 1 cancelled), Event settings (Bidding is open), Email templates (6, none edited).
+  - Reset for next year: Locked, "unlocks on Sunday, December 6 at 3:00 AM EST, 30 days after bidding closes", with what it deletes and keeps, and no button.
+  - Each section's loading line was gone once it loaded. No page errors.
+- **Found for Milestone 7:** the site footer reads "Kestrel is a fictional organization, and this is a demo." SPEC §2 requires "Kestrel is a fictional organization. Demo only." It's in the Milestone 7 plan.
+
+**Milestone 6 ended:** 2026-11-04 09:20 EST · about 15 hours 25 minutes from the plan approval (2026-11-03 17:54 EST), overnight included.
+
+## Milestone 7: Polish and ship
