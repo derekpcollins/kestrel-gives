@@ -581,13 +581,13 @@ test("Event settings: the form shows the saved values, the phase now and the zon
   await expect(form.getByLabel("Event name")).toHaveValue("Kestrel Gives 2026");
   await expect(form.getByLabel("Time zone")).toHaveValue("America/New_York");
   await expect(form.getByLabel("Bidding closes")).toHaveValue("2026-11-05T21:00");
-  await expect(form.getByLabel("Bidding closes")).toHaveAccessibleDescription(/Times are in America\/New_York \(EST\)/);
+  await expect(form.getByLabel("Bidding closes")).toHaveAccessibleDescription(/Times are in Eastern Time \(New York\), currently EST\./);
   await expect(form.getByLabel("Default minimum starting bid")).toHaveValue("10");
   await expect(form.getByLabel("Bid increment")).toHaveValue("5");
   await expect(form.getByLabel("Proof deadline")).toHaveValue("7");
   await expect(form.getByLabel(/Giving platform address/)).toHaveValue("/giving");
   await form.getByLabel("Time zone").selectOption("America/Los_Angeles");
-  await expect(form.getByLabel("Bidding closes")).toHaveAccessibleDescription(/Times are in America\/Los_Angeles \(PST\)/);
+  await expect(form.getByLabel("Bidding closes")).toHaveAccessibleDescription(/Times are in Pacific Time \(Los Angeles\), currently PST\./);
   await axe(page);
 });
 
@@ -783,4 +783,151 @@ test("Restore default asks first, then posts and redraws", async ({ page }) => {
   expect(sent).toEqual([{ action: "restore-template", key: "winner" }]);
   await expect(page.locator("#template-winner-title")).toBeFocused();
   await expect(page.getByRole("button", { name: /Restore default/ })).toHaveCount(0);
+});
+
+
+// ---------------------------------------------------------------------------------------------
+// 6E review and 6F: zone names and the zone change line; Reset for next year and the offer to
+// restore after it (SPEC §7.8; DECISIONS entries 109, 116, 117 and 118). Stubbed answers; nothing writes.
+
+test("Event settings: zones by friendly name (IANA id stored); a changed zone says what the close becomes", async ({ page }) => {
+  await viewAs(page, "1");
+  await stubSettings(page);
+  await page.goto("/admin/settings");
+  const form = page.getByRole("form", { name: "Event settings" });
+  const zone = form.getByLabel("Time zone");
+  await expect(zone.locator("option:checked")).toHaveText("Eastern Time (New York)");
+  await expect(zone.locator('option[value="America/Los_Angeles"]')).toHaveText("Pacific Time (Los Angeles)");
+  const effect = page.locator("[data-settings-effect]");
+  await expect(effect).toBeHidden();
+  await zone.selectOption("America/Los_Angeles");
+  await expect(effect).toHaveText("Bidding now closes at 9:00 PM PST (Nov 6 at midnight Eastern).");
+  await expect(form.getByLabel("Bidding closes")).toHaveAccessibleDescription(/Bidding now closes at 9:00 PM PST/);
+  await form.getByLabel("Bidding closes").fill("2026-11-05T18:00");
+  await expect(effect).toHaveText("Bidding now closes at 6:00 PM PST (9:00 PM Eastern).");
+  await form.getByLabel("Submissions open").fill("");
+  await expect(effect).toBeHidden();
+  await form.getByLabel("Submissions open").fill("2026-10-20T22:00");
+  await zone.selectOption("America/New_York");
+  await expect(effect).toBeHidden();
+  await axe(page);
+});
+
+const resetCounts = { items: 16, photos: 40, bids: 42, purchases: 9, proofs: 4 };
+function resetSummary(over: { unlocked?: boolean; unlocksAt?: string | null; demoReset?: boolean; name?: string; empty?: boolean } = {}) {
+  const base = summary("ended");
+  const name = over.name ?? "Kestrel Gives 2026";
+  return {
+    ...base,
+    event: { ...base.event, name, phase: over.demoReset ? "unscheduled" : "ended" },
+    activeItems: over.empty ? 0 : 15,
+    reset: {
+      unlocksAt: over.unlocksAt === undefined ? "2026-12-06T02:00:00.000Z" : over.unlocksAt, unlocked: over.unlocked ?? false,
+      nextName: name.replace(/\d{4}/, (y) => String(Number(y) + 1)), counts: over.empty ? { items: 0, photos: 0, bids: 0, purchases: 0, proofs: 0 } : resetCounts,
+    },
+    demoReset: over.demoReset ?? false,
+  };
+}
+
+test("Reset for next year, locked: when it unlocks, what goes and what stays, and no button", async ({ page }) => {
+  await viewAs(page, "1");
+  await page.route(/\/api\/admin\?view=summary$/, (route) => route.fulfill({ json: resetSummary() }));
+  await page.goto("/admin/reset");
+  await expect(page).toHaveTitle("Reset for next year · Admin Dashboard · Kestrel Gives");
+  await expect(page.getByRole("navigation", { name: "Admin sections" }).getByRole("link", { name: "Reset for next year" })).toHaveAttribute("aria-current", "page");
+  await expect(page.locator(".admin-reset .pill")).toHaveText("Locked");
+  await expect(page.locator("[data-reset-status]")).toHaveText("Reset for next year unlocks on Saturday, December 5 at 9:00 PM EST, 30 days after bidding closes.");
+  const deletes = page.getByRole("region", { name: "Reset deletes" });
+  await expect(deletes.getByRole("listitem")).toHaveText(["16 items with their 40 photos", "42 bids", "9 purchases", "4 proofs"]);
+  await expect(page.getByRole("region", { name: "Reset keeps" })).toContainText("Event settings, copied to Kestrel Gives 2027 with the dates cleared");
+  await expect(page.getByRole("button", { name: "Reset for next year" })).toHaveCount(0);
+  await expect(page.locator("[data-reset-offer]")).toHaveCount(0);
+  await axe(page);
+});
+
+test("Reset for next year, ready: the name must be typed; then the section shows the offer to restore, with focus on it", async ({ page }) => {
+  await viewAs(page, "1");
+  let done = false;
+  await page.route(/\/api\/admin\?view=summary$/, (route) => route.fulfill({ json: done ? resetSummary({ demoReset: true, empty: true, name: "Kestrel Gives 2027", unlocksAt: null }) : resetSummary({ unlocked: true, unlocksAt: "2026-10-01T02:00:00.000Z" }) }));
+  const sent: unknown[] = [];
+  await page.route(/\/api\/admin$/, (route) => {
+    sent.push(route.request().postDataJSON());
+    done = true;
+    return route.fulfill({ json: { ok: true, message: "Reset done. Kestrel Gives 2027 is ready for its dates.", view: "summary", answer: resetSummary({ demoReset: true, empty: true, name: "Kestrel Gives 2027", unlocksAt: null }) } });
+  });
+  await page.goto("/admin/reset");
+  await expect(page.locator(".admin-reset .pill")).toHaveText("Ready");
+  await page.getByRole("button", { name: "Reset for next year" }).click();
+  const dialog = page.getByRole("dialog", { name: "Reset for next year?" });
+  await expect(dialog).toContainText("This deletes 16 items with their 40 photos, 42 bids, 9 purchases and 4 proofs from Kestrel Gives 2026.");
+  await expect(dialog).toContainText("The demo is shared, so this empties it for everyone");
+  const confirm = dialog.getByRole("button", { name: "Reset for next year" });
+  await expect(confirm).toHaveAttribute("aria-disabled", "true");
+  await dialog.getByLabel("Type Kestrel Gives 2026 to confirm").fill("Kestrel Gives");
+  await dialog.getByLabel("Type Kestrel Gives 2026 to confirm").press("Enter"); // a wrong name: Enter does nothing
+  await expect(dialog).toBeVisible();
+  expect(sent).toEqual([]);
+  await dialog.getByLabel("Type Kestrel Gives 2026 to confirm").fill("Kestrel Gives 2026");
+  await expect(confirm).not.toHaveAttribute("aria-disabled", /.*/);
+  await dialog.evaluate((d) => Promise.all((d as unknown as { getAnimations(o: object): { finished: Promise<unknown> }[] }).getAnimations({ subtree: true }).map((a) => a.finished))); // contrast once faded in
+  await axe(page);
+  await confirm.click();
+  await expect(dialog).toHaveCount(0);
+  expect(sent).toEqual([{ action: "reset-year", confirmName: "Kestrel Gives 2026" }]);
+  await expect(page.getByText("Reset done. Kestrel Gives 2027 is ready for its dates.")).toBeVisible();
+  const offer = page.getByRole("region", { name: "The demo was reset for next year" });
+  await expect(offer).toContainText("Kestrel Gives 2027 has no items or dates yet");
+  await expect(offer).toContainText("set its dates in Event settings and add items");
+  await expect(offer.getByRole("heading", { level: 3 })).toBeFocused();
+  await expect(page.locator("[data-reset-status]")).toContainText("no close date yet");
+  await expect(page.getByRole("region", { name: "Reset deletes" })).toContainText("Nothing yet");
+  await axe(page);
+});
+
+test("Reset refused: a wrong name stays in the dialog; locked meanwhile closes it and reloads with why", async ({ page }) => {
+  await viewAs(page, "1");
+  await page.route(/\/api\/admin\?view=summary$/, (route) => route.fulfill({ json: resetSummary({ unlocked: true, unlocksAt: "2026-10-01T02:00:00.000Z" }) }));
+  let answers = [
+    { status: 422, json: { ok: false, code: "wrong-name", error: "Type the event's name, Kestrel Gives 2026, to confirm." } },
+    { status: 409, json: { ok: false, code: "locked", error: "Reset for next year unlocks 30 days after bidding closes." } },
+  ];
+  await page.route(/\/api\/admin$/, (route) => route.fulfill(answers.shift()!));
+  await page.goto("/admin/reset");
+  await page.getByRole("button", { name: "Reset for next year" }).click();
+  const dialog = page.getByRole("dialog", { name: "Reset for next year?" });
+  await dialog.getByLabel("Type Kestrel Gives 2026 to confirm").fill("Kestrel Gives 2026");
+  await dialog.getByRole("button", { name: "Reset for next year" }).click();
+  await expect(dialog.getByRole("alert")).toHaveText("Type the event's name, Kestrel Gives 2026, to confirm.");
+  await dialog.getByRole("button", { name: "Reset for next year" }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.getByRole("alert").filter({ hasText: "unlocks" })).toHaveText("Reset for next year unlocks 30 days after bidding closes. The section has been reloaded.");
+  answers = [];
+});
+
+test("after a Reset, Totals offers Restore demo data: the demo bar's own dialog, then focus on the section title", async ({ page }) => {
+  await viewAs(page, "1");
+  let restored = false;
+  await page.route(/\/api\/admin\?view=summary$/, (route) => route.fulfill({ json: restored ? summary("ended") : resetSummary({ demoReset: true, empty: true, name: "Kestrel Gives 2027", unlocksAt: null }) }));
+  const demo: unknown[] = [];
+  await page.route(/\/api\/demo$/, async (route) => {
+    demo.push(route.request().postDataJSON());
+    restored = true;
+    const app = await (await route.fetch({ url: "http://localhost:3000/api/app", method: "GET" })).json();
+    return route.fulfill({ json: app });
+  });
+  await page.goto("/admin");
+  const offer = page.getByRole("region", { name: "The demo was reset for next year" });
+  await expect(offer).toBeVisible();
+  await axe(page);
+  await offer.getByRole("button", { name: "Restore demo data" }).click();
+  const dialog = page.getByRole("dialog", { name: "Restore demo data?" });
+  await dialog.getByRole("button", { name: "Cancel" }).click();
+  expect(demo).toEqual([]);
+  await expect(offer.getByRole("button", { name: "Restore demo data" })).toBeFocused();
+  await offer.getByRole("button", { name: "Restore demo data" }).click();
+  await dialog.getByRole("button", { name: "Restore demo data" }).click();
+  await expect(page.getByText("Demo data restored.")).toBeVisible();
+  expect(demo).toEqual([{ action: "restore" }]);
+  await expect(page.locator("[data-reset-offer]")).toHaveCount(0);
+  await expect(page.getByRole("heading", { level: 2, name: "Totals" })).toBeFocused();
 });

@@ -2,7 +2,7 @@
 // could view as, the current event and its phase, and the charities. Served by GET /api/app
 // and returned by POST /api/demo after each change, so the page redraws from one answer.
 import type { Tx } from "../data/db.ts";
-import { currentEventIn, phaseOf, proofDeadlineOf } from "../data/event.ts";
+import { currentEventIn, justResetIn, phaseOf, proofDeadlineOf } from "../data/event.ts";
 import { resolveViewer } from "../demo/viewer.ts";
 import { photoUrl } from "../seed/photo-url.ts";
 import { ENDING_SOON_HOURS } from "../../src/components/thresholds.ts";
@@ -48,5 +48,6 @@ export async function appStateIn(tx: Tx, viewerId: string | null, env: Env, hasL
     people,
     event: shownEvent,
     charities: charities.map((c) => ({ id: c.id, name: c.name, description: c.description, logoUrl: photoUrl(c.logo_path, env, hasLocalCopy) })),
+    demoReset: event ? await justResetIn(tx, event.id) : false,
   };
 }

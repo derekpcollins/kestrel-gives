@@ -13,3 +13,14 @@
 .empty__title { font: var(--type-heading-3); }
 .empty__text { max-width: var(--size-content-narrow); color: var(--color-text-muted); }
 .empty__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-3); padding-top: var(--space-2); }
+
+/* Loading (DESIGN-SYSTEM.md › Loading): a visible line with a spinner where the content will
+   go, in the HTML so it shows at first paint. The spinner is the button's, stopped under
+   reduced motion like every animation (base.css). */
+.loading { display: flex; align-items: center; justify-content: center; gap: var(--space-3); margin: 0; padding: var(--space-8) var(--space-4); font: var(--type-body); color: var(--color-text-muted); }
+.loading[hidden] { display: none; }
+.loading__spinner {
+  flex: none; width: var(--size-icon-md); height: var(--size-icon-md);
+  border: var(--border-thick) solid currentColor; border-right-color: transparent; border-radius: var(--radius-pill);
+  animation: btn-spin var(--duration-spin) linear infinite;
+}

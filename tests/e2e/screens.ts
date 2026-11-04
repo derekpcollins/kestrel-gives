@@ -33,6 +33,8 @@ export const SCREENS: readonly Screen[] = [
   { name: "admin-items", path: "/admin/items", viewer: "1" },
   { name: "admin-settings", path: "/admin/settings", viewer: "1" },
   { name: "admin-templates", path: "/admin/templates", viewer: "1" },
+  // Milestone 6F: Reset for next year (locked on the seeded live event).
+  { name: "admin-reset", path: "/admin/reset", viewer: "1" },
   { name: "design-system", path: "/design-system/" }, // every component, every state
 ];
 

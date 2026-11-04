@@ -76,3 +76,16 @@ export async function currentEventIn(tx: Tx): Promise<CurrentEvent | null> {
   await finalizeWinnersIn(tx, event.id);
   return readCurrentIn(tx);
 }
+
+/**
+ * The shared demo was just reset for next year (SPEC v1.17 §7.8, DECISIONS #109): an earlier
+ * event exists and this one has no items yet. Home and the Admin Dashboard then offer Restore.
+ */
+export async function justResetIn(tx: Tx, eventId: string): Promise<boolean> {
+  const { rows } = await tx.query<{ reset: boolean }>(
+    `SELECT EXISTS (SELECT 1 FROM events WHERE id <> $1 AND created_at <= (SELECT created_at FROM events WHERE id = $1))
+        AND NOT EXISTS (SELECT 1 FROM items WHERE event_id = $1) AS reset`,
+    [eventId],
+  );
+  return rows[0]?.reset ?? false;
+}

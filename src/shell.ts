@@ -2,11 +2,12 @@
 // banner, drawn from GET /api/app. Pages mark their slots and name themselves with
 // <body data-page="…">; page scripts listen for "kg:state" to draw their own content.
 import type { AppState } from "./app-state.ts";
-import { renderDemoBar, updateDemoBar, type DemoBarActions } from "./components/demo-bar.ts";
+import { confirmRestore, renderDemoBar, updateDemoBar, type DemoBarActions } from "./components/demo-bar.ts";
 import { el } from "./components/dom.ts";
 import { icon } from "./components/icons.ts";
 import { updatePhaseBanner } from "./components/phase-banner.ts";
 import { renderSiteHeader } from "./components/site-header.ts";
+import { fetchWithTimeout, LoadTimeout, pageLoading } from "./components/loading.ts";
 import { pageKeyFor } from "./components/shell-rules.ts";
 
 
@@ -14,9 +15,12 @@ export class RequestError extends Error {}
 
 async function call(path: string, init?: RequestInit): Promise<AppState> {
   let response: Response;
+  const options = { ...init, headers: { Accept: "application/json", ...(init?.body ? { "Content-Type": "application/json" } : {}) } };
   try {
-    response = await fetch(path, { ...init, headers: { Accept: "application/json", ...(init?.body ? { "Content-Type": "application/json" } : {}) } });
-  } catch {
+    // Reading the app state gives up after LOAD_TIMEOUT_MS (DECISIONS #119); demo actions wait.
+    response = init?.method ? await fetch(path, options) : await fetchWithTimeout(path, options);
+  } catch (error) {
+    if (error instanceof LoadTimeout) throw new RequestError("The demo is taking too long to answer. Try again in a moment.");
     throw new RequestError("Can't reach the server. Check your connection and try again.");
   }
   const body = (await response.json().catch(() => null)) as (AppState & { ok?: boolean; error?: string }) | null;
@@ -77,19 +81,43 @@ export async function startShell(): Promise<Shell> {
 
   // A page that changed what the app state shows (an admin saving new dates) asks for it again.
   document.addEventListener("kg:refresh", () => void call("/api/app").then(show).catch(() => {}));
+  // The "demo was reset" offer (Home, Admin Dashboard) asks for the demo bar's Restore, even with
+  // the bar hidden (?demo=off). `detail.done` hears whether it ran, to place focus afterwards.
+  document.addEventListener("kg:restore", (event) => {
+    const done = (event as CustomEvent<{ done?: (restored: boolean) => void } | null>).detail?.done;
+    void confirmRestore(actions.restore).then((restored) => done?.(restored));
+  });
 
-  try {
-    const state = await call("/api/app");
-    bar = renderDemoBar(state, actions);
-    if (bar) demoSlot?.replaceChildren(bar);
-    show(state);
-  } catch (error) {
-    bannerSlot?.replaceChildren(loadError(error));
-  }
+  // The first load. If it fails or times out, the page's loading line goes and a banner says
+  // why, with Try again (which shows the loading line again and asks once more).
+  const start = async (retry?: HTMLButtonElement) => {
+    try {
+      const state = await call("/api/app");
+      bar = renderDemoBar(state, actions);
+      if (bar) demoSlot?.replaceChildren(bar);
+      bannerSlot?.replaceChildren();
+      show(state);
+      // Try again worked: its button is gone, so focus goes to the page's main region.
+      if (retry) document.querySelector<HTMLElement>("main")?.focus();
+    } catch (error) {
+      pageLoading(false);
+      const again = el("button", { className: "btn btn--secondary", attrs: { type: "button", "data-shell-retry": "" } }, "Try again");
+      again.addEventListener("click", () => {
+        if (again.getAttribute("aria-busy") === "true") return;
+        again.setAttribute("aria-busy", "true");
+        again.setAttribute("aria-disabled", "true");
+        pageLoading(true);
+        void start(again);
+      });
+      bannerSlot?.replaceChildren(loadError(error, again));
+      if (retry) again.focus();
+    }
+  };
+  await start();
   return shell;
 }
 
-function loadError(error: unknown): HTMLElement {
+function loadError(error: unknown, again: HTMLButtonElement): HTMLElement {
   return el("div", { className: "phase-banner" },
     el("div", { className: "banner banner--danger", attrs: { role: "alert" } },
       icon("alert"),
@@ -97,6 +125,7 @@ function loadError(error: unknown): HTMLElement {
         el("p", { className: "banner__title", text: "The demo couldn't load" }),
         el("p", { className: "banner__text", text: error instanceof Error ? error.message : "Please reload the page." }),
       ),
+      el("div", { className: "banner__action" }, again),
     ),
   );
 }

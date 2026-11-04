@@ -41,6 +41,10 @@ export interface ResetState {
   /** When Reset for next year unlocks (30 days after bidding closes), or null with no close date. */
   unlocksAt: string | null;
   unlocked: boolean;
+  /** The name next year's event gets ("Kestrel Gives 2027"). */
+  nextName: string;
+  /** What a Reset would delete from this event, for its dialog. Removed bids and cancelled items count too. */
+  counts: { items: number; photos: number; bids: number; purchases: number; proofs: number };
 }
 
 export interface AdminEvent {

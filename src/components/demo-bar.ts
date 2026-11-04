@@ -133,19 +133,25 @@ export function enhanceDemoBar(bar: HTMLElement, actions?: DemoBarActions): void
       bar.dispatchEvent(new CustomEvent("demo:restore", { bubbles: true, detail: {} }));
       return;
     }
-    const restored = await confirmDialog({
-      variant: "danger",
-      title: "Restore demo data?",
-      body: "Every item, bid, purchase, proof and email template goes back to the seeded demo, with bidding live. The demo is shared, so this resets it for everyone.",
-      confirmLabel: "Restore demo data",
-      busyLabel: "Restoring…",
-      onConfirm: actions.restore,
-    });
-    if (restored) {
-      announce(status, "Demo data restored");
-      showToast("Demo data restored.", { tone: "success" });
-    }
+    if (await confirmRestore(actions.restore)) announce(status, "Demo data restored");
   });
+}
+
+/**
+ * Restore demo data's confirmation, then a toast. The demo bar and the "demo was reset" offer
+ * on Home and the Admin Dashboard (SPEC v1.17 §7.8) both use it, so they ask the same way.
+ */
+export async function confirmRestore(restore: () => Promise<void>): Promise<boolean> {
+  const restored = await confirmDialog({
+    variant: "danger",
+    title: "Restore demo data?",
+    body: "Every item, bid, purchase, proof and email template goes back to the seeded demo, with bidding live. The demo is shared, so this resets it for everyone.",
+    confirmLabel: "Restore demo data",
+    busyLabel: "Restoring…",
+    onConfirm: restore,
+  });
+  if (restored) showToast("Demo data restored.", { tone: "success" });
+  return restored;
 }
 
 /** Runs a request with the button in its loading state. False (with a toast) if it failed. */

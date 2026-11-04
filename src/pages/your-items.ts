@@ -2,6 +2,7 @@
 // proof summary, donated items with Edit, and anything cancelled. Every row is an item tile
 // with Your Items' own words. It redraws whenever the demo bar changes who's viewing or the
 // phase, and only the newest answer is drawn.
+import { fetchWithTimeout, pageLoading } from "../components/loading.ts";
 import type { AppState } from "../app-state.ts";
 import { el } from "../components/dom.ts";
 import { hydrateIcons, icon } from "../components/icons.ts";
@@ -108,7 +109,7 @@ export function startYourItemsPage(): void {
     root.setAttribute("aria-busy", "true");
     let answer: MeAnswer;
     try {
-      const response = await fetch("/api/me", { headers: { Accept: "application/json" }, credentials: "same-origin" });
+      const response = await fetchWithTimeout("/api/me", { headers: { Accept: "application/json" }, credentials: "same-origin" });
       if (!response.ok) {
         await response.text().catch(() => "");
         throw new Error(String(response.status));
@@ -117,6 +118,7 @@ export function startYourItemsPage(): void {
     } catch {
       if (request !== latest) return;
       root.removeAttribute("aria-busy");
+      pageLoading(false);
       root.replaceChildren();
       failed.hidden = false;
       return;
@@ -124,11 +126,12 @@ export function startYourItemsPage(): void {
     if (request !== latest || !state) return;
     root.replaceChildren(...render(answer, state));
     root.removeAttribute("aria-busy");
+    pageLoading(false);
     failed.hidden = true;
     hydrateIcons(root);
   };
 
-  failed.querySelector("button")?.addEventListener("click", () => void load());
+  failed.querySelector("button")?.addEventListener("click", () => { failed.hidden = true; pageLoading(true); void load(); });
   document.addEventListener("kg:state", (event) => {
     state = (event as CustomEvent<AppState>).detail;
     void load();

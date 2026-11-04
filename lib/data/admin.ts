@@ -2,7 +2,7 @@
 // write runs in the caller's transaction, locks the rows it decides on, and uses the
 // database clock. Every path that changes a donation total ends in recheckProofsIn.
 import type { Id, Tx } from "./db.ts";
-import { currentEventIn, phaseOf, proofDeadlineOf, type CurrentEvent } from "./event.ts";
+import { currentEventIn, justResetIn, phaseOf, proofDeadlineOf, type CurrentEvent } from "./event.ts";
 import { setEventDatesIn } from "./event-dates.ts";
 import type { ResolvePhoto } from "./items.ts";
 import { donationTotalIn } from "./totals.ts";
@@ -121,12 +121,17 @@ export async function adminSummaryIn(tx: Tx): Promise<AdminSummary | null> {
     leading = Number(rows[0]?.cents ?? 0);
   }
   const people = await peopleMoneyIn(tx, event.id);
-  const { rows: counts } = await tx.query<{ items: number; earlier: boolean }>(
-    `SELECT (SELECT count(*)::int FROM items WHERE event_id = $1 AND status = 'active') AS items,
-            EXISTS (SELECT 1 FROM events WHERE id <> $1 AND created_at <= (SELECT created_at FROM events WHERE id = $1)) AS earlier`,
+  // What Reset for next year would delete, for its dialog (SPEC §7.8).
+  const { rows: counts } = await tx.query<{ active: number; items: number; photos: number; bids: number; purchases: number; proofs: number }>(
+    `SELECT (SELECT count(*)::int FROM items WHERE event_id = $1 AND status = 'active') AS active,
+            (SELECT count(*)::int FROM items WHERE event_id = $1) AS items,
+            (SELECT count(*)::int FROM item_photos p JOIN items i ON i.id = p.item_id WHERE i.event_id = $1) AS photos,
+            (SELECT count(*)::int FROM bids b JOIN items i ON i.id = b.item_id WHERE i.event_id = $1) AS bids,
+            (SELECT count(*)::int FROM purchases p JOIN items i ON i.id = p.item_id WHERE i.event_id = $1) AS purchases,
+            (SELECT count(*)::int FROM proofs WHERE event_id = $1) AS proofs`,
     [event.id],
   );
-  const { rows: all } = await tx.query<{ n: number }>(`SELECT count(*)::int AS n FROM items WHERE event_id = $1`, [event.id]);
+  const c = counts[0]!;
   const unlocksAt = resetUnlocksAt(event.biddingClosesAt);
   return {
     ok: true,
@@ -134,9 +139,12 @@ export async function adminSummaryIn(tx: Tx): Promise<AdminSummary | null> {
     event: adminEvent(event, now),
     totals: totalsFrom(people, leading),
     pendingProofs: people.filter((p) => p.proof_status === "pending").length,
-    activeItems: counts[0]!.items,
-    reset: { unlocksAt: iso(unlocksAt), unlocked: unlocksAt !== null && now >= unlocksAt },
-    demoReset: counts[0]!.earlier && all[0]!.n === 0,
+    activeItems: c.active,
+    reset: {
+      unlocksAt: iso(unlocksAt), unlocked: unlocksAt !== null && now >= unlocksAt, nextName: nextEventName(event.name),
+      counts: { items: c.items, photos: c.photos, bids: c.bids, purchases: c.purchases, proofs: c.proofs },
+    },
+    demoReset: await justResetIn(tx, event.id),
   };
 }
 

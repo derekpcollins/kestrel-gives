@@ -3,7 +3,7 @@
 // rules themselves are shared with the server (src/components/settings-rules.ts and
 // template-rules.ts), so the form and the API can't disagree.
 import type { Phase } from "../components/item-tile-rules.ts";
-import { fromZonedLocal, type SettingsInput } from "../components/settings-rules.ts";
+import { fromZonedLocal, toZonedLocal, type SettingsInput } from "../components/settings-rules.ts";
 import { fillTemplate, tokenProblems, type Variable } from "../components/template-rules.ts";
 
 // ---------------------------------------------------------------------------------------------
@@ -65,22 +65,85 @@ export function phaseChange(before: Phase, after: Phase): SaveConfirm | null {
     body: `${move} ${after === "submission" ? "Employees can submit items; bidding waits for its date." : "Employees can't submit, bid or buy until submissions open."}` };
 }
 
-/** "Times are in America/New_York (EST)." for the dates' help line. */
+function zonePart(zone: string, style: "short" | "longGeneric", at: Date): string {
+  return new Intl.DateTimeFormat("en-US", { timeZone: zone, timeZoneName: style }).formatToParts(at).find((p) => p.type === "timeZoneName")?.value ?? "";
+}
+
+/** The city in an IANA id: "America/New_York" → "New York", "America/Argentina/Buenos_Aires" → "Buenos Aires". */
+const cityOf = (zone: string) => zone.slice(zone.lastIndexOf("/") + 1).replaceAll("_", " ");
+
+/**
+ * A zone's friendly name, "Eastern Time (New York)" (owner, 6E review). The stored value stays
+ * the IANA id. Zones the browser only names by offset read "GMT+03:00 (Istanbul)"; UTC is
+ * "Coordinated Universal Time". An unknown id is shown as it is.
+ */
+export function zoneName(zone: string, at = new Date()): string {
+  let generic = "";
+  try {
+    generic = zonePart(zone, "longGeneric", at);
+  } catch {
+    return zone;
+  }
+  const city = cityOf(zone);
+  if (zone === "UTC" || zone === "Etc/UTC") return "Coordinated Universal Time";
+  if (!generic || generic.includes(city)) return generic || zone;
+  return `${generic} (${city})`;
+}
+
+/** The zone named in passing: "Eastern" for Eastern Time, "GMT+3" where the browser has no name. */
+function zoneWord(zone: string, at: Date): string {
+  const generic = zonePart(zone, "longGeneric", at);
+  if (!generic || generic.startsWith("GMT")) return zonePart(zone, "short", at);
+  return generic.replace(/ (Standard )?Time$/, "");
+}
+
+/** "Times are in Eastern Time (New York), currently EST." for the dates' help line. */
 export function zoneHelp(zone: string, now: Date): string {
   let short = "";
   try {
-    short = new Intl.DateTimeFormat("en-US", { timeZone: zone, timeZoneName: "short" }).formatToParts(now).find((p) => p.type === "timeZoneName")?.value ?? "";
+    short = zonePart(zone, "short", now);
   } catch {
     return "Choose a time zone first.";
   }
-  return `Times are in ${zone}${short ? ` (${short})` : ""}. Set all three, or leave all three empty for "Not scheduled yet".`;
+  return `Times are in ${zoneName(zone, now)}${short ? `, currently ${short}` : ""}. Set all three, or leave all three empty for "Not scheduled yet".`;
 }
 
-/** Every IANA zone the browser knows, with the current one kept even if it doesn't. */
-export function timeZones(current: string, known: readonly string[]): string[] {
+/** "9:00 PM", or "midnight" and "noon" on the hour. */
+function clockWords(date: Date, zone: string): string {
+  const local = toZonedLocal(date, zone).slice(11, 16);
+  if (local === "00:00") return "midnight";
+  if (local === "12:00") return "noon";
+  return new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: zone }).format(date);
+}
+
+/**
+ * Under the dates, once the time zone is changed and the dates are set (owner, 6E review;
+ * DECISIONS entry 116 keeps the typed wall times): what the close becomes, and what that is in the
+ * saved zone. "Bidding now closes at 9:00 PM PST (Dec 6 at midnight Eastern)." The date shows
+ * in the brackets only when the two zones are on different days. Null otherwise.
+ */
+export function zoneEffect(savedZone: string, values: Pick<SettingsInput, "timeZone" | "submissionsOpen" | "biddingOpens" | "biddingCloses">): string | null {
+  const zone = values.timeZone;
+  if (!zone || zone === savedZone) return null;
+  if ([values.submissionsOpen, values.biddingOpens, values.biddingCloses].some((v) => !v.trim())) return null;
+  let closes: Date | null = null;
+  try {
+    closes = fromZonedLocal(values.biddingCloses.trim(), zone);
+  } catch {
+    return null;
+  }
+  if (!closes) return null;
+  const there = toZonedLocal(closes, savedZone);
+  const day = there.slice(0, 10) === values.biddingCloses.trim().slice(0, 10) ? ""
+    : `${new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: savedZone }).format(closes)} at `;
+  return `Bidding now closes at ${clockWords(closes, zone)} ${zonePart(zone, "short", closes)} (${day}${clockWords(closes, savedZone)} ${zoneWord(savedZone, closes)}).`;
+}
+
+/** Every IANA zone the browser knows, with the current one kept even if it doesn't, by friendly name. */
+export function timeZones(current: string, known: readonly string[], at = new Date()): { value: string; label: string }[] {
   const list = [...known];
   if (current && !list.includes(current)) list.unshift(current);
-  return list;
+  return list.map((value) => ({ value, label: zoneName(value, at) })).sort((a, b) => a.label.localeCompare(b.label, "en-US"));
 }
 
 /** Labels, help and the name used in messages, by field (DESIGN-SYSTEM.md › Form field). */

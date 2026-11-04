@@ -11,6 +11,7 @@ import {
   adminCancelItemIn, adminCancelPurchaseIn, adminItemsIn, adminPeopleIn, adminProofsIn, adminRemoveBidIn, adminSettingsIn, adminSummaryIn, adminTemplatesIn,
   approveProofIn, rejectProofIn, resetYearIn, restoreTemplateIn, saveSettingsIn, saveTemplateIn,
 } from "../../lib/data/admin.ts";
+import { appStateIn } from "../../lib/api/app-state.ts";
 import { currentEventIn, phaseOf } from "../../lib/data/event.ts";
 import { createItemIn } from "../../lib/data/item-writes.ts";
 import { proofViewIn } from "../../lib/data/me.ts";
@@ -455,6 +456,13 @@ describe("admin (rolled back)", () => {
                 (SELECT count(*)::int FROM uploads) AS uploads, (SELECT count(*)::int FROM events) AS events`);
       await saveTemplateIn(db, "outbid", { subject: "Edited {{item_name}}", body: "Kept after reset." });
 
+      // The dialog's counts are what the Reset deletes, and the next name is the one it makes.
+      const before = await counts();
+      const ready = await summary(db);
+      assert.deepEqual(ready.reset.counts, { items: before.items, photos: before.photos, bids: before.bids, purchases: before.purchases, proofs: before.proofs });
+      assert.equal(ready.reset.nextName, "Kestrel Gives 2027");
+      assert.equal((await appStateIn(db, null, {}, () => false)).demoReset, false);
+
       const r = await resetYearIn(db, " Kestrel Gives 2026 ");
       assert.ok(r.ok);
       assert.equal(r.eventName, "Kestrel Gives 2027");
@@ -474,6 +482,7 @@ describe("admin (rolled back)", () => {
       const s = await summary(db);
       assert.equal(s.event.phase, "unscheduled");
       assert.equal(s.demoReset, true);
+      assert.equal((await appStateIn(db, null, {}, () => false)).demoReset, true, "Home offers Restore too");
       assert.equal(s.totals.pledged.grandCents, 0);
       assert.equal(s.reset.unlocked, false);
     });
@@ -497,6 +506,7 @@ describe("admin (rolled back)", () => {
       await restoreIn(db, "manual", new Date());
       const s = await summary(db);
       assert.deepEqual([s.event.name, s.event.phase, s.demoReset], ["Kestrel Gives 2026", "live", false]);
+      assert.equal((await appStateIn(db, null, {}, () => false)).demoReset, false);
       assert.equal((await one<{ n: number }>(db, `SELECT count(*)::int AS n FROM events`)).n, 1);
     });
   });

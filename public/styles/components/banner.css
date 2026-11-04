@@ -32,3 +32,9 @@
 .banner--danger  { background: var(--color-danger-soft); }
 .banner--danger > .icon { color: var(--color-danger); }
 .banner--info > .icon { color: var(--color-link); }
+
+/* The "demo was reset" offer (DESIGN-SYSTEM.md › Reset offer): an info banner whose title is a
+   heading, so it reads as its own region on Home and the Admin Dashboard. */
+.reset-offer .banner__title { margin: 0; }
+/* On Home it opens the page, right under the phase banner: keep the two apart. */
+.page > .reset-offer:first-child { margin-top: var(--space-4); }

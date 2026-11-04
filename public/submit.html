@@ -26,10 +26,17 @@
           <p class="page-header__description" data-submit-description>Donate an item or an experience to the auction.</p>
         </div></div>
       </header>
+      <p class="loading" role="status" data-page-loading><span class="loading__spinner" aria-hidden="true"></span><span>Loading the form…</span></p>
       <section class="empty" aria-labelledby="submit-blocked-title" data-submit-blocked hidden>
         <span class="empty__icon" data-icon="clock" data-icon-size="lg"></span>
         <h2 class="empty__title" id="submit-blocked-title" data-submit-blocked-text></h2>
         <p><a class="link" href="/silent-auction">Browse the Silent Auction</a></p>
+      </section>
+      <section class="empty" aria-labelledby="submit-error-title" data-submit-error hidden>
+        <span class="empty__icon" data-icon="alert" data-icon-size="lg"></span>
+        <h2 class="empty__title" id="submit-error-title">We couldn't load the item</h2>
+        <p class="empty__text">Check your connection and try again.</p>
+        <div class="empty__actions"><button type="button" class="btn btn--secondary">Try again</button></div>
       </section>
       <form class="item-form" id="item-form" aria-labelledby="item-form-title" data-submit-form hidden>
         <h2 class="visually-hidden" id="item-form-title" data-submit-form-title>Item details</h2>

@@ -11,7 +11,7 @@ import { checkSettings, SETTINGS_LIMITS, type SettingsField, type SettingsInput 
 import { insertAt, TEMPLATE_LIMITS, templateProblems, token, VARIABLES, type Variable } from "../components/template-rules.ts";
 import { showToast } from "../components/toast.ts";
 import {
-  liveProblems, PHASE_NAMES, phaseChange, phaseFor, preview, restoreDialog, SETTINGS_TEXT, TEMPLATE_WHEN, templateStatus, timeZones, VARIABLE_TEXT, zoneHelp,
+  liveProblems, PHASE_NAMES, phaseChange, phaseFor, preview, restoreDialog, SETTINGS_TEXT, TEMPLATE_WHEN, templateStatus, timeZones, VARIABLE_TEXT, zoneEffect, zoneHelp,
 } from "./admin-settings-rules.ts";
 
 /** What admin.ts lends these sections. */
@@ -22,8 +22,11 @@ export interface SectionHost {
   alert(message: string): void;
   denied(): void;
   redraw(nodes: Node[]): void;
-  /** Asks the shell to fetch the app state again (the header, banner and phase follow the dates). */
-  refreshApp(): void;
+  /**
+   * Asks the shell to fetch the app state again (the header, banner and phase follow the dates).
+   * The section then reloads; focus goes to `focus` (a selector) in it.
+   */
+  refreshApp(focus: string): void;
 }
 
 const pill = (label: string, tone: string) => el("span", { className: `pill${tone === "neutral" ? "" : ` pill--${tone}`}`, text: label });
@@ -89,16 +92,29 @@ export function settingsSection(answer: AdminSettings, host: SectionHost, focusS
   const name = textInput(SETTINGS_ID.name, "name", saved.name, { required: "", maxlength: String(SETTINGS_LIMITS.nameMax) });
   const zone = el("select", { className: "input", attrs: { id: SETTINGS_ID.timeZone, name: "timeZone", required: "" } });
   const known = typeof Intl.supportedValuesOf === "function" ? Intl.supportedValuesOf("timeZone") : [saved.timeZone];
-  zone.append(...timeZones(saved.timeZone, known).map((z) => el("option", { text: z.replaceAll("_", " "), attrs: { value: z } })));
+  zone.append(...timeZones(saved.timeZone, known, now()).map((z) => el("option", { text: z.label, attrs: { value: z.value } })));
   zone.value = saved.timeZone;
 
   const dateHelp = el("p", { className: "field__help", attrs: { id: "settings-dates-help" }, text: zoneHelp(saved.timeZone, now()) });
   const dateInput = (key: "submissionsOpen" | "biddingOpens" | "biddingCloses") => {
-    const input = el("input", { className: "input", attrs: { id: SETTINGS_ID[key], name: key, type: "datetime-local", step: "60", "aria-describedby": "settings-dates-help" } });
+    const input = el("input", { className: "input", attrs: { id: SETTINGS_ID[key], name: key, type: "datetime-local", step: "60", "aria-describedby": "settings-dates-help settings-dates-effect" } });
     input.value = saved[key];
     return el("div", { className: "field" }, el("label", { className: "field__label", attrs: { for: SETTINGS_ID[key] }, text: T[key].label }), input);
   };
-  zone.addEventListener("change", () => { dateHelp.textContent = zoneHelp(zone.value, now()); });
+  // A changed zone keeps the typed wall times (DECISIONS #116); this line says what the close becomes.
+  const effect = el("p", { className: "field__help admin-settings__effect", attrs: { id: "settings-dates-effect", "aria-live": "polite", "data-settings-effect": "" } });
+  const showEffect = () => {
+    const words = zoneEffect(saved.timeZone, {
+      timeZone: zone.value,
+      submissionsOpen: form.querySelector<HTMLInputElement>(`#${SETTINGS_ID.submissionsOpen}`)!.value,
+      biddingOpens: form.querySelector<HTMLInputElement>(`#${SETTINGS_ID.biddingOpens}`)!.value,
+      biddingCloses: form.querySelector<HTMLInputElement>(`#${SETTINGS_ID.biddingCloses}`)!.value,
+    });
+    effect.textContent = words ?? "";
+    effect.hidden = !words;
+  };
+  effect.hidden = true;
+  zone.addEventListener("change", () => { dateHelp.textContent = zoneHelp(zone.value, now()); showEffect(); });
 
   const days = textInput(SETTINGS_ID.proofDeadlineDays, "proofDeadlineDays", String(saved.proofDeadlineDays), { inputmode: "numeric", pattern: "[0-9]+", required: "", class: "input input--money input--short" });
   const giving = textInput(SETTINGS_ID.givingPlatformUrl, "givingPlatformUrl", saved.givingPlatformUrl, { inputmode: "url", maxlength: String(SETTINGS_LIMITS.urlMax), spellcheck: "false" });
@@ -110,7 +126,7 @@ export function settingsSection(answer: AdminSettings, host: SectionHost, focusS
     field({ id: SETTINGS_ID.timeZone, label: T.timeZone.label, help: T.timeZone.help }, el("div", { className: "select" }, zone, icon("chevron-down"))),
     el("fieldset", { className: "field admin-settings__group" },
       el("legend", { className: "field__label", text: T.dates.legend }), dateHelp,
-      el("div", { className: "field-row" }, dateInput("submissionsOpen"), dateInput("biddingOpens"), dateInput("biddingCloses"))),
+      el("div", { className: "field-row" }, dateInput("submissionsOpen"), dateInput("biddingOpens"), dateInput("biddingCloses")), effect),
     el("div", { className: "field-row" },
       field({ id: SETTINGS_ID.minStartingBidCents, label: T.minStartingBidCents.label, help: T.minStartingBidCents.help, messageName: "a minimum starting bid" }, moneyInput(SETTINGS_ID.minStartingBidCents, "minStartingBid", saved.minStartingBidCents)),
       field({ id: SETTINGS_ID.bidIncrementCents, label: T.bidIncrementCents.label, help: T.bidIncrementCents.help, messageName: "a bid increment" }, moneyInput(SETTINGS_ID.bidIncrementCents, "bidIncrement", saved.bidIncrementCents))),
@@ -120,6 +136,7 @@ export function settingsSection(answer: AdminSettings, host: SectionHost, focusS
     el("div", { className: "admin-settings__actions" }, save),
   );
 
+  form.addEventListener("input", (event) => { if ((event.target as HTMLElement).matches?.("input[type=datetime-local]")) showEffect(); });
   const control = (f: SettingsField) => form.querySelector<Control>(`#${SETTINGS_ID[f]}`)!;
   const values = (): SettingsInput => {
     const money = (id: string) => dollarsToCents(parseWholeDollars(form.querySelector<HTMLInputElement>(`#${id}`)!.value) ?? 0);
@@ -138,7 +155,7 @@ export function settingsSection(answer: AdminSettings, host: SectionHost, focusS
     const done = await host.post({ action: "save-settings", settings: input });
     host.redraw(settingsSection(done.answer as AdminSettings, host, true));
     showToast(done.message, { tone: "success" });
-    host.refreshApp();
+    host.refreshApp("[data-settings-save]");
   };
   /** Turns a refusal into what the person sees: problems under fields, a reload, or an alert. */
   const failedWith = async (error: unknown) => {

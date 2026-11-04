@@ -37,3 +37,33 @@ test("Home on a phone: the description is left-aligned; only the overline is cen
   expect(await align(".hero__event")).toBe("center");
 });
 
+
+// SPEC v1.17 §7.8: after a Reset on the shared demo, Home offers Restore right away. The app
+// state is the real one with demoReset set, and Restore is stubbed, so nothing writes.
+test("after a Reset, Home offers Restore demo data above the hero; once restored it's gone and focus is on the h1", async ({ page }) => {
+  const { default: AxeBuilder } = await import("@axe-core/playwright");
+  let restored = false;
+  await page.route(/\/api\/app$/, async (route) => {
+    const app = await (await route.fetch()).json();
+    return route.fulfill({ json: { ...app, demoReset: !restored, event: restored ? app.event : { ...app.event, name: "Kestrel Gives 2027" } } });
+  });
+  await page.route(/\/api\/demo$/, async (route) => {
+    restored = true;
+    const app = await (await route.fetch({ url: "http://localhost:3000/api/app", method: "GET" })).json();
+    return route.fulfill({ json: { ...app, demoReset: false } });
+  });
+  await page.goto("/?demo=off");
+  const offer = page.getByRole("region", { name: "The demo was reset for next year" });
+  await expect(offer.getByRole("heading", { level: 2 })).toBeVisible();
+  await expect(offer).toContainText("Kestrel Gives 2027 has no items or dates yet");
+  await expect(offer).not.toContainText("Event settings");
+  expect(await page.locator("main > *").first().getAttribute("data-reset-offer")).toBe("");
+  const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
+  expect(violations.map((v) => v.id)).toEqual([]);
+  // The demo bar is hidden (?demo=off), and the offer still restores through the same dialog.
+  await offer.getByRole("button", { name: "Restore demo data" }).click();
+  await page.getByRole("dialog", { name: "Restore demo data?" }).getByRole("button", { name: "Restore demo data" }).click();
+  await expect(page.getByText("Demo data restored.")).toBeVisible();
+  await expect(page.locator("[data-reset-offer]")).toHaveCount(0);
+  await expect(page.getByRole("heading", { level: 1, name: "Kestrel Gives" })).toBeFocused();
+});

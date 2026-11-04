@@ -40,4 +40,9 @@ export interface AppState {
   people: PersonView[];
   event: EventView | null;
   charities: CharityView[];
+  /**
+   * The shared demo was just reset for next year: an earlier event exists and the current one
+   * has no items (SPEC v1.17 §7.8). Home and the Admin Dashboard offer Restore demo data.
+   */
+  demoReset: boolean;
 }

@@ -7,6 +7,7 @@
 //   its id, so a retry after a failed submit doesn't upload it again.
 // - Someone with nothing to prove, or whose proof is approved for their current total, sees why
 //   instead of the form. It follows the demo bar like every page.
+import { fetchWithTimeout, pageLoading } from "../components/loading.ts";
 import type { AppState } from "../app-state.ts";
 import { el } from "../components/dom.ts";
 import { enhanceForm, showServerProblems } from "../components/forms.ts";
@@ -20,9 +21,11 @@ import { requestFailure } from "./submit-rules.ts";
 
 type Answer = { ok: boolean; status: number | null; body: Record<string, unknown> };
 
-async function send(url: string, init: RequestInit): Promise<Answer> {
+/** Reads (`read`) give up after LOAD_TIMEOUT_MS (DECISIONS #119); writes wait for their answer. */
+async function send(url: string, init: RequestInit, read = false): Promise<Answer> {
   try {
-    const response = await fetch(url, { ...init, credentials: "same-origin" });
+    const options = { ...init, credentials: "same-origin" as const };
+    const response = read ? await fetchWithTimeout(url, options) : await fetch(url, options);
     const body = (await response.json().catch(() => ({}))) as Record<string, unknown>;
     return { ok: response.ok, status: response.status, body };
   } catch {
@@ -99,9 +102,10 @@ export function startProofPage(): void {
   const load = async () => {
     const request = ++latest;
     body.setAttribute("aria-busy", "true");
-    const answer = await send("/api/me", { headers: { Accept: "application/json" } });
+    const answer = await send("/api/me", { headers: { Accept: "application/json" } }, true);
     if (request !== latest) return;
     body.removeAttribute("aria-busy");
+    pageLoading(false);
     if (!answer.ok) {
       body.hidden = true;
       blocked.hidden = true;
@@ -110,7 +114,7 @@ export function startProofPage(): void {
     }
     draw(answer.body as unknown as MeAnswer);
   };
-  failed.querySelector("button")?.addEventListener("click", () => void load());
+  failed.querySelector("button")?.addEventListener("click", () => { failed.hidden = true; pageLoading(true); void load(); });
 
   /** A message about the whole form, at its top; focused so it's read. */
   const showFormAlert = (message: string | null) => {

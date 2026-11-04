@@ -11,7 +11,7 @@ import { reasonProblem, REASON_MAX } from "../components/admin-rules.ts";
 
 const dollars = (cents: number) => formatDollars(cents / 100);
 
-export type SectionKey = "totals" | "people" | "proofs" | "items" | "settings" | "templates";
+export type SectionKey = "totals" | "people" | "proofs" | "items" | "settings" | "templates" | "reset";
 
 export interface Section {
   key: SectionKey;
@@ -28,6 +28,7 @@ export const SECTIONS: readonly Section[] = [
   { key: "items", label: "Items", href: "/admin/items", description: "Every item with its bid history. Remove a bid or cancel an item." },
   { key: "settings", label: "Event settings", href: "/admin/settings", description: "The event's name, time zone, dates, bidding amounts, proof deadline and giving platform." },
   { key: "templates", label: "Email templates", href: "/admin/templates", description: "The words of each email a real deployment would send. Nothing is sent from this demo." },
+  { key: "reset", label: "Reset for next year", href: "/admin/reset", description: "Clear this year's items, bids, purchases and proofs, and start next year's event. Unlocks 30 days after bidding closes." },
 ];
 
 /** Which section a path shows; null for an admin path that isn't a section. */

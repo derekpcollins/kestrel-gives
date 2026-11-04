@@ -10,10 +10,12 @@ import { el } from "../components/dom.ts";
 import { hydrateIcons, icon } from "../components/icons.ts";
 import { confirmDialog } from "../components/dialog.ts";
 import { enhanceTableScroll } from "../components/table.ts";
+import { fetchWithTimeout, pageLoading } from "../components/loading.ts";
 import { showToast } from "../components/toast.ts";
 import {
   bidRow, cancelItemDialog, cancelPurchaseDialog, purchaseRow, deadlineLine, GENERAL_DESCRIPTION, groupItems, itemRow, itemsLine, removeBidDialog, gapText, glanceLine, groupProofs, proofReview, queueLine, rejectDialog, initials, leadingBids, money, NOT_ADMIN, pageTitle, proofCell, SECTIONS, sectionFor, totalCards, TOTALS_KEY, type Section,
 } from "./admin-rules.ts";
+import { adminResetOffer, resetSection } from "./admin-reset.ts";
 import { settingsSection, templatesSection, type SectionHost, type TemplateState } from "./admin-settings.ts";
 
 const pill = (label: string, tone: string) => el("span", { className: `pill${tone === "neutral" ? "" : ` pill--${tone}`}`, text: label });
@@ -36,6 +38,8 @@ function totals(summary: AdminSummary): Node[] {
       ),
     ));
   const nodes: Node[] = [
+    // After a Reset on the shared demo, offer Restore right away (SPEC v1.17 §7.8).
+    ...(summary.demoReset ? [adminResetOffer(summary)] : []),
     el("p", { className: "admin-glance", text: glanceLine(summary) }),
     el("ul", { className: "total-cards", attrs: { "aria-label": "Totals by sale type" } }, ...cards),
     el("p", { className: "admin-gap" }, icon("info", { size: "sm" }), el("span", { text: gapText(summary) })),
@@ -313,8 +317,8 @@ async function post(body: Record<string, unknown>): Promise<{ message: string; a
   } catch {
     throw new Error("We couldn't reach the server. Check your connection and try again.");
   }
-  const json = (await response.json().catch(() => ({}))) as { message?: string; error?: string; answer?: unknown; problems?: unknown };
-  if (!response.ok) throw Object.assign(new Error(json.error ?? "Something went wrong. Please try again."), { status: response.status, problems: json.problems });
+  const json = (await response.json().catch(() => ({}))) as { message?: string; error?: string; answer?: unknown; problems?: unknown; code?: string };
+  if (!response.ok) throw Object.assign(new Error(json.error ?? "Something went wrong. Please try again."), { status: response.status, problems: json.problems, code: json.code });
   return { message: json.message ?? "Done.", answer: json.answer };
 }
 
@@ -339,6 +343,7 @@ export function startAdminPage(): void {
   const description = $<HTMLElement>("[data-admin-description]");
   const showDenied = () => {
     latest++; // drop any answer still on its way
+    pageLoading(false);
     document.title = "Admin Dashboard · Kestrel Gives";
     description.textContent = GENERAL_DESCRIPTION;
     body.hidden = true;
@@ -352,11 +357,11 @@ export function startAdminPage(): void {
     denied.hidden = true;
     body.hidden = false;
     content.setAttribute("aria-busy", "true");
-    const view = section.key === "totals" ? "summary" : section.key;  // people, proofs, items, settings, templates
+    const view = section.key === "totals" || section.key === "reset" ? "summary" : section.key;  // people, proofs, items, settings, templates
     let status: number | null = null;
     let answer: unknown = null;
     try {
-      const response = await fetch(`/api/admin?view=${view}`, { headers: { Accept: "application/json" }, credentials: "same-origin" });
+      const response = await fetchWithTimeout(`/api/admin?view=${view}`, { headers: { Accept: "application/json" }, credentials: "same-origin" });
       status = response.status;
       answer = response.ok ? await response.json() : (await response.text().catch(() => ""), null);
     } catch {
@@ -364,6 +369,7 @@ export function startAdminPage(): void {
     }
     if (request !== latest) return;
     content.removeAttribute("aria-busy");
+    pageLoading(false);
     if (status === 403) return showDenied();
     if (!answer) {
       content.replaceChildren();
@@ -376,6 +382,7 @@ export function startAdminPage(): void {
       : section.key === "proofs" ? proofs(answer as AdminProofs, actions)
       : section.key === "settings" ? settingsSection(answer as AdminSettings, host)
       : section.key === "templates" ? templatesSection(answer as AdminTemplates, templateState, host)
+      : section.key === "reset" ? resetSection(answer as AdminSummary, host)
       : items(answer as AdminItems, itemActions)));
     hydrateIcons(content);
   };
@@ -497,24 +504,29 @@ export function startAdminPage(): void {
 
   // Event settings and Email templates (src/pages/admin-settings.ts).
   const templateState: TemplateState = { drafts: new Map() };
-  /** After saving settings the app state is fetched again; its redraw keeps focus on Save. */
-  let refocusSave = false;
+  /** After saving settings or a Reset the app state is fetched again; its redraw puts focus back here (a selector). */
+  let refocus: string | null = null;
   const host: SectionHost = {
     post,
     reloadWith: async (message) => { await load(); alertWith(message); },
     alert: (message) => alertWith(message),
     denied: () => showDenied(),
     redraw: (nodes) => { content.replaceChildren(...nodes); hydrateIcons(content); },
-    refreshApp: () => { refocusSave = true; document.dispatchEvent(new CustomEvent("kg:refresh")); },
+    refreshApp: (focus) => { refocus = focus; document.dispatchEvent(new CustomEvent("kg:refresh")); },
   };
 
-  failed.querySelector("button")?.addEventListener("click", () => void load());
+  failed.querySelector("button")?.addEventListener("click", () => { failed.hidden = true; pageLoading(true); void load(); });
   document.addEventListener("kg:state", (event) => {
     const state = (event as CustomEvent<AppState>).detail;
     if (!state.viewer) return;
     if (state.viewer.role !== "admin") return showDenied();
-    const focusSave = refocusSave;
-    refocusSave = false;
-    void load().then(() => { if (focusSave) content.querySelector<HTMLElement>("[data-settings-save]")?.focus(); });
+    const focus = refocus;
+    refocus = null;
+    void load().then(() => {
+      const target = focus ? content.querySelector<HTMLElement>(focus) : null;
+      if (!target) return;
+      if (!target.matches("button, input, select, textarea, a[href]") && !target.hasAttribute("tabindex")) target.setAttribute("tabindex", "-1");
+      target.focus();
+    });
   });
 }

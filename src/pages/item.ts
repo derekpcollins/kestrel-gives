@@ -3,6 +3,7 @@
 // public bid history with the crown. The id comes from the path (/items/12). While the tab is
 // visible it refreshes every 30 seconds (SPEC §7.4), and announces only a change in the
 // viewer's own standing. Bid and buy results are announced too.
+import { fetchWithTimeout, pageLoading } from "../components/loading.ts";
 import { canEdit, EDIT_LINK } from "./submit-rules.ts";
 import type { AppState } from "../app-state.ts";
 import { renderAvatar } from "../components/avatar.ts";
@@ -36,6 +37,7 @@ export function startItemPage(): void {
   const showMissing = () => {
     content.replaceChildren();
     content.removeAttribute("aria-busy");
+    pageLoading(false);
     missing.hidden = false;
     document.title = "Item not found · Kestrel Gives";
   };
@@ -53,7 +55,7 @@ export function startItemPage(): void {
     const request = ++latest;
     let response: Response;
     try {
-      response = await fetch(`/api/items?id=${id}`, { headers: { Accept: "application/json" } });
+      response = await fetchWithTimeout(`/api/items?id=${id}`, { headers: { Accept: "application/json" } });
     } catch {
       if (request === latest && why !== "refresh") showError();
       return schedule();
@@ -94,6 +96,7 @@ export function startItemPage(): void {
   const showError = () => {
     if (shown) return; // keep showing what we have; the next refresh tries again
     content.removeAttribute("aria-busy");
+    pageLoading(false);
     failed.hidden = false;
   };
 
@@ -109,6 +112,7 @@ export function startItemPage(): void {
     const oldCarousel = content.querySelector<HTMLElement>("[data-carousel]");
     content.replaceChildren(...renderItem(answer, state!, actions.render));
     content.removeAttribute("aria-busy");
+    pageLoading(false);
     const newCarousel = content.querySelector<HTMLElement>("[data-carousel]");
     if (oldCarousel && newCarousel && oldCarousel.dataset.photosKey === newCarousel.dataset.photosKey) newCarousel.replaceWith(oldCarousel);
     else if (newCarousel) enhanceCarousel(newCarousel);
@@ -117,7 +121,7 @@ export function startItemPage(): void {
     if (keep) keep();
   };
 
-  failed.querySelector("button")?.addEventListener("click", () => { failed.hidden = true; void load("first"); });
+  failed.querySelector("button")?.addEventListener("click", () => { failed.hidden = true; pageLoading(true); void load("first"); });
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") void load("refresh");
     else clearTimeout(timer);

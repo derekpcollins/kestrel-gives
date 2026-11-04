@@ -32,6 +32,10 @@
       "destination": "/admin"
     },
     {
+      "source": "/admin/reset",
+      "destination": "/admin"
+    },
+    {
       "source": "/your-items/proof",
       "destination": "/proof"
     },

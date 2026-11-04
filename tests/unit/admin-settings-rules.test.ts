@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import {
-  liveProblems, PHASE_NAMES, phaseChange, phaseFor, preview, restoreDialog, TEMPLATE_WHEN, templateStatus, timeZones, VARIABLE_TEXT, zoneHelp,
+  liveProblems, PHASE_NAMES, phaseChange, phaseFor, preview, restoreDialog, TEMPLATE_WHEN, templateStatus, timeZones, VARIABLE_TEXT, zoneEffect, zoneHelp, zoneName,
 } from "../../src/pages/admin-settings-rules.ts";
 import { TEMPLATE_KEYS } from "../../lib/email-templates.ts";
 import { VARIABLES } from "../../src/components/template-rules.ts";
@@ -61,14 +61,39 @@ describe("phaseChange", () => {
 });
 
 describe("time zone", () => {
-  test("help names the zone and its abbreviation then", () => {
-    assert.equal(zoneHelp("America/New_York", new Date("2026-11-03T12:00Z")), 'Times are in America/New_York (EST). Set all three, or leave all three empty for "Not scheduled yet".');
-    assert.match(zoneHelp("America/New_York", new Date("2026-07-01T12:00Z")), /\(EDT\)/);
+  const NOV = new Date("2026-11-03T12:00Z");
+  test("help names the zone in words and its abbreviation then", () => {
+    assert.equal(zoneHelp("America/New_York", NOV), 'Times are in Eastern Time (New York), currently EST. Set all three, or leave all three empty for "Not scheduled yet".');
+    assert.match(zoneHelp("America/New_York", new Date("2026-07-01T12:00Z")), /currently EDT\./);
     assert.equal(zoneHelp("Nowhere/Land", new Date()), "Choose a time zone first.");
   });
-  test("the saved zone stays in the list even if the browser doesn't know it", () => {
-    assert.deepEqual(timeZones("Europe/Oslo", ["America/New_York"]), ["Europe/Oslo", "America/New_York"]);
-    assert.deepEqual(timeZones("America/New_York", ["America/New_York"]), ["America/New_York"]);
+  test("friendly names: generic name and city; UTC; unknown ids as they are", () => {
+    assert.equal(zoneName("America/New_York", NOV), "Eastern Time (New York)");
+    assert.equal(zoneName("America/Los_Angeles", NOV), "Pacific Time (Los Angeles)");
+    assert.equal(zoneName("America/Argentina/Buenos_Aires", NOV), "Argentina Standard Time (Buenos Aires)");
+    assert.equal(zoneName("UTC", NOV), "Coordinated Universal Time");
+    assert.equal(zoneName("Nowhere/Land", NOV), "Nowhere/Land");
+  });
+  test("the list keeps IANA ids as values, sorted by friendly name, with the saved zone kept even if the browser doesn't know it", () => {
+    assert.deepEqual(timeZones("Europe/Oslo", ["America/New_York"], NOV), [
+      { value: "Europe/Oslo", label: "Central European Time (Oslo)" },
+      { value: "America/New_York", label: "Eastern Time (New York)" },
+    ]);
+    assert.deepEqual(timeZones("America/New_York", ["America/New_York"], NOV).map((z) => z.value), ["America/New_York"]);
+  });
+  const dates = { submissionsOpen: "2026-12-01T09:00", biddingOpens: "2026-12-03T09:00", biddingCloses: "2026-12-05T21:00" };
+  test("changing the zone says what the close becomes, and what that is in the saved zone (the date when it differs)", () => {
+    assert.equal(zoneEffect("America/New_York", { timeZone: "America/Los_Angeles", ...dates }),
+      "Bidding now closes at 9:00 PM PST (Dec 6 at midnight Eastern).");
+    assert.equal(zoneEffect("America/New_York", { timeZone: "America/Chicago", ...dates, biddingCloses: "2026-12-05T11:00" }),
+      "Bidding now closes at 11:00 AM CST (noon Eastern).");
+    assert.equal(zoneEffect("America/Los_Angeles", { timeZone: "Asia/Kolkata", ...dates }),
+      "Bidding now closes at 9:00 PM GMT+5:30 (7:30 AM Pacific).");
+  });
+  test("no line when the zone is unchanged or the dates aren't all set", () => {
+    assert.equal(zoneEffect("America/New_York", { timeZone: "America/New_York", ...dates }), null);
+    assert.equal(zoneEffect("America/New_York", { timeZone: "America/Los_Angeles", ...dates, biddingOpens: "" }), null);
+    assert.equal(zoneEffect("America/New_York", { timeZone: "America/Los_Angeles", ...dates, biddingCloses: "nope" }), null);
   });
 });
 

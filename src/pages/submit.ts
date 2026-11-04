@@ -9,6 +9,7 @@
 // - Editing: once an item has a bid or purchase, the sale type and money are shown but locked.
 //   Delete is offered only while there's no activity, behind a confirmation.
 // - Who may submit or edit follows the demo bar: switching person or jumping phase updates it.
+import { fetchWithTimeout, pageLoading } from "../components/loading.ts";
 import type { AppState } from "../app-state.ts";
 import { confirmDialog } from "../components/dialog.ts";
 import { enableWhenChosen, enhanceForm, showServerProblems } from "../components/forms.ts";
@@ -25,9 +26,11 @@ import {
 
 type Answer = { ok: boolean; status: number | null; body: Record<string, unknown> };
 
-async function send(url: string, init: RequestInit): Promise<Answer> {
+/** Reads (`read`) give up after LOAD_TIMEOUT_MS (DECISIONS #119); writes wait for their answer. */
+async function send(url: string, init: RequestInit, read = false): Promise<Answer> {
   try {
-    const response = await fetch(url, { ...init, credentials: "same-origin" });
+    const options = { ...init, credentials: "same-origin" as const };
+    const response = read ? await fetchWithTimeout(url, options) : await fetch(url, options);
     const body = (await response.json().catch(() => ({}))) as Record<string, unknown>;
     return { ok: response.ok, status: response.status, body };
   } catch {
@@ -146,9 +149,11 @@ export function startSubmitPage(): void {
     }
   };
 
+  const failed = $<HTMLElement>("[data-submit-error]");
   const update = () => {
     if (!state) return;
     if (mode === "submit") {
+      pageLoading(false);
       showBlocked(submitPageBlock(state.viewer, state.event?.phase ?? null));
       if (!filled && state.event) {
         start.value = String(state.event.minStartingBidCents / 100);
@@ -156,6 +161,7 @@ export function startSubmitPage(): void {
       }
     } else {
       if (!item) return;
+      pageLoading(false);
       const viewer = state.viewer;
       const can = viewer ? editState(viewer, item, state.event?.phase ?? null) : null;
       showBlocked(!can ? "The demo isn't ready yet." : can.blocked?.message ?? null);
@@ -180,17 +186,28 @@ export function startSubmitPage(): void {
     update();
   });
 
-  if (editId) {
-    void (async () => {
-      const answer = await send(`/api/items?id=${editId}`, {});
-      if (!answer.ok) {
-        showBlocked(answer.status === 404 ? "That item doesn't exist." : requestFailure(answer.status, answer.body["error"] as string | undefined));
+  // Edit: the item to edit. A failure or a timeout shows the error with Try again; a refusal
+  // (missing, or not yours) says why.
+  const loadItem = async () => {
+    const answer = await send(`/api/items?id=${editId}`, {}, true);
+    if (!answer.ok) {
+      pageLoading(false);
+      if (answer.status === null || answer.status >= 500) {
+        failed.hidden = false;
         return;
       }
-      item = (answer.body as unknown as ItemAnswer).item;
-      update();
-    })();
-  }
+      showBlocked(answer.status === 404 ? "That item doesn't exist." : requestFailure(answer.status, answer.body["error"] as string | undefined));
+      return;
+    }
+    item = (answer.body as unknown as ItemAnswer).item;
+    update();
+  };
+  failed.querySelector("button")?.addEventListener("click", () => {
+    failed.hidden = true;
+    pageLoading(true);
+    void loadItem();
+  });
+  if (editId) void loadItem();
 
   // ---------- Saving ----------
   const values = (): FormValues => {

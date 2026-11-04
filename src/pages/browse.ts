@@ -6,6 +6,7 @@ import type { AppState } from "../app-state.ts";
 import { el } from "../components/dom.ts";
 import { renderItemTile } from "../components/item-tile.ts";
 import { hydrateIcons } from "../components/icons.ts";
+import { fetchWithTimeout, pageLoading } from "../components/loading.ts";
 import type { BrowseAnswer, BrowseSort, ItemType } from "../items-api.ts";
 import { SORT_LABELS, countWords, emptyWords, searchForSort, sortFromSearch, sortedMessage, sortsFor, tileContext, tileView } from "./browse-rules.ts";
 
@@ -35,7 +36,7 @@ export function startBrowse(type: ItemType): void {
     grid.setAttribute("aria-busy", "true");
     let answer: BrowseAnswer;
     try {
-      const response = await fetch(`/api/items?type=${type}&sort=${sort}`, { headers: { Accept: "application/json" } });
+      const response = await fetchWithTimeout(`/api/items?type=${type}&sort=${sort}`, { headers: { Accept: "application/json" } });
       if (!response.ok) {
         await response.text().catch(() => ""); // an unread body keeps the response open
         throw new Error(String(response.status));
@@ -44,6 +45,7 @@ export function startBrowse(type: ItemType): void {
     } catch {
       if (request !== latest) return;
       grid.removeAttribute("aria-busy");
+      pageLoading(false);
       grid.replaceChildren();
       count.textContent = "";
       empty.hidden = true;
@@ -55,6 +57,7 @@ export function startBrowse(type: ItemType): void {
     const ctx = tileContext(state);
     grid.replaceChildren(...answer.items.map((item) => renderItemTile(tileView(item), ctx)));
     grid.removeAttribute("aria-busy");
+    pageLoading(false);
     count.textContent = answer.items.length ? countWords(answer.items.length) : "";
     empty.hidden = answer.items.length > 0;
     failed.hidden = true;
@@ -66,7 +69,11 @@ export function startBrowse(type: ItemType): void {
     history.replaceState(null, "", `${location.pathname}${searchForSort(location.search, sort)}`);
     void load(true);
   });
-  failed.querySelector("button")?.addEventListener("click", () => void load(false));
+  failed.querySelector("button")?.addEventListener("click", () => {
+    failed.hidden = true;
+    pageLoading(true);
+    void load(false);
+  });
   document.addEventListener("kg:state", (event) => {
     state = (event as CustomEvent<AppState>).detail;
     void load(false);

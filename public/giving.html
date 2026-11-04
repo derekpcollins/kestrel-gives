@@ -35,9 +35,11 @@
           <li class="steps__item"><h3 class="steps__title">Donate once</h3><p class="steps__text">Give that total once on the donation page. There's no charity to choose.</p></li>
           <li class="steps__item"><h3 class="steps__title">Upload proof</h3><p class="steps__text">Enter the amount and add a screenshot of the receipt. An admin reviews it.</p></li>
         </ol>
+        <p class="loading" role="status" data-page-loading><span class="loading__spinner" aria-hidden="true"></span><span>Loading your donation total…</span></p>
         <div class="giving__you" aria-live="polite" data-giving-you>
           <p class="giving__total" data-giving-total hidden></p>
           <p class="giving__none" data-giving-none hidden></p>
+          <p class="giving__failed" data-giving-error hidden><span>We couldn't load your donation total.</span> <button type="button" class="btn btn--secondary btn--sm">Try again</button></p>
           <p data-giving-upload><a class="btn" href="/your-items/proof">Upload proof</a></p>
         </div>
       </section>
@@ -45,6 +47,7 @@
       <section class="home-section" aria-labelledby="giving-split">
         <h2 id="giving-split">Split three ways</h2>
         <p>Every donation is split equally among these three charities, so you donate once and all three benefit.</p>
+        <p class="loading" role="status" data-page-loading data-charities-loading><span class="loading__spinner" aria-hidden="true"></span><span>Loading the charities…</span></p>
         <ul class="charity-list" data-charities aria-busy="true"></ul>
       </section>
     </main>

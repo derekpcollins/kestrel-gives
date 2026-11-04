@@ -176,3 +176,22 @@
 .admin-template__preview-subject { margin: 0; font: var(--type-body); font-weight: var(--weight-semibold); color: var(--color-text); overflow-wrap: anywhere; }
 .admin-template__preview-body { margin: 0; font: var(--type-body); color: var(--color-text); white-space: pre-wrap; overflow-wrap: anywhere; }
 .admin-template__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+
+/* Event settings: what a changed time zone does to the close (owner, 6E review). */
+.admin-settings__effect { color: var(--color-text); }
+
+/* Reset for next year (SPEC §7.8; DECISIONS entry 118): the lock, what goes and what stays,
+   then the danger button once it unlocks. */
+.admin-reset { display: grid; gap: var(--space-4); max-width: calc(var(--space-16) * 12); padding: var(--space-5); }
+.admin-reset__head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
+.admin-reset__title { margin: 0; font: var(--type-heading-3); color: var(--color-text); }
+.admin-reset__status { display: flex; align-items: flex-start; gap: var(--space-2); margin: 0; font: var(--type-body); color: var(--color-text); }
+.admin-reset__status svg { flex: none; margin-top: var(--space-1); color: var(--color-text-muted); }
+.admin-reset__lists { display: grid; gap: var(--space-4); }
+.admin-reset__list-title { margin: 0 0 var(--space-2); font: var(--type-label); color: var(--color-text); }
+.admin-reset__list ul { display: grid; gap: var(--space-1); margin: 0; padding-left: var(--space-5); font: var(--type-body); color: var(--color-text); }
+.admin-reset__note { margin: 0; font: var(--type-caption); color: var(--color-text-muted); }
+.admin-reset__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+@media (min-width: 40rem) {
+  .admin-reset__lists { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
