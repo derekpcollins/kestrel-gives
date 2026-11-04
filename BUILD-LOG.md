@@ -923,3 +923,11 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 - **Tests:** unit 320 (10 new), DB 120, browser 299 a11y and keyboard (7 new tour tests), 22 reflow, 26 visual (including a real Set me up), run one after the other; exit 0, rerun after the step fix. `npm audit`: only the accepted advisory.
 - **Preview:** kestrel-gives-qufve24r6 on the dev database: every scenario's steps through the API, items found by title, then Restore back to the seed (`.review/guide/preview-checks.txt`).
 - **Found, not touched:** `design/source/charities/` appeared in the project at 15:00 with three PNGs (Lantern Paws, Lunchbox Brigade, Saplingworks), likely the 7B logos. Left uncommitted until the owner says.
+
+### 2026-11-04 — The tour live (16:34 – 16:45 EST)
+- **Owner stepped in:** approved the push. Asked for a plan to make the full check faster (separate entry when built), agreed to skip a Figma page for the Guide, and said resizing the charity logos is allowed.
+- **Pushed:** `main` fast-forwarded `9f8184e..dbc3acb` (the tour, SPEC v1.21, DECISIONS #127–#129). Deployment `kestrel-gives-hil0stbgq`, production, Ready.
+- **Build log:** unit tests 320 pass, 0 fail. `deploy-db: production build; DATABASE_URL_UNPOOLED confirmed as the main branch (direct connection).`, `Up to date.`, `deploy-db: an event exists; not seeding.`, `deploy-db: step m3-land-live-demo already ran; skipped.` No error lines; only Vercel's known `npm warn Unknown env config "cache-dir"`.
+- **Health:** `{"ok":true,"db":"main","schema":"008","seedPhotos":true}` on both domains.
+- **Live pages:** a view-only look as Jules at 1280 and 390: `/guide` 200 with six scenarios and six Set me up buttons (not pressed); the strip link at 1280, not at 390; Home's "New here?" line and the footer link on both. No page or API errors; the browser aborted anything but GET, and nothing else was attempted (`.review/guide-prod/`).
+- **Found:** production was in Submissions open with no bids. A visitor had used the clearing jump, which is what it's for. Left alone: no writes on production from my side; the daily cron restores it.
