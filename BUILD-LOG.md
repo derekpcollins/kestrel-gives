@@ -889,3 +889,24 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 - **Caught or hard:** the first full check failed 4 DB tests with deadlocks. I had sent read-only requests to the local dev server during the DB tests, and they locked tables the tests reseed: the shared-load problem behind the owner's one-after-the-other rule. The rerun, with nothing else touching the dev database, passed. The visual set is 288 screenshots, not the 290 reported in 7A and 7C: two were leftovers from Nov 1.
 - **Tests:** unit 310 (0 todo), DB 120, a11y and keyboard 288, reflow 21, visual 25 (288 screenshots); exit 0. `npm audit`: only the accepted advisory.
 - **Preview:** kestrel-gives-ne2ikvklv on the dev database, schema 008. 20 pages 200; a bid, a repeated bid refused, a purchase, sold out refused, an employee's admin write refused, the clearing jump (activity to 0, stock back) and its cooldown, then Restore to the seed. Logs: 5 info, 0 errors (`.review/m7-7d/preview-checks.txt`).
+
+### 2026-11-04 — Milestone 7 live (14:18 – 14:25 EST)
+- **Owner stepped in:** approved Milestone 7 and the push to main.
+- **Pushed:** `main` fast-forwarded `199d40e..cbff418`: 7 commits, 7A–7D, their review changes, BUILD-LOG and DECISIONS #120–#126. Deployment `kestrel-gives-7kskdyrah`, production, Ready.
+- **Build log:** unit tests 310 pass, 0 fail. `deploy-db: production build; DATABASE_URL_UNPOOLED confirmed as the main branch (direct connection).`, `applied 008_jump_resets.sql`, `1 applied.`, `deploy-db: an event exists; not seeding.`, `deploy-db: step m3-land-live-demo already ran; skipped.` No error lines; only Vercel's known `npm warn Unknown env config "cache-dir"`.
+- **Health:** `{"ok":true,"db":"main","schema":"008","seedPhotos":true}` on `kestrel-gives.vercel.app` and on the team domain (via `vercel curl`).
+- **Live pages:** a view-only look on the public domain as Jules and as Maya (the viewer cookie only), at 1280 and 390: Home, both browse pages, an auction and an instant item, Your Items, the proof page, Giving, the design system, and the Admin Dashboard (For admins only for Jules; all seven sections for Maya). Every page 200, no page errors, no API errors. The browser aborted anything other than GET, and nothing else was attempted (`.review/m7-prod/view-checks.txt`, 52 PNGs). Function logs: no errors.
+- **7B:** the owner's charity logos didn't arrive, so the placeholder tiles ship, as agreed (#72, #125).
+
+**Milestone 7 ended:** 2026-11-04 14:25 EST · about 4 hours 25 minutes from the plan approval (10:01 EST).
+
+---
+
+## Project close
+
+**Live:** https://kestrel-gives.vercel.app
+
+- **Elapsed:** about 4 days 3 hours 20 minutes, from the kickoff (2026-10-31 12:07 EDT) to the Milestone 7 close (2026-11-04 14:25 EST), nights included.
+- **Milestones:** 8 (0 Local infrastructure, 1 Design system, 2 Data, 3 App shell and Home, 4 Browsing and buying, 5 Employee flows, 6 Admin, 7 Polish and ship), each in stages that stopped at a checkpoint for the owner's go. Nothing reached main without an approved checkpoint.
+- **Final tests** (`npm run check`, one stage after another): unit 310 (0 todo), DB 120, browser 288 a11y and keyboard, 21 reflow at 320px, 25 visual tests (288 screenshots in every phase and the just-reset state). `npm audit`: the one accepted advisory.
+- **Record:** SPEC.md v1.20, DECISIONS #1–#126, schema 008, 11 functions, and this log.
