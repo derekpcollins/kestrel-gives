@@ -2,10 +2,10 @@
 // button is pressed. Pure, with no DOM, so node:test covers them.
 import type { EventView } from "../app-state.ts";
 
-/** "item" is an item page: no nav link is the current page there. */
-export type PageKey = "home" | "silent-auction" | "instant-sale" | "your-items" | "submit" | "admin" | "item" | "proof" | "giving";
+/** "item" is an item page: no nav link is the current page there, nor on the giving stub or the tour. */
+export type PageKey = "home" | "silent-auction" | "instant-sale" | "your-items" | "submit" | "admin" | "item" | "proof" | "giving" | "guide";
 
-const PAGE_KEYS: readonly PageKey[] = ["home", "silent-auction", "instant-sale", "your-items", "submit", "admin", "item", "proof", "giving"];
+const PAGE_KEYS: readonly PageKey[] = ["home", "silent-auction", "instant-sale", "your-items", "submit", "admin", "item", "proof", "giving", "guide"];
 
 /**
  * Which page the nav treats as current, from the body's data-page and the path. Edit item
@@ -45,6 +45,8 @@ export const JUMPS: ReadonlyArray<{ value: JumpValue; label: string }> = [
   { value: "ended", label: "Bidding ended" },
   { value: "after", label: "30+ days after" },
 ];
+/** The tour's link in the demo bar (SPEC v1.21 §3.1): the open bar, and the strip where it fits. */
+export const TOUR_LINK = { href: "/guide", open: "New here? Take the 5-minute tour", strip: "Take the 5-minute tour" } as const;
 /** The demo bar's note (SPEC §3.1, v1.11). */
 export const SHARED_NOTE = "Shared demo · resets daily";
 

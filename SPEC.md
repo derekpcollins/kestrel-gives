@@ -1,6 +1,6 @@
 # Kestrel Gives — Build Spec & Conformance Rules
 
-**Status:** v1.20 · Owner: Derek Collins · Last updated: Nov 4, 2026
+**Status:** v1.21 · Owner: Derek Collins · Last updated: Nov 4, 2026
 
 This document describes what to build and the rules every contribution must follow, whether a person or an AI agent writes it. Read it in full before writing any code. If something here conflicts with a request, stop and ask.
 
@@ -24,7 +24,7 @@ This is a **from-memory recreation** of a tool I designed and built at a previou
   - **Exception 2:** "Kestrel" is used as a generic word (a bird). It does not refer to any real company. The logo MUST be an original wordmark that doesn't resemble any existing Kestrel brand.
 - MUST NOT imitate any real company's visual identity.
 - The README MUST include: "Recreated from memory after leaving Netflix. No original code, designs, or data were used."
-- The site footer MUST include: "Kestrel is a fictional organization, and this is a demo." (v1.19)
+- The site footer MUST include: "Kestrel is a fictional organization, and this is a demo." (v1.19) It also links to the 5-minute tour and the design system (v1.21).
 
 ## 3. Scope
 
@@ -44,6 +44,7 @@ A slim bar pinned to the top of every page, in the normal page flow (it never ov
 - **Restore demo data:** resets everything to the seeded state (including email templates), behind a confirmation dialog. It also deletes the files visitors uploaded in this environment (v1.13; section 4).
 - **Shared and self-repairing** (v1.11): anyone can use Jump to and Restore demo data, and everyone sees the same data. A short global cooldown (about 10 seconds) stops repeated Restores. A daily scheduled job (Vercel cron) runs the same Restore, so the demo returns to the live phase every day; the bar says the demo is shared and resets daily. This is the only scheduled job (section 7.1).
 - Collapsible to a thin strip using `<details>`; collapsed state is remembered.
+- **Tour link** (v1.21): "New here? Take the 5-minute tour" links to the Guide (section 8). It's in the open bar, and in the collapsed strip where it fits (from the small breakpoint); phones start collapsed, so Home has its own line too.
 - Exposed to assistive tech as a region labeled "Demo controls."
 - Hidden when the URL includes `?demo=off` (used for clean case-study screenshots).
 - This mock login is NOT security. A real deployment would use company login and pass a security review, and would not include demo controls.
@@ -264,13 +265,14 @@ A banner just below the header shows the current phase message, for example "Sub
   2. A description of the event
   3. **How to participate** (submit, bid or buy, donate once, upload proof)
   4. Cards for the three charities, noting that donations are split equally among them
-  No item lists on Home.
+  No item lists on Home. Above the hero, a one-line "New here? Take the 5-minute tour" link to the Guide (v1.21), hidden with `?demo=off` like the demo bar.
 - **Silent Auction** and **Instant Sale:** separate browse pages, each a grid of item tiles. Sort by newest, price, or (silent auction) most bids. No search.
 - **Item page** (section 7.3).
 - **Submit an Item** and **Edit item** (section 7.3).
 - **Your Items** (personal dashboard), four sections: *My bids* (winning or outbid), *Won & purchased* (with proof status and days left), *My donated items* (with edit), and *Cancelled* (shown only if something was cancelled).
 - **Proof upload** (section 7.6).
 - **Giving platform stub** (section 3).
+- **Guide** (v1.21), `/guide`, "Try it: a 5-minute tour" for first-time visitors (portfolio reviewers): six scenarios (get outbid; buy the last one; win and donate, review as admin and change the outcome as one story; submit an item last, since its phase clears activity), each with who to view as, which phase, numbered steps, and one line on why it works that way; then "Also try" (dark mode, a phone, keyboard only, 200% zoom) and a closing line on Restore. Each scenario has **Set me up**, which says before the click what it changes (the viewer is just you; the phase is everyone), then sets the viewer and the phase with the demo bar's own rules (only Submissions open asks first, with its cooldown), never restores on its own, and checks that the state the scenario needs is still there (finding items by title, never by id). If it's gone, it says what happened and points to Restore demo data. With `?demo=off` the steps stay and the buttons go. It meets the same conformance checks as every screen.
 - **Admin Dashboard:**
   - **Totals:** silent auction total, instant sale total, and grand total, each shown as **pledged** (winning bids and purchases) and **confirmed** (approved proofs only). (v1.17) A proof is one combined amount per person, so: the **grand confirmed** total is the sum of the amounts on approved proofs; the **silent auction** and **instant sale confirmed** totals are the winning bids and purchases owed by people whose latest proof is approved. A line under the totals shows where the approved amounts differ from what those people owe ("Approved proofs: $1,240 against $1,300 owed by those people, $60 short"). So the two sale-type figures can add up to a different number than the grand confirmed total.
   - **People:** employees with their bids, wins, purchases, and proof status.

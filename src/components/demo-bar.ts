@@ -5,7 +5,7 @@
 // call the API; each control shows the button loading state while its request runs, and
 // updateDemoBar() refreshes it in place so focus stays where it was.
 import type { AppState } from "../app-state.ts";
-import { JUMPS, SHARED_NOTE, SUBMISSION_JUMP_TEXT, currentJump, type JumpValue } from "./shell-rules.ts";
+import { JUMPS, SHARED_NOTE, SUBMISSION_JUMP_TEXT, TOUR_LINK, currentJump, type JumpValue } from "./shell-rules.ts";
 import { confirmDialog } from "./dialog.ts";
 import { el } from "./dom.ts";
 import { icon } from "./icons.ts";
@@ -35,6 +35,7 @@ export function renderDemoBar(state: AppState, actions: DemoBarActions): HTMLEle
         el("span", { className: "demo-bar__tag", text: "Demo" }),
         el("span", { className: "demo-bar__who" }),
         el("span", { className: "demo-bar__note", text: SHARED_NOTE }),
+        el("span", { className: "demo-bar__tour-room", attrs: { "aria-hidden": "true" } }),
         icon("chevron-down", { size: "sm" }),
       ),
       el("div", { className: "demo-bar__controls" },
@@ -49,13 +50,23 @@ export function renderDemoBar(state: AppState, actions: DemoBarActions): HTMLEle
           ),
         ),
         el("button", { className: "btn btn--secondary", attrs: { type: "button", "data-demo-restore": "" } }, icon("trash", { size: "sm" }), "Restore demo data"),
+        tourLink("demo-bar__tour demo-bar__tour--open", TOUR_LINK.open),
       ),
     ),
+    // Outside the <summary>, so the link isn't nested in the toggle; CSS places it in the strip.
+    el("div", { className: "demo-bar__strip-tour" }, tourLink("demo-bar__tour demo-bar__tour--strip", TOUR_LINK.strip)),
     el("p", { className: "visually-hidden demo-bar__status", attrs: { role: "status" } }),
   );
   updateDemoBar(bar, state);
   enhanceDemoBar(bar, actions);
   return bar;
+}
+
+/** The tour link (SPEC v1.21 §3.1). On the tour itself it marks the current page. */
+function tourLink(className: string, text: string): HTMLElement {
+  const link = el("a", { className, text, attrs: { href: TOUR_LINK.href } });
+  if (location.pathname.replace(/\/$/, "") === TOUR_LINK.href) link.setAttribute("aria-current", "page");
+  return link;
 }
 
 /** Shows the state's viewer and phase without rebuilding the bar. */

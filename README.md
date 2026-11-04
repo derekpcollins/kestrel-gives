@@ -2,6 +2,8 @@
 
 **Live demo: [kestrel-gives.vercel.app](https://kestrel-gives.vercel.app)**
 
+**New here? [Take the 5-minute tour](https://kestrel-gives.vercel.app/guide):** six short scenarios, each set up with one button, with a line on why each flow works the way it does.
+
 A web app for running a yearly charity auction: silent auction and instant-sale items, bidding, inventory, donation proof, and an admin dashboard. Built as a portfolio case study in designing and building with AI.
 
 Recreated from memory after leaving Netflix. No original code, designs, or data were used.
@@ -17,7 +19,7 @@ The photos in the screenshots are the demo's seed photos, from Pixabay, credited
 
 ## Take the tour
 
-The demo is shared: everyone sees the same data, and it restores itself every day. The bar across the top is for trying it out.
+The demo is shared: everyone sees the same data, and it restores itself every day. The bar across the top is for trying it out. The [5-minute tour](https://kestrel-gives.vercel.app/guide) (`/guide`) walks through the main flows; its **Set me up** buttons use these same controls and say first what they change.
 
 - **Viewing as:** be any of the seven seeded people. Jules is an employee; Maya and Theo are admins and see the **Admin Dashboard** in the avatar menu.
 - **Jump to:** move the event to another phase: submissions open, bidding live, ending soon, bidding ended, or 30+ days after. It moves the event's dates, never the clock, so the real rules apply. **Submissions open** also clears every bid, purchase and proof, since that phase can't have any, and asks first.

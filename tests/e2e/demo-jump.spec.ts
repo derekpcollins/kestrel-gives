@@ -1,5 +1,5 @@
 // Jump to "Submissions open" clears bids, purchases and proofs (owner, 7A review; DECISIONS
-// #124), through the demo bar as a visitor would. It empties the shared dev data, so it runs in
+// #124), through the demo bar as a visitor would; and the tour's Set me up for real (DECISIONS #128). It empties the shared dev data, so it runs in
 // `npm run check:visual`, one test at a time, never beside the parallel specs; Restore runs after.
 import { expect, test, type APIRequestContext } from "@playwright/test";
 
@@ -20,6 +20,23 @@ async function restore(request: APIRequestContext): Promise<void> {
 
 test.afterAll(async ({ request }, info) => {
   if (info.project.name === RUNS_HERE) await restore(request);
+});
+
+test("the tour's Set me up, for real: Win and donate moves the shared demo to Bidding ended and finds Jules's wins", async ({ page, request, baseURL }) => {
+  test.setTimeout(60_000);
+  await restore(request);
+  await page.context().addCookies([{ name: "kg_viewer", value: "1", url: baseURL! }]);
+  await page.goto("/guide");
+  const card = page.getByRole("region", { name: "3. Win and donate" });
+  await expect(card.locator("[data-guide-effect]")).toHaveText("Just you: viewing as Jules. Everyone: moves the demo to Bidding ended.");
+  await card.getByRole("button", { name: "Set me up for Win and donate" }).click();
+  const status = card.getByRole("status");
+  await expect(status).toContainText("Viewing as Jules Ferreira, Bidding ended.");
+  await expect(status).toContainText("Jules won");
+  await expect(page.locator('[data-demo-bar="page"] .demo-bar__who')).toHaveText("Viewing as Jules Ferreira (employee)");
+  await expect(page.locator("[data-shell-banner] .banner")).toContainText("Winners, please donate and upload proof by");
+  await status.getByRole("link", { name: "Go to Your Items" }).click();
+  await expect(page.getByText("You won").first()).toBeVisible();
 });
 
 test("Submissions open: the dialog says what goes, then bids, purchases and proofs are gone and items stay", async ({ page, request }) => {

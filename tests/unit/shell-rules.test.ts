@@ -43,6 +43,9 @@ describe("which nav link is current", () => {
     assert.equal(pageKeyFor(undefined, "/"), "home");
     assert.equal(pageKeyFor("proof", "/your-items/proof"), "your-items", "the proof page is part of Your Items");
     assert.ok(!navLinks("ended").some((l) => l.key === "giving"), "the giving stub marks nothing");
+    // The tour (SPEC v1.21) is its own page, so Home isn't marked there either.
+    assert.equal(pageKeyFor("guide", "/guide"), "guide");
+    assert.ok(!navLinks("live").some((l) => l.key === "guide"), "the tour marks nothing");
   });
 });
 

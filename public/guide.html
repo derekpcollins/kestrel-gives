@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Try it: a 5-minute tour · Kestrel Gives</title>
+    <link rel="icon" href="/favicon-32.png" sizes="32x32">
+    <link rel="icon" href="/favicon-16.png" sizes="16x16">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="preload" href="/fonts/plus-jakarta-sans-latin-var.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/styles/tokens.css">
+    <link rel="stylesheet" href="/styles/base.css">
+    <link rel="stylesheet" href="/styles/components.css">
+    <script type="module" src="/js/main.js"></script>
+  </head>
+  <body data-page="guide">
+    <a class="skip-link" href="#main">Skip to main content</a>
+    <div data-shell-demo></div>
+    <div data-shell-header></div>
+    <div data-shell-banner></div>
+    <main class="page guide" id="main" tabindex="-1" data-guide-page>
+      <header class="page-header">
+        <div class="page-header__row"><div class="page-header__text">
+          <h1 class="page-header__title">Try it: a 5-minute tour</h1>
+          <p class="page-header__description">Six short scenarios show how Kestrel Gives works and why it's built this way. Set me up puts you in the right seat and phase.</p>
+        </div></div>
+      </header>
+      <p>The demo is shared: anyone can change it, and it resets every day. Set me up says first what it will change. Changing who you're viewing as is just you; moving the phase is everyone.</p>
+      <nav class="guide-contents" aria-label="Scenarios">
+        <ol>
+          <li><a href="#outbid">Get outbid</a></li>
+          <li><a href="#last-one">Buy the last one</a></li>
+          <li><a href="#win">Win and donate</a></li>
+          <li><a href="#review">Review as admin</a></li>
+          <li><a href="#change">Change the outcome</a></li>
+          <li><a href="#submit">Submit an item</a></li>
+        </ol>
+      </nav>
+
+      <section class="card card--flat guide-scenario" id="outbid" data-scenario="outbid" aria-labelledby="outbid-title">
+        <div class="guide-scenario__head">
+          <h2 class="guide-scenario__title" id="outbid-title">1. Get outbid</h2>
+          <dl class="guide-scenario__meta">
+            <div><dt>Viewing as</dt><dd>Jules, then Owen, then Jules</dd></div>
+            <div><dt>Phase</dt><dd>Bidding live</dd></div>
+          </dl>
+        </div>
+        <div class="guide-scenario__setup" data-guide-setup hidden>
+          <button type="button" class="btn">Set me up<span class="visually-hidden"> for Get outbid</span></button>
+          <p class="guide-scenario__effect" data-guide-effect></p>
+        </div>
+        <div class="guide-scenario__status" role="status" data-guide-status></div>
+        <ol class="guide-steps">
+          <li>Open <strong>Lakeside Cabin Weekend</strong> in the Silent Auction. Jules bid on it earlier and was outbid, so the panel says <em>Outbid</em> and shows the lowest bid Jules can place.</li>
+          <li>Bid that amount. Jules is the high bidder now, and the crown in the bid history moves to Jules.</li>
+          <li>In the demo bar, change <em>Viewing as</em> to Owen Achterberg, and bid the new minimum.</li>
+          <li>Switch back to Jules. The item says <em>Outbid</em> again, and Your Items lists it under My bids as Outbid.</li>
+        </ol>
+        <p class="guide-scenario__why"><strong>Why it works this way:</strong> The minimum and the step between bids show before you type, so a bid is never refused by a rule you couldn't see. If someone bids while your page is open, your bid is refused with the new minimum instead of going through at a price you didn't see.</p>
+      </section>
+      <section class="card card--flat guide-scenario" id="last-one" data-scenario="last-one" aria-labelledby="last-one-title">
+        <div class="guide-scenario__head">
+          <h2 class="guide-scenario__title" id="last-one-title">2. Buy the last one</h2>
+          <dl class="guide-scenario__meta">
+            <div><dt>Viewing as</dt><dd>Jules</dd></div>
+            <div><dt>Phase</dt><dd>Bidding live</dd></div>
+          </dl>
+        </div>
+        <div class="guide-scenario__setup" data-guide-setup hidden>
+          <button type="button" class="btn">Set me up<span class="visually-hidden"> for Buy the last one</span></button>
+          <p class="guide-scenario__effect" data-guide-effect></p>
+        </div>
+        <div class="guide-scenario__status" role="status" data-guide-status></div>
+        <ol class="guide-steps">
+          <li>Open <strong>Homemade hot sauce trio</strong> in the Instant Sale. It says how many are left.</li>
+          <li>Buy one, and confirm. Your Items lists it under Won &amp; purchased, and Jules's donation total goes up.</li>
+          <li>Buy until none are left. The item says <em>Sold out</em>, and so does its tile in the Instant Sale.</li>
+          <li>Optional: with one left, open the item in two tabs and buy in both. One purchase goes through; the other is told it's sold out.</li>
+        </ol>
+        <p class="guide-scenario__why"><strong>Why it works this way:</strong> Each purchase locks the item and takes one from stock in a single step, so two people buying at the same moment can never take more than there is. One unit per purchase keeps the rules simple: to get two, buy twice.</p>
+      </section>
+      <p class="guide-story" id="story">Scenarios 3 to 5 are one story: Jules wins and uploads proof, Maya approves it, then Maya removes Jules's winning bid. Each also works on its own. If someone else changes the demo partway, Set me up says what happened and how to recover; if they only moved the phase, press Set me up again.</p>
+
+      <section class="card card--flat guide-scenario" id="win" data-scenario="win" aria-labelledby="win-title">
+        <div class="guide-scenario__head">
+          <h2 class="guide-scenario__title" id="win-title">3. Win and donate</h2>
+          <p class="guide-scenario__story">Story, part 1 of 3</p>
+          <dl class="guide-scenario__meta">
+            <div><dt>Viewing as</dt><dd>Jules</dd></div>
+            <div><dt>Phase</dt><dd>Bidding ended</dd></div>
+          </dl>
+        </div>
+        <div class="guide-scenario__setup" data-guide-setup hidden>
+          <button type="button" class="btn">Set me up<span class="visually-hidden"> for Win and donate</span></button>
+          <p class="guide-scenario__effect" data-guide-effect></p>
+        </div>
+        <div class="guide-scenario__status" role="status" data-guide-status></div>
+        <ol class="guide-steps">
+          <li>Open Your Items. Under Won &amp; purchased, Jules's winning bids say <em>You won</em>, next to what Jules bought, with one donation total and the days left to upload proof.</li>
+          <li>Choose <em>Go to the giving page</em>. In the real event this opens one outside donation page; here it explains how giving works.</li>
+          <li>Back on Your Items, choose <em>Donate and upload proof</em>. Enter the total and add any image as the screenshot. A screenshot of this page works.</li>
+          <li>Optional: enter a lower amount first, to see the warning before you send it.</li>
+        </ol>
+        <p class="guide-scenario__why"><strong>Why it works this way:</strong> One total and one donation cover everything, split equally among the three charities, so nobody works out who gets what. The proof window starts when bidding closes, and the countdown is always on Your Items.</p>
+      </section>
+      <section class="card card--flat guide-scenario" id="review" data-scenario="review" aria-labelledby="review-title">
+        <div class="guide-scenario__head">
+          <h2 class="guide-scenario__title" id="review-title">4. Review as admin</h2>
+          <p class="guide-scenario__story">Story, part 2 of 3</p>
+          <dl class="guide-scenario__meta">
+            <div><dt>Viewing as</dt><dd>Maya</dd></div>
+            <div><dt>Phase</dt><dd>Bidding ended</dd></div>
+          </dl>
+        </div>
+        <div class="guide-scenario__setup" data-guide-setup hidden>
+          <button type="button" class="btn">Set me up<span class="visually-hidden"> for Review as admin</span></button>
+          <p class="guide-scenario__effect" data-guide-effect></p>
+        </div>
+        <div class="guide-scenario__status" role="status" data-guide-status></div>
+        <ol class="guide-steps">
+          <li>Open the Admin Dashboard. Totals shows Pledged and Confirmed side by side. Note Confirmed.</li>
+          <li>Go to Proof review and open the waiting proof: Jules's if you did scenario 3, otherwise Rosa's. Compare its amount with what's owed.</li>
+          <li>Approve it. Back on Totals, Confirmed went up, and the line under the totals compares the approved amounts with what those people owed.</li>
+          <li>Optional: reject it with a reason, then approve it after all. Decisions can be changed.</li>
+        </ol>
+        <p class="guide-scenario__why"><strong>Why it works this way:</strong> Pledged counts promises; Confirmed counts only proof an admin approved, so nobody mistakes one for the other. Reviews can be undone, because anyone can misread a screenshot.</p>
+      </section>
+      <section class="card card--flat guide-scenario" id="change" data-scenario="change" aria-labelledby="change-title">
+        <div class="guide-scenario__head">
+          <h2 class="guide-scenario__title" id="change-title">5. Change the outcome</h2>
+          <p class="guide-scenario__story">Story, part 3 of 3</p>
+          <dl class="guide-scenario__meta">
+            <div><dt>Viewing as</dt><dd>Maya, then Jules</dd></div>
+            <div><dt>Phase</dt><dd>Bidding ended</dd></div>
+          </dl>
+        </div>
+        <div class="guide-scenario__setup" data-guide-setup hidden>
+          <button type="button" class="btn">Set me up<span class="visually-hidden"> for Change the outcome</span></button>
+          <p class="guide-scenario__effect" data-guide-effect></p>
+        </div>
+        <div class="guide-scenario__status" role="status" data-guide-status></div>
+        <ol class="guide-steps">
+          <li>In the Admin Dashboard, go to Items and find an item Jules won. Set me up names them.</li>
+          <li>In its bid history, remove Jules's winning bid. The next-highest bid wins instead.</li>
+          <li>In the demo bar, change <em>Viewing as</em> to Jules Ferreira, and open Your Items.</li>
+          <li>The item is under My bids as <em>Didn't win</em>, the total is lower, and a banner says Jules's donation total changed. If Maya had approved Jules's proof, it's back to waiting for review.</li>
+        </ol>
+        <p class="guide-scenario__why"><strong>Why it works this way:</strong> Every change to a total (a removed bid, a cancelled purchase or item) runs the same check on that person's proof, so an approval never stands for an amount that's no longer right.</p>
+      </section>
+      <section class="card card--flat guide-scenario" id="submit" data-scenario="submit" aria-labelledby="submit-title">
+        <div class="guide-scenario__head">
+          <h2 class="guide-scenario__title" id="submit-title">6. Submit an item</h2>
+          <dl class="guide-scenario__meta">
+            <div><dt>Viewing as</dt><dd>Jules</dd></div>
+            <div><dt>Phase</dt><dd>Submissions open (it asks first, because it clears bids, purchases and proofs)</dd></div>
+          </dl>
+        </div>
+        <div class="guide-scenario__setup" data-guide-setup hidden>
+          <button type="button" class="btn">Set me up<span class="visually-hidden"> for Submit an item</span></button>
+          <p class="guide-scenario__effect" data-guide-effect></p>
+        </div>
+        <div class="guide-scenario__status" role="status" data-guide-status></div>
+        <ol class="guide-steps">
+          <li>The banner says Submissions are open, and <em>Submit an Item</em> is in the nav.</li>
+          <li>Submit an item: a title, a description, a type and price, and at least one photo. Any image works.</li>
+          <li>It's on its browse page right away. There's no approval queue.</li>
+          <li>Open Your Items: it's under My donated items, with Edit.</li>
+          <li>When you're done, choose <em>Restore demo data</em> in the demo bar. The bids, purchases and proofs come back, and your item goes.</li>
+        </ol>
+        <p class="guide-scenario__why"><strong>Why it works this way:</strong> Everyone is a trusted employee, so items go live without review. The phase decides what anyone can do, and the nav and banner follow it.</p>
+      </section>
+      <section class="home-section" aria-labelledby="also-try">
+        <h2 id="also-try">Also try</h2>
+        <ul class="guide-also">
+          <li><strong>Dark mode:</strong> switch your system to dark. Both modes are designed, not inverted.</li>
+          <li><strong>A phone or a narrow window:</strong> the nav becomes a menu, and the demo bar starts collapsed.</li>
+          <li><strong>Keyboard only:</strong> Tab from the top. There's a skip link, every focus is visible, and dialogs keep focus inside.</li>
+          <li><strong>Zoom to 200%:</strong> nothing is cut off, and nothing scrolls sideways.</li>
+        </ul>
+      </section>
+
+      <section class="home-section" aria-labelledby="start-fresh">
+        <h2 id="start-fresh">Start fresh</h2>
+        <p>If something looks off, someone else is probably using the demo. <em>Restore demo data</em> in the demo bar puts everything back as seeded, for everyone.</p>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <p>Kestrel is a fictional organization, and this is a demo. <a href="/guide" aria-current="page">Take the 5-minute tour</a> <a href="/design-system/">Design system</a></p>
+    </footer>
+    <noscript><p class="page">Set me up needs JavaScript; the steps work without it.</p></noscript>
+  </body>
+</html>

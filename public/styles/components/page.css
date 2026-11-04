@@ -5,6 +5,8 @@
 .phase-banner { max-width: var(--size-content); margin: var(--space-4) auto 0; padding-inline: var(--space-4); }
 .site-footer { border-top: var(--border-thin) solid var(--color-border); color: var(--color-text-muted); font: var(--type-caption); }
 .site-footer > p { max-width: var(--size-content); margin: 0 auto; padding: var(--space-6) var(--space-4); }
+/* The footer's links (the tour, the design system) keep apart when they share a line. */
+.site-footer a + a { margin-left: var(--space-3); }
 /* A titled section of a page (Home's How to participate and Where donations go). */
 .home-section { display: grid; gap: var(--space-4); padding-top: var(--space-4); }
 /* Browse pages: the item count and the sort above the grid. The sort keeps its own width and

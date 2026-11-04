@@ -1,0 +1,30 @@
+/* The 5-minute tour (/guide; DESIGN-SYSTEM.md › Guide; SPEC v1.21 §8): a reading column of
+   scenario cards, each with who and which phase, Set me up and what it changes, its result,
+   numbered steps, and why it works this way. Home's "New here?" line is here too. */
+.home-tour { font: var(--type-label); }
+.home-tour .icon { width: var(--size-icon-sm); height: var(--size-icon-sm); vertical-align: middle; }
+
+.guide { max-width: calc(var(--size-content-narrow) + var(--space-16) * 2); }
+.guide-contents ol { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); margin: 0; padding: 0; list-style: none; counter-reset: scenario; }
+.guide-contents li { counter-increment: scenario; }
+.guide-contents li::before { content: counter(scenario) ". "; color: var(--color-text-muted); }
+.guide-contents a { color: var(--color-link); text-decoration: underline; text-decoration-thickness: var(--border-thin); text-underline-offset: var(--space-1); border-radius: var(--radius-sm); }
+
+.guide-scenario { display: grid; gap: var(--space-4); padding: var(--space-5); scroll-margin-top: var(--space-4); }
+.guide-scenario__head { display: grid; gap: var(--space-2); }
+.guide-scenario__title { font: var(--type-heading-2); }
+.guide-scenario__story { font: var(--type-badge); text-transform: uppercase; letter-spacing: var(--tracking-label); color: var(--color-text-muted); }
+.guide-scenario__meta { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-6); margin: 0; }
+.guide-scenario__meta div { display: grid; gap: 0; }
+.guide-scenario__meta dt { font: var(--type-caption); color: var(--color-text-muted); }
+.guide-scenario__meta dd { margin: 0; font: var(--type-label); }
+.guide-scenario__setup { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); }
+.guide-scenario__setup[hidden] { display: none; }
+.guide-scenario__effect { flex: 1 1 calc(var(--space-16) * 3); font: var(--type-caption); color: var(--color-text-muted); }
+.guide-scenario__effect strong { color: var(--color-text); font-weight: inherit; }
+.guide-scenario__status:empty { display: none; }
+.guide-steps { display: grid; gap: var(--space-2); margin: 0; padding-left: var(--space-6); }
+.guide-steps li::marker { color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+.guide-scenario__why { padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); background: var(--color-surface-muted); }
+.guide-story { padding-left: var(--space-4); border-left: var(--border-thick) solid var(--color-accent); }
+.guide-also { display: grid; gap: var(--space-2); margin: 0; padding-left: var(--space-6); }
