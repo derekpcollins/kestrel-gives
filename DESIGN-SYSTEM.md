@@ -417,8 +417,9 @@ How forms behave, for every component below:
   - The current phase shows as **pressed** (filled, `aria-pressed="true"`).
   - Focus rings switch to the on-inverse color on the bar.
   - Hidden entirely with `?demo=off`; gallery specimens (`data-demo-bar="specimen"`) never hide.
-  - **Loading:** on app pages (`renderDemoBar()`), a Jump to button shows the button loading state while its request runs; the select is `aria-busy` while switching people; Restore uses the danger dialog's loading state ("Restoring…").
-  - **Error:** a failed Jump or Viewing as change shows a danger toast with the server's reason and leaves the bar as it was; a failed Restore shows the reason in the dialog (for example the 10-second cooldown). Disabled and empty: N/A.
+  - **Asks first:** **Submissions open** clears every bid, purchase and proof (SPEC v1.20 §3.1), so it opens a danger dialog, "Open submissions and clear activity?", that says so and that Restore demo data brings them back. Confirm reads "Clear and open submissions"; a toast follows ("Bids, purchases and proofs cleared. Submissions are open."). The other jumps act at once (DECISIONS #124).
+  - **Loading:** on app pages (`renderDemoBar()`), a Jump to button shows the button loading state while its request runs; the select is `aria-busy` while switching people; Restore and Submissions open use the danger dialog's loading state ("Restoring…", "Clearing…").
+  - **Error:** a failed Jump or Viewing as change shows a danger toast with the server's reason and leaves the bar as it was. A failed Restore or Submissions open shows the reason in the dialog, for example the shared 10-second cooldown ("The demo data just changed. Try again in 6 seconds."). Disabled and empty: N/A.
   - The pressed button comes from the data (`currentJump()`), so it's right after a reload or someone else's jump.
 - **Accessibility:** a region named "Demo controls". Changing who you're viewing as is announced ("Now viewing as Dev Kapoor (employee)"). Moving the phase is announced too. All controls are 44px.
 - **Do:** keep it visually distinct from the app. **Don't:** make it sticky or overlay content.

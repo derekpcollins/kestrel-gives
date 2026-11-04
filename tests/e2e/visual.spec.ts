@@ -30,24 +30,27 @@ const STATES: Record<Exclude<State, "live">, readonly Screen[]> = {
 
 const MAYA = { cookie: "kg_viewer=1" };
 
-/** Restore, waiting out the 10-second cooldown if the last test restored moments ago. */
-async function restore(request: APIRequestContext): Promise<void> {
+/**
+ * POST /api/demo, waiting out the 10-second cooldown that Restore and the clearing jump to
+ * "Submissions open" share (DECISIONS entry 124), if the last one ran moments ago.
+ */
+async function demo(request: APIRequestContext, data: Record<string, string>): Promise<void> {
   for (let tries = 0; tries < 5; tries++) {
-    const r = await request.post("/api/demo", { data: { action: "restore" } });
+    const r = await request.post("/api/demo", { data });
     if (r.ok()) return;
-    if (r.status() !== 429) throw new Error(`Restore answered ${r.status()}`);
+    if (r.status() !== 429) throw new Error(`${JSON.stringify(data)} answered ${r.status()}`);
     const wait = Number(r.headers()["retry-after"] ?? "10");
     await new Promise((done) => setTimeout(done, (wait + 1) * 1000));
   }
-  throw new Error("Restore stayed in its cooldown");
+  throw new Error(`${JSON.stringify(data)} stayed in its cooldown`);
 }
+const restore = (request: APIRequestContext) => demo(request, { action: "restore" });
 
 async function setState(request: APIRequestContext, state: State): Promise<void> {
   await restore(request);
   if (state === "live") return;
   const to = state === "reset" ? "after" : state;
-  const jump = await request.post("/api/demo", { data: { action: "jump", to } });
-  if (!jump.ok()) throw new Error(`Jump to ${to} answered ${jump.status()}`);
+  await demo(request, { action: "jump", to });
   if (state !== "reset") return;
   const app = (await (await request.get("/api/app", { headers: MAYA })).json()) as { event: { name: string } };
   const reset = await request.post("/api/admin", { headers: MAYA, data: { action: "reset-year", confirmName: app.event.name } });

@@ -3,6 +3,7 @@
 import type { Id, Tx } from "../data/db.ts";
 import { setEventDatesIn, type DatesResult } from "../data/event-dates.ts";
 import { ENDING_SOON_HOURS } from "../../src/components/thresholds.ts";
+import { cooldownLeftIn, tryDemoLockIn } from "./restore.ts";
 
 export const JUMP_TARGETS = ["submission", "live", "ending-soon", "ended", "after"] as const;
 export type JumpTarget = (typeof JUMP_TARGETS)[number];
@@ -56,4 +57,51 @@ export async function jumpIn(tx: Tx, target: JumpTarget, now: Date): Promise<Jum
   const event = rows[0];
   if (!event) throw new Error("There is no current event to move.");
   return setEventDatesIn(tx, event.id, jumpDates(target, now), now);
+}
+
+/**
+ * Clears the current event's activity for "Submissions open" (owner, 7A review; DECISIONS #124):
+ * that phase can't have bids, purchases or proofs. Items, their photos and cancellations stay;
+ * instant-sale stock goes back to full. Returns the uploaded proof files to delete after the
+ * commit (lib/api/files.ts keeps to this environment's own; seed images are never listed).
+ */
+export async function clearActivityIn(tx: Tx, eventId: Id): Promise<string[]> {
+  const { rows: files } = await tx.query<{ path: string }>(
+    `SELECT pathname AS path FROM uploads WHERE purpose = 'proof'
+     UNION SELECT image_path FROM proofs WHERE event_id = $1 AND image_path NOT LIKE '/seed/%' AND image_path NOT LIKE 'seed/%'`,
+    [eventId],
+  );
+  await tx.query(`UPDATE items SET winning_bid_id = NULL WHERE event_id = $1 AND winning_bid_id IS NOT NULL`, [eventId]);
+  await tx.query(`DELETE FROM proofs WHERE event_id = $1`, [eventId]);
+  await tx.query(`DELETE FROM purchases p USING items i WHERE i.id = p.item_id AND i.event_id = $1`, [eventId]);
+  await tx.query(`DELETE FROM bids b USING items i WHERE i.id = b.item_id AND i.event_id = $1`, [eventId]);
+  await tx.query(`UPDATE items SET remaining = quantity WHERE event_id = $1 AND type = 'instant'`, [eventId]);
+  await tx.query(`DELETE FROM uploads WHERE purpose = 'proof'`);
+  return files.map((f) => f.path);
+}
+
+export type JumpOutcome =
+  | { status: "jumped"; cleared: boolean; files: string[] }
+  | { status: "busy" } // someone else holds the demo lock: a restore, a jump, a reset or a deploy
+  | { status: "cooldown"; retryAfterSeconds: number };
+
+/**
+ * One Jump to, as the demo bar asks for it, under the demo lock. "Submissions open" also clears
+ * activity, so it follows Restore's rules too: refused within the global cooldown, and logged so
+ * it starts one. Other jumps only move the dates, as before (#81).
+ */
+export async function tryJumpIn(tx: Tx, target: JumpTarget, now: Date): Promise<JumpOutcome> {
+  if (!(await tryDemoLockIn(tx))) return { status: "busy" };
+  if (target !== "submission") {
+    await jumpIn(tx, target, now);
+    return { status: "jumped", cleared: false, files: [] };
+  }
+  const wait = await cooldownLeftIn(tx, now);
+  if (wait > 0) return { status: "cooldown", retryAfterSeconds: wait };
+  const { rows } = await tx.query<{ id: Id }>(`SELECT id FROM events WHERE is_current FOR UPDATE`);
+  if (!rows[0]) throw new Error("There is no current event to move.");
+  const files = await clearActivityIn(tx, rows[0].id);
+  await jumpIn(tx, target, now);
+  await tx.query(`INSERT INTO demo_restores (source, restored_at) VALUES ('jump', $1)`, [now]);
+  return { status: "jumped", cleared: true, files };
 }

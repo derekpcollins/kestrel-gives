@@ -10,7 +10,7 @@ import { appStateIn } from "../../lib/api/app-state.ts";
 import { withTransaction } from "../../lib/data/db.ts";
 import { currentEventIn, phaseOf } from "../../lib/data/event.ts";
 import { donationTotalIn } from "../../lib/data/totals.ts";
-import { JUMP_TARGETS, jumpIn } from "../../lib/demo/jump.ts";
+import { JUMP_TARGETS, jumpIn, tryJumpIn } from "../../lib/demo/jump.ts";
 import { RESTORE_COOLDOWN_SECONDS, cooldownLeftIn, restoreIn, tryDemoLockIn, tryRestoreIn } from "../../lib/demo/restore.ts";
 import { seedIn } from "../../lib/seed/seed.ts";
 
@@ -124,6 +124,51 @@ describe("demo controls (rolled back)", () => {
     assert.deepEqual(await tryRestoreIn(db, "manual", new Date(now.getTime() + RESTORE_COOLDOWN_SECONDS * 1000)), { status: "restored", hadUploads: false });
   });
 
+  test("Jump to Submissions open clears bids, purchases and proofs with their uploaded files; items, photos and cancellations stay (#124)", async () => {
+    await db.query(`DELETE FROM demo_restores`);
+    // A proof someone uploaded in this environment, so its file is listed for deleting.
+    const person = (await ids(`SELECT id FROM users WHERE first_name = 'Jules'`))[0]!;
+    await db.query(
+      `INSERT INTO uploads (user_id, purpose, pathname, content_type, bytes, attached_at) VALUES ($1, 'proof', 'local/proofs/jules.png', 'image/png', 10, now())`,
+      [person],
+    );
+    await db.query(`UPDATE proofs SET image_path = 'local/proofs/jules.png' WHERE id = (SELECT min(id) FROM proofs)`);
+    await db.query(
+      `INSERT INTO uploads (user_id, purpose, pathname, content_type, bytes) VALUES ($1, 'photo', 'local/photos/kept.png', 'image/png', 10)`,
+      [person],
+    );
+    const count = async (table: string) => (await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM ${table}`)).rows[0]!.n;
+    const before = { items: await count("items"), photos: await count("item_photos"), cancelled: await count("items WHERE status = 'cancelled'") };
+    assert.ok((await count("bids")) > 0 && (await count("purchases")) > 0 && (await count("proofs")) > 0, "the seed has activity");
+
+    const now = new Date();
+    const outcome = await tryJumpIn(db, "submission", now);
+    assert.deepEqual(outcome, { status: "jumped", cleared: true, files: ["local/proofs/jules.png"] });
+    assert.equal(phaseOf((await currentEventIn(db))!, now), "submission");
+    assert.deepEqual([await count("bids"), await count("purchases"), await count("proofs")], [0, 0, 0]);
+    assert.equal(await count("uploads WHERE purpose = 'proof'"), 0);
+    assert.equal(await count("uploads WHERE purpose = 'photo'"), 1, "uploaded item photos stay with their items");
+    assert.deepEqual({ items: await count("items"), photos: await count("item_photos"), cancelled: await count("items WHERE status = 'cancelled'") }, before);
+    assert.equal(await count("items WHERE type = 'instant' AND remaining <> quantity"), 0, "stock is full again");
+    assert.equal(await count("items WHERE winning_bid_id IS NOT NULL"), 0);
+    assert.equal(await donationTotalIn(db, (await eventRow()).id, person), 0);
+    assert.deepEqual((await db.query<{ source: string }>(`SELECT source FROM demo_restores`)).rows, [{ source: "jump" }]);
+  });
+
+  test("the clearing jump follows Restore's cooldown both ways; other jumps don't (#124)", async () => {
+    await db.query(`DELETE FROM demo_restores`);
+    const now = new Date();
+    assert.deepEqual(await tryRestoreIn(db, "manual", now), { status: "restored", hadUploads: false });
+    const soon = new Date(now.getTime() + 4_000);
+    assert.deepEqual(await tryJumpIn(db, "submission", soon), { status: "cooldown", retryAfterSeconds: RESTORE_COOLDOWN_SECONDS - 4 });
+    assert.ok((await ids(`SELECT id FROM bids`)).length > 0, "nothing was cleared");
+    assert.deepEqual(await tryJumpIn(db, "ended", soon), { status: "jumped", cleared: false, files: [] });
+
+    const later = new Date(now.getTime() + RESTORE_COOLDOWN_SECONDS * 1000);
+    assert.equal((await tryJumpIn(db, "submission", later)).status, "jumped");
+    assert.deepEqual(await tryRestoreIn(db, "manual", new Date(later.getTime() + 2_000)), { status: "cooldown", retryAfterSeconds: RESTORE_COOLDOWN_SECONDS - 2 });
+  });
+
   test("the cron restores once an hour at most; the deploy source is allowed", async () => {
     await db.query(`DELETE FROM demo_restores`);
     const now = new Date();
@@ -167,6 +212,8 @@ describe("demo controls (committed; dev is reseeded after)", () => {
       assert.equal(await tryDemoLockIn(a), true);
       assert.equal(await tryDemoLockIn(b), false);
       assert.deepEqual(await tryRestoreIn(b, "manual", new Date()), { status: "busy" });
+      assert.deepEqual(await tryJumpIn(b, "submission", new Date()), { status: "busy" });
+      assert.deepEqual(await tryJumpIn(b, "ended", new Date()), { status: "busy" });
       await a.query("ROLLBACK");
       assert.equal(await tryDemoLockIn(b), true, "free again once the first transaction ends");
     } finally {

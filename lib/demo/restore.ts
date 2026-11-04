@@ -11,7 +11,7 @@ import { storageFor, type ClearResult, type Storage } from "../storage/index.ts"
 
 export type RestoreSource = "manual" | "cron" | "deploy";
 
-/** Restores refused within this many seconds of the last one (any source). */
+/** Restores, and Jumps to "Submissions open" (#124), refused within this many seconds of the last of either. */
 export const RESTORE_COOLDOWN_SECONDS = 10;
 /** The cron skips if a cron restore ran within this long (Vercel may deliver twice). */
 export const CRON_DEDUPE_MINUTES = 60;

@@ -48,6 +48,10 @@ export const JUMPS: ReadonlyArray<{ value: JumpValue; label: string }> = [
 /** The demo bar's note (SPEC §3.1, v1.11). */
 export const SHARED_NOTE = "Shared demo · resets daily";
 
+/** What Jump to "Submissions open" does, said before it happens (owner, 7A review; DECISIONS entry 124). */
+export const SUBMISSION_JUMP_TEXT =
+  "Submissions open clears bids, purchases and proofs, with their uploaded files. Items stay. Restore demo data brings them back. The demo is shared, so this changes it for everyone.";
+
 /** Which Jump to button shows as pressed for the event as it is now. */
 export function currentJump(event: Pick<EventView, "phase" | "endingSoon" | "proofDeadline"> | null, now: Date): JumpValue | null {
   if (!event) return null;

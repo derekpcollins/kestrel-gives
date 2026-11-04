@@ -1,6 +1,6 @@
 # Kestrel Gives — Build Spec & Conformance Rules
 
-**Status:** v1.19 · Owner: Derek Collins · Last updated: Nov 4, 2026
+**Status:** v1.20 · Owner: Derek Collins · Last updated: Nov 4, 2026
 
 This document describes what to build and the rules every contribution must follow, whether a person or an AI agent writes it. Read it in full before writing any code. If something here conflicts with a request, stop and ask.
 
@@ -40,6 +40,7 @@ This is a **from-memory recreation** of a tool I designed and built at a previou
 A slim bar pinned to the top of every page, in the normal page flow (it never overlays content), visually distinct from the app (its own background treatment and a "Demo" label). It is a design-system component like any other.
 - **Viewing as:** a select listing every seeded user with their role. The choice is stored in a cookie; the API reads it to know who is acting. Changes are announced ("Now viewing as …, admin").
 - **Jump to:** submission window / live / ending soon / ended / 30+ days after. Moves the stored event dates relative to now. "Ending soon" is live with bidding closing in under 24 hours (the threshold in section 10). (Ending soon added v1.8.) It MUST NOT fake the clock; the real time-window rules are what get exercised.
+  - **Submission window clears activity** (v1.20): that phase can't have any, so this jump also deletes every bid, purchase and proof (with the proofs' uploaded files). Items stay. The demo bar says so in a confirmation before it happens ("Submissions open clears bids, purchases and proofs. Restore demo data brings them back."). It follows Restore's lock and cooldown rules. The other jumps only move the dates.
 - **Restore demo data:** resets everything to the seeded state (including email templates), behind a confirmation dialog. It also deletes the files visitors uploaded in this environment (v1.13; section 4).
 - **Shared and self-repairing** (v1.11): anyone can use Jump to and Restore demo data, and everyone sees the same data. A short global cooldown (about 10 seconds) stops repeated Restores. A daily scheduled job (Vercel cron) runs the same Restore, so the demo returns to the live phase every day; the bar says the demo is shared and resets daily. This is the only scheduled job (section 7.1).
 - Collapsible to a thin strip using `<details>`; collapsed state is remembered.
@@ -140,7 +141,7 @@ There is no inherited design system, so this project defines its own, from scrat
   - **Dark mode:** the marks' white face and chest are part of the art, so in dark mode the marks sit on a light rounded tile in the art's own white. The Home hero (event mark with the lettering) is a light card in both modes, because the event mark's file has its white background built in.
   - **Hero lockup:** the event mark, then "Kestrel" in brand teal over "gives" in brand coral, both live text in the heading font (`--type-hero`). There's no hand-drawn lettering, no heart over the i (the mark carries the heart), and no swash. The whole lockup has one accessible name, "Kestrel Gives". Brand teal and coral are sampled from the event mark.
   - **Favicon:** the org mark as-is, padded to a square (16 and 32px, transparent). The Apple touch icon (180px) is the org mark placed on a white square, since iOS shows transparency as black. A dedicated small mark MAY come later.
-  - **Charities:** the three charity logos are original, simple SVGs built from tokens so they work in dark mode.
+  - **Charities** (v1.20): the owner's own files, used unmodified, in `public/brand/charities/`; on a light tile in dark mode if the art needs it, like the Kestrel marks.
 - **Avatars:** initials on a token-colored circle. No photos of people.
 - **Top-bidder crown:** the current high bidder's avatar gets a small, slightly tilted, hand-drawn-style crown at its top edge, everywhere their avatar appears in that item's bid history. It MUST be an original drawing, not traced or copied from any artwork.
 

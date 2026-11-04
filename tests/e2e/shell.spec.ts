@@ -65,16 +65,33 @@ test("the Admin Dashboard tells employees it's for admins", async ({ page }) => 
   await bar(page).getByLabel("Viewing as").selectOption({ label: "Jules Ferreira (employee)" });
 });
 
-test("Jump to moves the phase: banner, pressed button, and Submit an Item only in the submission window", async ({ page }) => {
+test("Jump to moves the phase: banner and pressed button; Submissions open asks first, and Cancel changes nothing", async ({ page }) => {
   await open(page);
   const jump = (name: string) => bar(page).getByRole("button", { name, exact: true });
   await expect(nav(page).getByRole("link", { name: "Submit an Item" })).toHaveCount(0);
 
+  // "Submissions open" clears activity, so it asks first (DECISIONS #124). The real clearing runs
+  // in demo-jump.spec.ts, one test at a time, so it can't empty the data under other specs here.
+  const sent: string[] = [];
+  page.on("request", (r) => { if (r.url().endsWith("/api/demo") && r.method() === "POST") sent.push(r.postData() ?? ""); });
   await jump("Submissions open").click();
-  await expect(jump("Submissions open")).toHaveAttribute("aria-pressed", "true");
-  await expect(banner(page)).toContainText("Submissions are open");
-  await expect(nav(page).getByRole("link", { name: "Submit an Item" })).toBeVisible();
-  await expect(bar(page).locator(".demo-bar__status")).toHaveText("Event moved to: Submissions open");
+  const dialog = page.getByRole("dialog", { name: "Open submissions and clear activity?" });
+  await expect(dialog).toContainText("Submissions open clears bids, purchases and proofs, with their uploaded files. Items stay. Restore demo data brings them back.");
+  await dialog.getByRole("button", { name: "Cancel" }).click();
+  await expect(dialog).toBeHidden();
+  await expect(jump("Submissions open")).toBeFocused();
+  await expect(jump("Bidding live")).toHaveAttribute("aria-pressed", "true");
+  expect(sent).toEqual([]);
+
+  // Inside the shared cooldown the server says why, in the dialog, which stays open.
+  await page.route("**/api/demo", (route) =>
+    route.fulfill({ status: 429, contentType: "application/json", headers: { "Retry-After": "6" }, body: JSON.stringify({ error: "The demo data just changed. Try again in 6 seconds." }) }));
+  await jump("Submissions open").click();
+  await dialog.getByRole("button", { name: "Clear and open submissions" }).click();
+  await expect(dialog.locator(".dialog__error")).toContainText("The demo data just changed. Try again in 6 seconds.");
+  await dialog.getByRole("button", { name: "Cancel" }).click();
+  await page.unroute("**/api/demo");
+  await expect(jump("Bidding live")).toHaveAttribute("aria-pressed", "true");
 
   await jump("Ending soon").click();
   await expect(banner(page)).toContainText("Bidding ends soon");
@@ -108,7 +125,7 @@ test("Restore asks first, restores, and a second restore within the cooldown sho
 
   await restore.click();
   await dialog.getByRole("button", { name: "Restore demo data" }).click();
-  await expect(dialog.locator(".dialog__error")).toContainText("The demo was just restored.");
+  await expect(dialog.locator(".dialog__error")).toContainText("The demo data just changed.");
   await page.keyboard.press("Escape");
   await expect(restore).toBeFocused();
 });

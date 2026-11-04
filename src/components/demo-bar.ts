@@ -5,7 +5,7 @@
 // call the API; each control shows the button loading state while its request runs, and
 // updateDemoBar() refreshes it in place so focus stays where it was.
 import type { AppState } from "../app-state.ts";
-import { JUMPS, SHARED_NOTE, currentJump, type JumpValue } from "./shell-rules.ts";
+import { JUMPS, SHARED_NOTE, SUBMISSION_JUMP_TEXT, currentJump, type JumpValue } from "./shell-rules.ts";
 import { confirmDialog } from "./dialog.ts";
 import { el } from "./dom.ts";
 import { icon } from "./icons.ts";
@@ -118,7 +118,10 @@ export function enhanceDemoBar(bar: HTMLElement, actions?: DemoBarActions): void
   for (const button of bar.querySelectorAll<HTMLButtonElement>(".demo-bar__jump-buttons .btn")) {
     button.addEventListener("click", async () => {
       if (button.getAttribute("aria-disabled") === "true") return;
-      if (actions) {
+      if (actions && button.value === "submission") {
+        // This jump clears activity (DECISIONS entry 124), so it asks first, as Restore does.
+        if (!(await confirmSubmissionJump(() => actions.jump("submission")))) return;
+      } else if (actions) {
         const ok = await whileBusy(button, () => actions.jump(button.value as JumpValue));
         if (!ok) return;
       }
@@ -152,6 +155,23 @@ export async function confirmRestore(restore: () => Promise<void>): Promise<bool
   });
   if (restored) showToast("Demo data restored.", { tone: "success" });
   return restored;
+}
+
+/**
+ * Jump to "Submissions open" clears every bid, purchase and proof (owner, 7A review; DECISIONS
+ * entry 124), so it says so first. A refusal (busy, or the shared cooldown) shows in the dialog.
+ */
+export async function confirmSubmissionJump(jump: () => Promise<void>): Promise<boolean> {
+  const done = await confirmDialog({
+    variant: "danger",
+    title: "Open submissions and clear activity?",
+    body: SUBMISSION_JUMP_TEXT,
+    confirmLabel: "Clear and open submissions",
+    busyLabel: "Clearing…",
+    onConfirm: jump,
+  });
+  if (done) showToast("Bids, purchases and proofs cleared. Submissions are open.", { tone: "success" });
+  return done;
 }
 
 /** Runs a request with the button in its loading state. False (with a toast) if it failed. */
