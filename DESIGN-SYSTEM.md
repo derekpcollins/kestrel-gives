@@ -322,7 +322,7 @@ How forms behave, for every component below:
 - **States:** default (the effect lines fill in from the app state). Loading: Set me up waits for the first app state, with the button busy. **Ready:** a success *Banner* ("Ready", "Viewing as Jules Ferreira, Bidding ended." plus what the check found) with a small secondary *Button* link to the first page. **State gone:** a warning *Banner* naming what happened, with Restore demo data, which opens the usual Restore *Dialog*; after a restore, an info *Banner* says to press Set me up again. **Error:** a danger *Banner*, "Couldn't set this up", with the server's reason (busy, the cooldown). Submissions open asks first with the demo bar's *Dialog*; Cancel changes nothing and focus returns to the button. With `?demo=off`: no buttons, the steps stay. Hover, focus, active and disabled come from *Button* and *Link*.
 - **Accessibility:** each scenario is a region named by its heading; the six buttons have distinct names; results are announced through the scenario's status; focus stays on the button.
 - **Don't:** restore on the visitor's behalf, or find items by id: another visitor may have changed the demo, so the checks go by title and say what they found.
-- **Figma:** not yet a page in the library (owner to decide).
+- **Figma:** none, by the owner's choice (DECISIONS entry 131): the Guide is built from components already in the library.
 
 ## Admin Dashboard
 
@@ -496,13 +496,13 @@ How forms behave, for every component below:
 
 ## Charity card
 
-**Purpose:** a charity on Home: logo, name and what it does (SPEC §7.2).
+**Purpose:** a charity on Home and the giving page: logo, name and what it does (SPEC §5, §7.2).
 
-- **Classes:** `ul.charity-list` > `li` > `article.card.card--flat.charity-card` > `img.charity-card__logo` (`--size-charity-logo`, on the mark tile's white) and `.charity-card__text` > `h3.charity-card__name`, `p.charity-card__description`.
+- **Classes:** `ul.charity-list` > `li` > `article.card.card--flat.charity-card`, stacked: `.charity-card__tile` > `img.charity-card__logo` (`--size-charity-logo`, 160; the files are 320px), then `.charity-card__text` > `h3.charity-card__name`, `p.charity-card__description`. The tile is `--color-mark-tile` in both modes, so it disappears on the light card and shows as a light tile in dark mode. In forced colors it keeps that white (`forced-color-adjust: none`), because the logos' lettering is dark.
 - **States:** default. **Loading:** the list is `aria-busy` and empty until the data arrives. Hover, focus, active, disabled, error and empty: N/A (always three charities; if the data fails, the page's danger banner says so).
-- **Accessibility:** a real logo has `alt=""` because the name is right beside it. Until the owner's logos arrive, the placeholder is a dashed tile reading "Logo" with `alt="Placeholder logo"` (`logoAlt()`), so it's marked as a placeholder to everyone (SPEC §7.2).
+- **Accessibility:** the logo has `alt=""`: it spells the charity's name, and the heading right under it says it again.
 - **Do:** keep descriptions to one sentence. **Don't:** make the card a link (there's no charity page).
-- **Figma:** *Charity card* · Logo = Placeholder / Real (2).
+- **Figma:** *Charity card* · no variants since 7B (the placeholder is gone): a vertical auto-layout of the logo tile, the name and the description.
 
 ---
 

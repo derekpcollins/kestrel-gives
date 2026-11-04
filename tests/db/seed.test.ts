@@ -103,7 +103,7 @@ describe("seed", () => {
     assert.equal(await count("users"), 0);
   });
 
-  test("the seed never writes an absolute URL: item photos are relative keys (DECISIONS #77)", async () => {
+  test("the seed never writes an absolute URL: item photos are relative keys (DECISIONS #77), logos are committed files", async () => {
     await seedIn(db, new Date());
     const { rows } = await db.query<{ path: string }>(
       `SELECT path FROM item_photos UNION ALL SELECT logo_path FROM charities UNION ALL SELECT image_path FROM proofs`,
@@ -111,7 +111,7 @@ describe("seed", () => {
     assert.ok(rows.length >= 26 + 3 + 3);
     for (const { path } of rows) {
       assert.doesNotMatch(path, /^([a-z][a-z0-9+.-]*:|\/\/)/i, path);
-      assert.ok(path.startsWith("/seed/") || SEED_PHOTO_KEY.test(path), path);
+      assert.ok(path.startsWith("/seed/") || path.startsWith("/brand/charities/") || SEED_PHOTO_KEY.test(path), path);
     }
     const photos = (await db.query<{ path: string }>(`SELECT path FROM item_photos ORDER BY id`)).rows.map((r) => r.path);
     if (PHOTOS_INSTALLED) for (const path of photos) assert.match(path, SEED_PHOTO_KEY);

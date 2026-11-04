@@ -19,8 +19,19 @@ test("Home: hero, how to participate, and the charities from the data", async ({
   await expect(charities.getByRole("heading", { level: 3 })).toHaveText(["Lantern Paws", "Lunchbox Brigade", "Saplingworks"]);
   await expect(charities.locator("[data-charities]")).not.toHaveAttribute("aria-busy");
 
-  // The placeholder logo says it's a placeholder.
-  await expect(charities.getByRole("img", { name: "Placeholder logo" })).toHaveCount(3);
+  // Each charity's own logo (DECISIONS entry 130): decorative, since it spells the name the
+  // heading repeats; loaded; and stacked above the name.
+  const logos = charities.locator(".charity-card__logo");
+  await expect(logos).toHaveCount(3);
+  for (const [i, slug] of ["lantern-paws", "lunchbox-brigade", "saplingworks"].entries()) {
+    await expect(logos.nth(i)).toHaveAttribute("alt", "");
+    await expect(logos.nth(i)).toHaveAttribute("src", new RegExp(`/brand/charities/${slug}\\.png$`));
+    await logos.nth(i).scrollIntoViewIfNeeded(); // they load lazily
+    await expect.poll(() => logos.nth(i).evaluate((el) => { const img = el as unknown as { complete: boolean; naturalWidth: number }; return img.complete ? img.naturalWidth : 0; })).toBe(320);
+  }
+  const logoBox = await logos.first().boundingBox();
+  const nameBox = await charities.getByRole("heading", { level: 3 }).first().boundingBox();
+  expect(logoBox!.y + logoBox!.height).toBeLessThanOrEqual(nameBox!.y);
 
   // No item lists on Home (SPEC §8), and no payment words anywhere on it.
   await expect(page.locator(".item-tile")).toHaveCount(0);

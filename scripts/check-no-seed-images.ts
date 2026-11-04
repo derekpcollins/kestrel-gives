@@ -1,9 +1,10 @@
 // Seed photos never go in git (DECISIONS #77). Fails if git tracks (or has staged) any
-// .jpg, .jpeg, .png or .webp under a seed or photo path. The three committed placeholders
-// are the only exceptions. Runs in `npm run check` and the pre-commit hook.
+// .jpg, .jpeg, .png or .webp under a seed or photo path. The two committed placeholders
+// are the only exceptions. Charity logos (public/brand/charities/) aren't seed photos: they're
+// the owner's art, committed like the Kestrel marks (DECISIONS entry 130). Runs in `npm run check` and the pre-commit hook.
 import { execFileSync } from "node:child_process";
 
-const ALLOWED = new Set(["public/seed/placeholder-photo.png", "public/seed/charities/placeholder-logo.png", "public/seed/proofs/placeholder-proof.png"]);
+const ALLOWED = new Set(["public/seed/placeholder-photo.png", "public/seed/proofs/placeholder-proof.png"]);
 const IMAGE = /\.(jpe?g|png|webp)$/i;
 const SEED_OR_PHOTO_DIR = /(^|\/)(seed|\.seed-photos|seed-photos|photos)\//i;
 

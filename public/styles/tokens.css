@@ -155,7 +155,7 @@
   --size-mark-header: 2rem;    /* 32: org mark in the header */
   --size-lockup-mark: calc(var(--text-5xl) * 2.6); /* event mark in the hero lockup, scaled with the words */
   --size-tile-min:    16rem;   /* item grid: tiles wrap at this width, no breakpoints */
-  --size-charity-logo: 5rem;   /* 80: charity logos on Home */
+  --size-charity-logo: 10rem;  /* 160: charity logos on Home and giving (files are 2x) */
   --size-step-number: 2.5rem; /* 40: the numbered circles in How to participate */
   --size-content:     72rem;   /* page max width */
   --size-content-narrow: 40rem; /* forms, reading text */

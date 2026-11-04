@@ -6,6 +6,7 @@
 import type { Pool } from "@neondatabase/serverless";
 import { withTransaction, type Tx } from "../lib/data/db.ts";
 import { restoreIn } from "../lib/demo/restore.ts";
+import { CHARITIES } from "../lib/seed/data.ts";
 
 export interface DeployStep {
   /** Lowercase words joined by hyphens; never reused or renamed once it has run. */
@@ -26,6 +27,21 @@ export const DEPLOY_STEPS: readonly DeployStep[] = [
     run: async (tx, now) => {
       await restoreIn(tx, "deploy", now);
       return "restored the demo data (bidding live)";
+    },
+  },
+  {
+    // Milestone 7B (DECISIONS entry 130): the charities on main were seeded with the shared
+    // placeholder logo. Point each at its own file now, rather than wait for the next Restore,
+    // and touch nothing else, so a visitor's bids and phase stay as they are. Matched by name;
+    // a charity a later seed renamed is left alone.
+    name: "m7-charity-logos",
+    run: async (tx) => {
+      let changed = 0;
+      for (const c of CHARITIES) {
+        const { rowCount } = await tx.query(`UPDATE charities SET logo_path = $1 WHERE name = $2 AND logo_path <> $1`, [c.logo, c.name]);
+        changed += rowCount ?? 0;
+      }
+      return `pointed ${changed} of ${CHARITIES.length} charities at their own logos`;
     },
   },
 ];

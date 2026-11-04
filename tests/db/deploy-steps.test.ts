@@ -13,6 +13,7 @@ import { DEPLOY_STEPS, runDeploySteps, type DeployStep } from "../../scripts/dep
 import { directUrl } from "../../scripts/migrate-lib.ts";
 import { phaseOf } from "../../lib/data/event.ts";
 import { jumpIn } from "../../lib/demo/jump.ts";
+import { CHARITIES } from "../../lib/seed/data.ts";
 
 const run = promisify(execFile);
 const quiet = () => {};
@@ -90,6 +91,26 @@ describe("deploy steps", () => {
       assert.equal(phaseOf({ submissionsOpenAt: e!.subs, biddingOpensAt: e!.opens, biddingClosesAt: e!.closes }, e!.now), "live");
       const { rows } = await client.query<{ source: string }>(`SELECT source FROM demo_restores ORDER BY id DESC LIMIT 1`);
       assert.equal(rows[0]?.source, "deploy");
+    } finally {
+      await client.query("ROLLBACK");
+      client.release();
+    }
+  });
+});
+
+describe("m7-charity-logos", () => {
+  test("points placeholder logos at each charity's own file and leaves the rest of the demo alone (rolled back)", async () => {
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query(`UPDATE charities SET logo_path = '/seed/charities/placeholder-logo.png'`);
+      const bids = (await client.query<{ n: string }>(`SELECT count(*) AS n FROM bids`)).rows[0]!.n;
+      const step = DEPLOY_STEPS.find((s) => s.name === "m7-charity-logos")!;
+      assert.equal(await step.run(client, new Date()), `pointed 3 of 3 charities at their own logos`);
+      const { rows } = await client.query<{ name: string; logo_path: string }>(`SELECT name, logo_path FROM charities ORDER BY position`);
+      assert.deepEqual(rows, CHARITIES.map((c) => ({ name: c.name, logo_path: c.logo })));
+      assert.equal((await client.query<{ n: string }>(`SELECT count(*) AS n FROM bids`)).rows[0]!.n, bids);
+      assert.equal(await step.run(client, new Date()), `pointed 0 of 3 charities at their own logos`);
     } finally {
       await client.query("ROLLBACK");
       client.release();

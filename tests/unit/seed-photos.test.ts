@@ -92,14 +92,15 @@ describe("SEED_PHOTOS_BASE_URL is checked, never echoed", () => {
 });
 
 describe("image files never go in git", () => {
-  test("flags images under seed or photo paths, except the three placeholders", () => {
+  test("flags images under seed or photo paths, except the two placeholders; charity logos and their sources are fine", () => {
     assert.deepEqual(
       forbiddenImages([
-        "public/seed/placeholder-photo.png", "public/seed/charities/placeholder-logo.png", "public/seed/proofs/placeholder-proof.png",
+        "public/seed/placeholder-photo.png", "public/seed/proofs/placeholder-proof.png",
+        "public/brand/charities/lantern-paws.png", "design/source/charities/lantern-paws.png",
         "public/seed/candles-1.jpg", "public/seed/photos/a.webp", ".seed-photos/originals/x.JPG", "assets/photos/y.png", "public/seed/new.png",
-        "public/brand/logo.png", "design/screenshots/a.png", "lib/seed/photos.ts",
+        "public/brand/logo.png", "design/screenshots/a.png", "lib/seed/photos.ts", "public/seed/charities/placeholder-logo.png",
       ]),
-      ["public/seed/candles-1.jpg", "public/seed/photos/a.webp", ".seed-photos/originals/x.JPG", "assets/photos/y.png", "public/seed/new.png"],
+      ["public/seed/candles-1.jpg", "public/seed/photos/a.webp", ".seed-photos/originals/x.JPG", "assets/photos/y.png", "public/seed/new.png", "public/seed/charities/placeholder-logo.png"],
     );
   });
 });

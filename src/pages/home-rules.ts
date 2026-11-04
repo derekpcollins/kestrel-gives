@@ -10,14 +10,3 @@ export function proofDaysWords(event: Pick<EventView, "biddingClosesAt" | "proof
   const days = Math.round((Date.parse(event.proofDeadline) - Date.parse(event.biddingClosesAt)) / DAY);
   return days === 1 ? "1 day" : `${days} days`;
 }
-
-/** The seed's shared placeholder logo (lib/seed/data.ts PLACEHOLDER_LOGO; a unit test keeps them equal). */
-export const PLACEHOLDER_LOGO = "/seed/charities/placeholder-logo.png";
-
-/**
- * A charity logo's alt text. The name is beside it, so a real logo is decorative (""); the
- * placeholder says what it is, so nobody mistakes it for the charity's mark (SPEC §7.2).
- */
-export function logoAlt(logoUrl: string): string {
-  return new URL(logoUrl, "https://kestrel.invalid").pathname === PLACEHOLDER_LOGO ? "Placeholder logo" : "";
-}

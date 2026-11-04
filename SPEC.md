@@ -1,6 +1,6 @@
 # Kestrel Gives — Build Spec & Conformance Rules
 
-**Status:** v1.21 · Owner: Derek Collins · Last updated: Nov 4, 2026
+**Status:** v1.22 · Owner: Derek Collins · Last updated: Nov 4, 2026
 
 This document describes what to build and the rules every contribution must follow, whether a person or an AI agent writes it. Read it in full before writing any code. If something here conflicts with a request, stop and ask.
 
@@ -142,7 +142,7 @@ There is no inherited design system, so this project defines its own, from scrat
   - **Dark mode:** the marks' white face and chest are part of the art, so in dark mode the marks sit on a light rounded tile in the art's own white. The Home hero (event mark with the lettering) is a light card in both modes, because the event mark's file has its white background built in.
   - **Hero lockup:** the event mark, then "Kestrel" in brand teal over "gives" in brand coral, both live text in the heading font (`--type-hero`). There's no hand-drawn lettering, no heart over the i (the mark carries the heart), and no swash. The whole lockup has one accessible name, "Kestrel Gives". Brand teal and coral are sampled from the event mark.
   - **Favicon:** the org mark as-is, padded to a square (16 and 32px, transparent). The Apple touch icon (180px) is the org mark placed on a white square, since iOS shows transparency as black. A dedicated small mark MAY come later.
-  - **Charities** (v1.20): the owner's own files, used unmodified, in `public/brand/charities/`; on a light tile in dark mode if the art needs it, like the Kestrel marks.
+  - **Charities** (v1.20, v1.22): the owner's own files, used unmodified (no redrawing, recoloring, or tracing; resizing and compressing are allowed). The originals stay in `design/source/charities/`; the site serves resized, compressed copies at 2x the displayed size from `public/brand/charities/`. On Home and the giving page each card stacks the logo, big, over the name and the description, on a light tile in dark mode. The logo spells the name, so it's decorative (`alt=""`).
 - **Avatars:** initials on a token-colored circle. No photos of people.
 - **Top-bidder crown:** the current high bidder's avatar gets a small, slightly tilted, hand-drawn-style crown at its top edge, everywhere their avatar appears in that item's bid history. It MUST be an original drawing, not traced or copied from any artwork.
 
@@ -181,7 +181,7 @@ Three fictional charities, seeded and read-only in v1:
 | **Lunchbox Brigade** | Packs weekend and summer meals for kids who rely on school lunch |
 | **Saplingworks** | Plants and cares for street trees in neighborhoods with the least shade |
 
-Each has a name, a one-sentence description, and an original logo. The owner supplies the logos; until then all three use one neutral image clearly marked as a placeholder, and each charity keeps its own logo path so the real files drop in later (v1.8). There is **one donation destination**: people donate once on the giving platform, and the funds are **split equally among the three charities**. Donors don't choose a charity.
+Each has a name, a one-sentence description, and an original logo. The owner supplies the logos, and each charity has its own (v1.8, v1.22; section 5). There is **one donation destination**: people donate once on the giving platform, and the funds are **split equally among the three charities**. Donors don't choose a charity.
 
 ### 7.3 Items
 - **Submitting** (employees during the submission window; admins any time). The form's first question is the sale type, shown as two side-by-side radio cards: **Silent auction** and **Instant sale**, each with a label and a one-line description of when to choose it. The rest of the form is disabled until one is chosen.
@@ -313,7 +313,7 @@ These run before any change counts as done. Each is a script in `package.json`.
 5. **Business rules:** `node:test` tests cover section 7: bid minimums and increments, no self-outbidding, time windows for every phase, the inventory floor, simultaneous bids and purchases (against real Postgres on the `dev` branch), edit locks, delete and cancel rules, the reset lock, and template variable validation.
 6. **Visual review:** Playwright screenshots of every screen in every seeded state, in light and dark mode, at 390px and 1280px wide, with `?demo=off`, for a human to review.
 7. **Reflow:** Playwright loads every screen at 320px wide and fails if the page scrolls sideways or any element cuts off content sideways. Regions meant to scroll (overflow auto or scroll) and text truncated with an ellipsis are allowed.
-8. **No seed images in git** (added v1.10): a short Node script fails if git tracks or has staged any `.jpg`, `.jpeg`, `.png` or `.webp` under a seed or photo path, except the three committed placeholders. The pre-commit hook runs it too.
+8. **No seed images in git** (added v1.10): a short Node script fails if git tracks or has staged any `.jpg`, `.jpeg`, `.png` or `.webp` under a seed or photo path, except the two committed placeholders. The pre-commit hook runs it too.
 
 ## 13. How the agent works
 

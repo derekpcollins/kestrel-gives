@@ -12,7 +12,6 @@ import { seedPhotoKey } from "./photos.ts";
  */
 export const PHOTOS_INSTALLED = true;
 export const PLACEHOLDER_PHOTO = "/seed/placeholder-photo.png";
-export const PLACEHOLDER_LOGO = "/seed/charities/placeholder-logo.png";
 export const PLACEHOLDER_PROOF = "/seed/proofs/placeholder-proof.png";
 
 export const EVENT = {
@@ -37,10 +36,11 @@ export const USERS: ReadonlyArray<{ key: Person; first: string; last: string; ro
   { key: "owen", first: "Owen", last: "Achterberg", role: "employee" },
 ];
 
+/** Logos are the owner's files, resized copies in public/brand/charities/ (DECISIONS entry 130). */
 export const CHARITIES = [
-  { name: "Lantern Paws", description: "Fosters and rehomes cats and dogs from crowded shelters." },
-  { name: "Lunchbox Brigade", description: "Packs weekend and summer meals for kids who rely on school lunch." },
-  { name: "Saplingworks", description: "Plants and cares for street trees in neighborhoods with the least shade." },
+  { name: "Lantern Paws", description: "Fosters and rehomes cats and dogs from crowded shelters.", logo: "/brand/charities/lantern-paws.png" },
+  { name: "Lunchbox Brigade", description: "Packs weekend and summer meals for kids who rely on school lunch.", logo: "/brand/charities/lunchbox-brigade.png" },
+  { name: "Saplingworks", description: "Plants and cares for street trees in neighborhoods with the least shade.", logo: "/brand/charities/saplingworks.png" },
 ] as const;
 
 /** [bidder, dollars, hours ago] in the order they were placed. */

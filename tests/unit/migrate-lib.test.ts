@@ -91,10 +91,10 @@ describe("decideDeploy", () => {
 });
 
 describe("deploy steps list", () => {
-  test("m3-land-live-demo is there; names are well formed and unique", async () => {
+  test("m3-land-live-demo and m7-charity-logos are there, in that order; names are well formed and unique", async () => {
     const { DEPLOY_STEPS, STEP_NAME } = await import("../../scripts/deploy-steps.ts");
     const names = DEPLOY_STEPS.map((s) => s.name);
-    assert.ok(names.includes("m3-land-live-demo"));
+    assert.deepEqual(names.slice(0, 2), ["m3-land-live-demo", "m7-charity-logos"]);
     for (const n of names) assert.match(n, STEP_NAME);
     assert.equal(new Set(names).size, names.length);
   });

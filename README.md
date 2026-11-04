@@ -90,7 +90,7 @@ Every change must pass the eight conformance checks in SPEC.md section 12. `npm 
 | Script | Check |
 |---|---|
 | `npm run check:deps` | `package.json` lists only the packages in SPEC.md's approved table (read from the spec itself) |
-| `npm run check:seed-images` | No `.jpg`/`.jpeg`/`.png`/`.webp` tracked under a seed or photo path, except the three placeholders (also run by the pre-commit hook) |
+| `npm run check:seed-images` | No `.jpg`/`.jpeg`/`.png`/`.webp` tracked under a seed or photo path, except the two placeholders (also run by the pre-commit hook) |
 | `npm run check:tokens` | No raw colors or lengths in `public/` or `src/` outside `public/styles/tokens.css` (except the two named breakpoints, inside `@media`/`@container` conditions); type set with `--type-*` roles, not `--text-*` steps; every color token has a light and a dark value |
 | `npm run check:types` | `tsc --noEmit` for server and browser code |
 | `npm run test:rules` | `node:test` unit tests of the rules in SPEC §7 and the pure code around them |

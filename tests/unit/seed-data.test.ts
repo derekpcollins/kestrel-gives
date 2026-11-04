@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { access } from "node:fs/promises";
 import { describe, test } from "node:test";
 import { TEMPLATE_DEFAULTS, TEMPLATE_KEYS } from "../../lib/email-templates.ts";
-import { CHARITIES, EVENT, ITEMS, PHOTOS_INSTALLED, PLACEHOLDER_LOGO, PLACEHOLDER_PROOF, PROOFS, USERS, photoPath, type AuctionItem, type InstantItem } from "../../lib/seed/data.ts";
+import { CHARITIES, EVENT, ITEMS, PHOTOS_INSTALLED, PLACEHOLDER_PROOF, PROOFS, USERS, photoPath, type AuctionItem, type InstantItem } from "../../lib/seed/data.ts";
 import { SEED_PHOTO_KEY } from "../../lib/seed/photos.ts";
 
 const PUBLIC = new URL("../../public/", import.meta.url);
@@ -31,12 +31,21 @@ describe("seed data", () => {
 
   test("image paths: committed placeholders exist under public/; seed photos are relative keys, never URLs", async () => {
     const photoPaths = ITEMS.flatMap((i) => Array.from({ length: i.photos }, (_, n) => photoPath(i.slug, n + 1)));
-    for (const path of new Set([PLACEHOLDER_LOGO, PLACEHOLDER_PROOF, ...photoPaths])) {
+    for (const path of new Set([PLACEHOLDER_PROOF, ...photoPaths])) {
       assert.doesNotMatch(path, /^([a-z][a-z0-9+.-]*:|\/\/)/i, path);
       if (path.startsWith("/")) await access(new URL(path.slice(1), PUBLIC));
       else assert.match(path, SEED_PHOTO_KEY, path);
     }
     if (PHOTOS_INSTALLED) for (const path of photoPaths) assert.match(path, SEED_PHOTO_KEY);
+  });
+
+  test("each charity has its own logo, a committed file in public/brand/charities/ (DECISIONS entry 130)", async () => {
+    const logos = CHARITIES.map((c) => c.logo);
+    assert.equal(new Set(logos).size, CHARITIES.length);
+    for (const logo of logos) {
+      assert.match(logo, /^\/brand\/charities\/[a-z-]+\.png$/);
+      await access(new URL(logo.slice(1), PUBLIC));
+    }
   });
 
   test("bids follow §7.4: first at least the start, then up by the increment, never the high bidder again, never the submitter", () => {

@@ -4,7 +4,7 @@
 import type { AppState } from "../app-state.ts";
 import { el } from "../components/dom.ts";
 import { renderResetOffer } from "../components/reset-offer.ts";
-import { logoAlt, proofDaysWords } from "./home-rules.ts";
+import { proofDaysWords } from "./home-rules.ts";
 
 export function showHome(state: AppState): void {
   const name = document.querySelector<HTMLElement>("[data-event-name]");
@@ -37,7 +37,10 @@ export function showCharities(state: AppState): void {
     ...state.charities.map((c) =>
       el("li", {},
         el("article", { className: "card card--flat charity-card" },
-          el("img", { className: "charity-card__logo", attrs: { src: c.logoUrl, alt: logoAlt(c.logoUrl), width: "80", height: "80", loading: "lazy" } }),
+          // The logo spells the name, which the heading says again, so it's decorative (DECISIONS entry 130).
+          el("div", { className: "charity-card__tile" },
+            el("img", { className: "charity-card__logo", attrs: { src: c.logoUrl, alt: "", width: "160", height: "160", loading: "lazy" } }),
+          ),
           el("div", { className: "charity-card__text" },
             el("h3", { className: "charity-card__name", text: c.name }),
             el("p", { className: "charity-card__description", text: c.description }),

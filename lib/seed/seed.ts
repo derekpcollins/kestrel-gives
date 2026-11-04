@@ -5,7 +5,7 @@
 import type { Id, Tx } from "../data/db.ts";
 import { TEMPLATE_DEFAULTS, TEMPLATE_KEYS } from "../email-templates.ts";
 import {
-  CHARITIES, EVENT, ITEMS, PLACEHOLDER_LOGO, PLACEHOLDER_PROOF, PROOF_REVIEWER, PROOFS, REVIEW_AFTER_HOURS, USERS,
+  CHARITIES, EVENT, ITEMS, PLACEHOLDER_PROOF, PROOF_REVIEWER, PROOFS, REVIEW_AFTER_HOURS, USERS,
   photoPath, type Person,
 } from "./data.ts";
 
@@ -62,7 +62,7 @@ export async function seedIn(tx: Tx, now: Date): Promise<SeedSummary> {
   const who = (p: Person) => user.get(p) as Id;
 
   for (const [i, c] of CHARITIES.entries()) {
-    await tx.query(`INSERT INTO charities (name, description, logo_path, position) VALUES ($1, $2, $3, $4)`, [c.name, c.description, PLACEHOLDER_LOGO, i + 1]);
+    await tx.query(`INSERT INTO charities (name, description, logo_path, position) VALUES ($1, $2, $3, $4)`, [c.name, c.description, c.logo, i + 1]);
   }
 
   let photos = 0;
