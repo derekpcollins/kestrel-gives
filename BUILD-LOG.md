@@ -910,3 +910,16 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 - **Milestones:** 8 (0 Local infrastructure, 1 Design system, 2 Data, 3 App shell and Home, 4 Browsing and buying, 5 Employee flows, 6 Admin, 7 Polish and ship), each in stages that stopped at a checkpoint for the owner's go. Nothing reached main without an approved checkpoint.
 - **Final tests** (`npm run check`, one stage after another): unit 310 (0 todo), DB 120, browser 288 a11y and keyboard, 21 reflow at 320px, 25 visual tests (288 screenshots in every phase and the just-reset state). `npm audit`: the one accepted advisory.
 - **Record:** SPEC.md v1.20, DECISIONS #1–#126, schema 008, 11 functions, and this log.
+
+## After Milestone 7: the 5-minute tour
+
+### 2026-11-04 — Guide stage (14:25 – 16:35 EST)
+- **Owner stepped in:** proposed an in-app tour for portfolio reviewers (14:25) and asked what I'd change. Approved my plan (14:43) with my changes (scenarios 3–5 as one story, Start fresh as a closing line, Submit an item last, the footer link everywhere, 200% zoom in Also try), and added: the tour link in the collapsed strip from the small breakpoint plus a line on Home; scenarios find items by title, never id, and check the state they need, saying what happened and how to recover, mid-story included.
+- **Built:** `/guide` with six scenarios, Set me up (says first what it changes; the viewer is just you, the phase is everyone; only Submissions open asks; never restores on its own) and its checks (`src/pages/guide-rules.ts`). Links in every footer, the demo bar (open bar when narrow, strip from `--breakpoint-sm`), Home and the README. SPEC v1.21, DECISIONS #127–#129, a DESIGN-SYSTEM Guide entry. No new API or dependency.
+- **Caught or hard:**
+  - A link can't go inside the demo bar's `<summary>` (nested controls), so the strip link sits beside it over reserved room. At 640px that room wrapped to a second row and the link overlapped "Shared demo · resets daily"; the note now stays on its own line until `--breakpoint-lg`. axe then flagged the strip link's target (one text line, under 24px); it has a 24px minimum now.
+  - The gallery's demo bar specimens had been missing the shared note since v1.11; added with the tour links.
+  - The Preview walk caught a wrong step: removing Jules's only bid on an item takes it off Your Items entirely, not to "Didn't win". The same removal sent the new winner's approved proof back to review too, which the step now says.
+- **Tests:** unit 320 (10 new), DB 120, browser 299 a11y and keyboard (7 new tour tests), 22 reflow, 26 visual (including a real Set me up), run one after the other; exit 0, rerun after the step fix. `npm audit`: only the accepted advisory.
+- **Preview:** kestrel-gives-qufve24r6 on the dev database: every scenario's steps through the API, items found by title, then Restore back to the seed (`.review/guide/preview-checks.txt`).
+- **Found, not touched:** `design/source/charities/` appeared in the project at 15:00 with three PNGs (Lantern Paws, Lunchbox Brigade, Saplingworks), likely the 7B logos. Left uncommitted until the owner says.
