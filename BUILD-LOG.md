@@ -882,3 +882,10 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 - **Tests:** unit 310 (0 todo), DB 120 (the new jump tests), browser 288 a11y and keyboard, 21 reflow, 25 visual tests including the real clearing jump (290 screenshots), run one after the other on a fresh dev server; exit 0. `npm audit`: only the accepted advisory.
 - **Screenshots:** the submission-phase set retaken: no bids, a $0 total, $0 in Totals (`.review/m7-7c/submission/`).
 - **Preview:** not this stage; migration 008 runs in the production build at the 7D push.
+
+### 2026-11-04 — Stage 7D: final check and Preview walk (13:20 – 14:20 EST)
+- **Owner stepped in:** approved 7C; keep the seed photos in the README screenshots (DECISIONS #126); 7B logos if they get to them, else the placeholder ships; go on 7D.
+- **Built:** DECISIONS #126. No code changes.
+- **Caught or hard:** the first full check failed 4 DB tests with deadlocks. I had sent read-only requests to the local dev server during the DB tests, and they locked tables the tests reseed: the shared-load problem behind the owner's one-after-the-other rule. The rerun, with nothing else touching the dev database, passed. The visual set is 288 screenshots, not the 290 reported in 7A and 7C: two were leftovers from Nov 1.
+- **Tests:** unit 310 (0 todo), DB 120, a11y and keyboard 288, reflow 21, visual 25 (288 screenshots); exit 0. `npm audit`: only the accepted advisory.
+- **Preview:** kestrel-gives-ne2ikvklv on the dev database, schema 008. 20 pages 200; a bid, a repeated bid refused, a purchase, sold out refused, an employee's admin write refused, the clearing jump (activity to 0, stock back) and its cooldown, then Restore to the seed. Logs: 5 info, 0 errors (`.review/m7-7d/preview-checks.txt`).
