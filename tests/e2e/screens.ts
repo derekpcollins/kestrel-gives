@@ -4,6 +4,8 @@
 export interface Screen {
   name: string;
   path: string;
+  /** The demo viewer's user id (the kg_viewer cookie); the default viewer (Jules) when absent. */
+  viewer?: string;
 }
 
 export const SCREENS: readonly Screen[] = [
@@ -24,5 +26,13 @@ export const SCREENS: readonly Screen[] = [
   // Milestone 5D: the proof page (what it shows follows the dev phase and viewer) and the giving stub.
   { name: "proof", path: "/your-items/proof" },
   { name: "giving", path: "/giving" },
+  // Milestone 6B: the Admin Dashboard as Maya (the plain "admin" screen above is Jules: For admins only).
+  { name: "admin-totals", path: "/admin", viewer: "1" },
+  { name: "admin-people", path: "/admin/people", viewer: "1" },
   { name: "design-system", path: "/design-system/" }, // every component, every state
 ];
+
+/** Sets the screen's viewer cookie, if it has one, before the page loads. */
+export async function viewAs(page: { context(): { addCookies(c: { name: string; value: string; url: string }[]): Promise<void> } }, screen: Screen, baseURL: string | undefined): Promise<void> {
+  if (screen.viewer) await page.context().addCookies([{ name: "kg_viewer", value: screen.viewer, url: baseURL ?? "http://localhost:3000" }]);
+}

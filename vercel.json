@@ -12,6 +12,10 @@
   ],
   "rewrites": [
     {
+      "source": "/admin/people",
+      "destination": "/admin"
+    },
+    {
       "source": "/your-items/proof",
       "destination": "/proof"
     },

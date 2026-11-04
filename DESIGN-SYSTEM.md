@@ -300,6 +300,18 @@ How forms behave, for every component below:
 - **Don't:** link a charity on its own (no charity choice, SPEC §7.2), or use words about paying in the app.
 - **Figma:** *Giving stub* page, built from *Banner*, *Steps*, *Button* and *Charity card*.
 
+## Admin Dashboard
+
+**Purpose:** the admin's sections (SPEC §8): Totals and People in 6B; proof review, items, event settings, email templates and Reset join in later stages. One page, `admin.html`, serves every section URL (`/admin` is Totals, `/admin/people`, …, by rewrites), and reads its section from the path (DECISIONS #112).
+
+- **Admin section nav:** `nav.admin-nav` (`aria-label="Admin sections"`) > `ul.admin-nav__list` of plain links (`.admin-nav__link`), the current one with `aria-current="page"` and the accent fill. They wrap onto more lines when narrow. Not tabs (DECISIONS entry 59): each section is its own page, so the browser's back button and links work.
+- **Total card:** `li.card.card--flat.total-card` in `ul.total-cards` (one column, three from `--breakpoint-sm`), one each for Silent auction, Instant sale and Grand total (`.total-card--grand` has the stronger border). A `dl` holds Pledged (text color) and Confirmed (success color), both in the amount type with tabular figures. Below: the gap line (`.admin-gap`, info icon) and a key (`dl.admin-key`) saying what Pledged and Confirmed mean (DECISIONS #107).
+- **Leading bids note:** live only. `section.leading-note`, a dashed muted box *outside* the cards, titled "Leading bids so far, not final until bidding closes", with the amount in plain text color (not the amount style) and a line saying they aren't in the totals (owner, 6A review).
+- **People table:** a *Table* labeled by the section heading (no caption, like Bid history). The row header is a small *Avatar*, the name and an "Admin" *Pill* for admins; Bids, Wins, Purchases and Donation total are number columns; Proof is a status *Pill* (Approved success, Waiting for review warning, Rejected danger, Not uploaded warning, Nothing owed neutral) and the amount, "$60 of $65" when it differs from the total. It scrolls inside its region on phones.
+- **States:** loading (`aria-busy` on the content); error (an *Empty state* with Try again); **For admins only** for employees (an *Empty state* with an info icon, the hint to choose Maya or Theo in the demo bar, and a link Home; no section nav). It shows from the app state without asking the API, and also on the API's 403. The demo bar's Viewing as switches between the states.
+- **Behavior:** `startAdminPage()` in `src/pages/admin.ts`, words in `src/pages/admin-rules.ts`, from `GET /api/admin`. Redrawn when the demo bar changes the person or phase; only the newest answer is drawn.
+- **Figma:** *Admin Dashboard* page, built from *Admin section nav* · State = Default / Current, *Total card*, *Leading bids note*, *Table*, *Pill*, *Avatar* and *Empty state*.
+
 ## Error summary
 
 **Purpose:** after a submit with problems, one place that lists them all and gets you to each.

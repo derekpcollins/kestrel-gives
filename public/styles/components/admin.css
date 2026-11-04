@@ -1,0 +1,60 @@
+/* Admin Dashboard (DESIGN-SYSTEM.md › Admin section nav, Total card, Leading bids note; SPEC §8).
+   One page per section; the section nav is plain links, the current one marked with
+   aria-current (DECISIONS entry 59). */
+.admin { display: grid; gap: var(--space-8); }
+
+/* Section nav: links that wrap onto more lines when narrow; never tabs. */
+.admin-nav__list { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.admin-nav__link {
+  display: inline-flex; align-items: center; min-height: var(--size-target); padding: 0 var(--space-4);
+  border: var(--border-thin) solid var(--color-border); border-radius: var(--radius-pill);
+  font: var(--type-label); color: var(--color-text); text-decoration: none; background: var(--color-surface);
+}
+.admin-nav__link:hover { background: var(--color-accent-soft); }
+.admin-nav__link:focus-visible { outline: var(--focus-width) solid var(--color-focus); outline-offset: var(--focus-offset); }
+.admin-nav__link[aria-current="page"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-on-accent); }
+
+.admin-section { display: grid; gap: var(--space-5); }
+.admin-section__title { margin: 0; font: var(--type-heading-2); color: var(--color-text); }
+.admin-section__body { display: grid; gap: var(--space-5); }
+.admin-glance { margin: 0; font: var(--type-body); color: var(--color-text-muted); }
+
+/* Total cards: one per sale type and the grand total, each pledged then confirmed. */
+.total-cards { display: grid; gap: var(--space-4); margin: 0; padding: 0; list-style: none; }
+.total-card { display: grid; gap: var(--space-3); padding: var(--space-5); }
+.total-card--grand { border-color: var(--color-border-strong); }
+.total-card__title { margin: 0; font: var(--type-heading-3); color: var(--color-text); }
+.total-card__figures { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin: 0; }
+.total-card__figure { display: grid; gap: var(--space-1); }
+.total-card__figure dt { font: var(--type-label); color: var(--color-text-muted); }
+.total-card__figure dd { margin: 0; }
+.total-card__amount { font: var(--type-amount); color: var(--color-text); font-variant-numeric: var(--figures-amount); }
+.total-card__amount--confirmed { color: var(--color-success); }
+@media (min-width: 40rem) {
+  .total-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+.admin-gap { display: flex; align-items: flex-start; gap: var(--space-2); margin: 0; font: var(--type-body); color: var(--color-text); }
+.admin-gap svg { flex: none; margin-top: var(--space-1); color: var(--color-text-muted); }
+.admin-key { display: grid; gap: var(--space-2); margin: 0; font: var(--type-caption); color: var(--color-text-muted); }
+.admin-key div { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); }
+.admin-key dt { font-weight: var(--weight-semibold); color: var(--color-text); }
+.admin-key dt::after { content: ":"; }
+.admin-key dd { margin: 0; }
+
+/* Leading bids: live only, and kept apart from pledged and confirmed (a dashed box, no amount color). */
+.leading-note {
+  display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-4) var(--space-5);
+  border: var(--border-thin) dashed var(--color-border-strong); border-radius: var(--radius-lg); background: var(--color-surface-muted);
+}
+.leading-note > svg { flex: none; margin-top: var(--space-1); color: var(--color-text-muted); }
+.leading-note__body { display: grid; gap: var(--space-1); }
+.leading-note__title { margin: 0; font: var(--type-label); color: var(--color-text); }
+.leading-note__amount { margin: 0; font: var(--type-heading-2); color: var(--color-text); font-variant-numeric: var(--figures-amount); }
+.leading-note__text { margin: 0; font: var(--type-caption); color: var(--color-text-muted); }
+
+/* People table cells. */
+.admin-person { display: inline-flex; align-items: center; gap: var(--space-2); }
+.admin-person .pill { margin-left: var(--space-1); }
+.admin-proof { display: inline-flex; align-items: center; gap: var(--space-2); }
+.admin-proof__detail { font-variant-numeric: var(--figures-amount); color: var(--color-text); }

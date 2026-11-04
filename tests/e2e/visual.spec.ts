@@ -2,10 +2,11 @@
 // dark at 390px and 1280px, with demo controls hidden, saved to visual-review/ for a person to review.
 // Nothing is compared automatically.
 import { test } from "@playwright/test";
-import { SCREENS } from "./screens.ts";
+import { SCREENS, viewAs } from "./screens.ts";
 
 for (const screen of SCREENS) {
-  test(`${screen.name} screenshot`, async ({ page }, testInfo) => {
+  test(`${screen.name} screenshot`, async ({ page, baseURL }, testInfo) => {
+    await viewAs(page, screen, baseURL);
     const url = new URL(screen.path, "http://placeholder");
     url.searchParams.set("demo", "off");
     await page.goto(url.pathname + url.search);

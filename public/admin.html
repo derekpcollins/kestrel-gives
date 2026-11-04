@@ -18,24 +18,32 @@
     <div data-shell-demo></div>
     <div data-shell-header></div>
     <div data-shell-banner></div>
-    <main class="page" id="main" tabindex="-1">
+    <main class="page" id="main" tabindex="-1" data-admin-page>
       <header class="page-header">
         <div class="page-header__row"><div class="page-header__text">
           <h1 class="page-header__title">Admin Dashboard</h1>
-          <p class="page-header__description">Totals, people, proof review, items and event settings.</p>
+          <p class="page-header__description" data-admin-description>Totals, people, proof review, items and event settings.</p>
         </div></div>
       </header>
-      <div class="banner banner--info" data-for-role="employee" hidden>
-        <span data-icon="info"></span>
-        <div class="banner__body">
-          <p class="banner__title">For admins only</p>
-          <p class="banner__text">Employees don't see the Admin Dashboard. To look around, choose Maya Okafor or Theo Lindqvist under Viewing as in the demo bar.</p>
-        </div>
-      </div>
-      <section class="empty" aria-labelledby="later">
-        <span class="empty__icon" data-icon="clock" data-icon-size="lg"></span>
-        <h2 class="empty__title" id="later">The admin dashboard arrives in a later milestone of this demo.</h2>
+      <section class="empty" aria-labelledby="admin-denied-title" data-admin-denied hidden>
+        <span class="empty__icon" data-icon="info" data-icon-size="lg"></span>
+        <h2 class="empty__title" id="admin-denied-title" data-admin-denied-title>For admins only</h2>
+        <p class="empty__text" data-admin-denied-text></p>
+        <p><a class="link" href="/">Go to Home</a></p>
       </section>
+      <div class="admin" data-admin-body hidden>
+        <nav class="admin-nav" aria-label="Admin sections"><ul class="admin-nav__list" data-admin-nav></ul></nav>
+        <section class="admin-section" aria-labelledby="admin-section-title">
+          <h2 class="admin-section__title" id="admin-section-title" data-admin-section-title>Totals</h2>
+          <div class="admin-section__body" data-admin-content aria-busy="true"></div>
+          <div class="empty" data-admin-error hidden>
+            <span class="empty__icon" data-icon="alert" data-icon-size="lg"></span>
+            <h3 class="empty__title">We couldn't load this section</h3>
+            <p class="empty__text">Check your connection and try again.</p>
+            <div class="empty__actions"><button type="button" class="btn btn--secondary">Try again</button></div>
+          </div>
+        </section>
+      </div>
     </main>
     <footer class="site-footer">
       <p>Kestrel is a fictional organization, and this is a demo. <a href="/design-system/">Design system</a></p>
