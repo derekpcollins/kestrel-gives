@@ -1,6 +1,6 @@
 # Kestrel Gives — Build Spec & Conformance Rules
 
-**Status:** v1.17 · Owner: Derek Collins · Last updated: Nov 3, 2026
+**Status:** v1.18 · Owner: Derek Collins · Last updated: Nov 3, 2026
 
 This document describes what to build and the rules every contribution must follow, whether a person or an AI agent writes it. Read it in full before writing any code. If something here conflicts with a request, stop and ask.
 
@@ -209,6 +209,7 @@ Each has a name, a one-sentence description, and an original logo. The owner sup
 - Each purchase buys one unit, behind a confirmation dialog. People MAY buy again while stock lasts. No per-person limit.
 - No one buys their own item; its page shows "This is your item." in place of the button (v1.12). Admins otherwise buy like anyone.
 - Inventory MUST NOT go below zero, even with simultaneous purchases. Use a transaction with a row lock.
+- **Admins can cancel a single purchase** (v1.18), behind a confirmation. The buyer's donation total drops and their proof is re-checked (section 7.6). The unit goes back into stock only while the sale is still open (live), not after the close. Two admins cancelling the same purchase at once cancel it once.
 
 ### 7.6 Donation proof and statuses
 - Auction winners and instant-sale buyers donate on the outside giving platform, then upload proof: the amount and a screenshot. (No charity choice; see 7.2.)
@@ -273,7 +274,7 @@ A banner just below the header shows the current phase message, for example "Sub
   - **Totals:** silent auction total, instant sale total, and grand total, each shown as **pledged** (winning bids and purchases) and **confirmed** (approved proofs only). (v1.17) A proof is one combined amount per person, so: the **grand confirmed** total is the sum of the amounts on approved proofs; the **silent auction** and **instant sale confirmed** totals are the winning bids and purchases owed by people whose latest proof is approved. A line under the totals shows where the approved amounts differ from what those people owe ("Approved proofs: $1,240 against $1,300 owed by those people, $60 short"). So the two sale-type figures can add up to a different number than the grand confirmed total.
   - **People:** employees with their bids, wins, purchases, and proof status.
   - **Proof review queue** (section 7.6).
-  - **Items:** all items with bid history, plus remove bid and cancel.
+  - **Items:** all items with bid history (and, for instant sale, their purchases), plus remove bid, cancel purchase (v1.18), and cancel item.
   - **Event settings** (section 7.1).
   - **Email templates** (section 7.7).
   - **Reset for next year** (section 7.8).

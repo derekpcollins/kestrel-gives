@@ -18,6 +18,7 @@ export type AdminAction =
   | { action: "reject-proof"; proofId: string; reason: string; fromStatus: ProofStatus }
   | { action: "remove-bid"; bidId: string }
   | { action: "cancel-item"; itemId: string }
+  | { action: "cancel-purchase"; purchaseId: string }
   | { action: "save-settings"; settings: SettingsInput }
   | { action: "save-template"; key: string; subject: string; body: string }
   | { action: "restore-template"; key: string }
@@ -61,6 +62,10 @@ export function parseAdminAction(body: unknown): AdminAction | { error: string }
     case "remove-bid": {
       const bidId = asId(b["bidId"]);
       return bidId ? { action: "remove-bid", bidId } : { error: "remove-bid needs bidId." };
+    }
+    case "cancel-purchase": {
+      const purchaseId = asId(b["purchaseId"]);
+      return purchaseId ? { action: "cancel-purchase", purchaseId } : { error: "cancel-purchase needs purchaseId." };
     }
     case "cancel-item": {
       const itemId = asId(b["itemId"]);

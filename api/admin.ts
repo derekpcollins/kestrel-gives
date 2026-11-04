@@ -2,7 +2,7 @@
 // anyone else gets 403. Acts as the viewer cookie's user, like every endpoint (the demo's mock
 // login, SPEC §3.1).
 // - GET `?view=summary|people|proofs|items|settings|templates`.
-// - POST `{ action, … }`: approve-proof, reject-proof, remove-bid, cancel-item, save-settings,
+// - POST `{ action, … }`: approve-proof, reject-proof, remove-bid, cancel-purchase, cancel-item, save-settings,
 //   save-template, restore-template, reset-year. Each answers with a message and the refreshed
 //   view it changed, so the page redraws from one answer.
 import { parseAdminAction, parseAdminView, type AdminAction } from "../lib/api/admin-requests.ts";
@@ -10,7 +10,7 @@ import { deleteOwnFiles } from "../lib/api/files.ts";
 import { json, problem, readJson, withDatabase } from "../lib/api/http.ts";
 import { actingUserIn, resolvePhoto } from "../lib/api/item-answer.ts";
 import {
-  adminCancelItemIn, adminItemsIn, adminPeopleIn, adminProofsIn, adminRemoveBidIn, adminSettingsIn, adminSummaryIn, adminTemplatesIn,
+  adminCancelItemIn, adminCancelPurchaseIn, adminItemsIn, adminPeopleIn, adminProofsIn, adminRemoveBidIn, adminSettingsIn, adminSummaryIn, adminTemplatesIn,
   approveProofIn, rejectProofIn, resetYearIn, restoreTemplateIn, saveSettingsIn, saveTemplateIn,
 } from "../lib/data/admin.ts";
 import { withRetriedTransaction, withTransaction, type Tx } from "../lib/data/db.ts";
@@ -50,7 +50,7 @@ export async function GET(request: Request): Promise<Response> {
 
 /** The view each action changes, sent back with its message. */
 const VIEW_AFTER: Record<AdminAction["action"], AdminView> = {
-  "approve-proof": "proofs", "reject-proof": "proofs", "remove-bid": "items", "cancel-item": "items",
+  "approve-proof": "proofs", "reject-proof": "proofs", "remove-bid": "items", "cancel-item": "items", "cancel-purchase": "items",
   "save-settings": "settings", "save-template": "templates", "restore-template": "templates", "reset-year": "summary",
 };
 
@@ -72,6 +72,10 @@ async function act(tx: Tx, adminId: string, a: AdminAction): Promise<Outcome> {
     case "remove-bid": {
       const r = await adminRemoveBidIn(tx, a.bidId, adminId);
       return r.ok ? { ok: true, message: `Bid removed. The top bid has been updated.${reopened(r.proofsReopened.length)}` } : r;
+    }
+    case "cancel-purchase": {
+      const r = await adminCancelPurchaseIn(tx, a.purchaseId);
+      return r.ok ? { ok: true, message: `Purchase cancelled.${r.restocked ? " The unit is back in stock." : ""}${reopened(r.proofsReopened.length)}` } : r;
     }
     case "cancel-item": {
       const r = await adminCancelItemIn(tx, a.itemId);

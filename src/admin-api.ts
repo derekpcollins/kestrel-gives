@@ -126,6 +126,17 @@ export interface AdminBid {
   isTop: boolean;
 }
 
+/** One purchase of an instant-sale item, cancelled ones included (owner, 6D review; DECISIONS #115). */
+export interface AdminPurchase {
+  id: string;
+  buyer: PersonName;
+  priceCents: number;
+  createdAt: string;
+  cancelledAt: string | null;
+  /** The buyer's latest proof status, so the cancel dialog can say whether it goes back to review. */
+  buyerProof: ProofStatus | null;
+}
+
 export interface AdminItem {
   id: string;
   type: "auction" | "instant";
@@ -141,6 +152,8 @@ export interface AdminItem {
   remaining: number | null;
   /** Non-cancelled purchases. */
   purchases: number;
+  /** Instant sale: every purchase, newest first, cancelled ones included and marked. */
+  purchaseList: AdminPurchase[];
   highBidCents: number | null;
   /** Newest first, removed ones included and marked. */
   bids: AdminBid[];

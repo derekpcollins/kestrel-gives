@@ -3,7 +3,7 @@
 // section nav is plain links with aria-current (DECISIONS entry 59). Employees see why they
 // can't use it, both from the app state and from the API's 403. Redraws when the demo bar
 // changes who's viewing or the phase; only the newest answer is drawn.
-import type { AdminBid, AdminItem, AdminItems, AdminPeople, AdminProof, AdminProofs, AdminSummary } from "../admin-api.ts";
+import type { AdminBid, AdminItem, AdminItems, AdminPurchase, AdminPeople, AdminProof, AdminProofs, AdminSummary } from "../admin-api.ts";
 import type { AppState } from "../app-state.ts";
 import { renderAvatar } from "../components/avatar.ts";
 import { el } from "../components/dom.ts";
@@ -12,7 +12,7 @@ import { confirmDialog } from "../components/dialog.ts";
 import { enhanceTableScroll } from "../components/table.ts";
 import { showToast } from "../components/toast.ts";
 import {
-  bidRow, cancelItemDialog, deadlineLine, GENERAL_DESCRIPTION, groupItems, itemRow, itemsLine, removeBidDialog, gapText, glanceLine, groupProofs, proofReview, queueLine, rejectDialog, initials, leadingBids, money, NOT_ADMIN, pageTitle, proofCell, SECTIONS, sectionFor, totalCards, TOTALS_KEY, type Section,
+  bidRow, cancelItemDialog, cancelPurchaseDialog, purchaseRow, deadlineLine, GENERAL_DESCRIPTION, groupItems, itemRow, itemsLine, removeBidDialog, gapText, glanceLine, groupProofs, proofReview, queueLine, rejectDialog, initials, leadingBids, money, NOT_ADMIN, pageTitle, proofCell, SECTIONS, sectionFor, totalCards, TOTALS_KEY, type Section,
 } from "./admin-rules.ts";
 
 const pill = (label: string, tone: string) => el("span", { className: `pill${tone === "neutral" ? "" : ` pill--${tone}`}`, text: label });
@@ -168,6 +168,7 @@ function proofs(answer: AdminProofs, actions: ProofActions): Node[] {
 interface ItemActions {
   removeBid(item: AdminItem, bid: AdminBid, phase: AdminItems["phase"]): void;
   cancel(item: AdminItem, phase: AdminItems["phase"]): void;
+  cancelPurchase(item: AdminItem, purchase: AdminPurchase, phase: AdminItems["phase"]): void;
   open: Set<string>;
 }
 
@@ -207,6 +208,42 @@ function bidTable(item: AdminItem, answer: AdminItems, actions: ItemActions): HT
     el("p", { className: "visually-hidden", attrs: { id: captionId }, text: `Bid history for ${item.title}, newest first` }), wrap);
 }
 
+/** Instant sale: each purchase (owner, 6D review; DECISIONS #115), laid out like the bid history. */
+function purchaseTable(item: AdminItem, answer: AdminItems, actions: ItemActions): HTMLElement {
+  const ctx = { now: new Date(answer.now) };
+  const rows = item.purchaseList.length
+    ? item.purchaseList.map((p) => {
+        const t = purchaseRow(p, item, ctx);
+        const cancel = el("button", { className: "btn btn--secondary btn--sm", attrs: { type: "button" } }, "Cancel purchase", el("span", { className: "visually-hidden", text: t.cancelLabel }));
+        cancel.addEventListener("click", () => actions.cancelPurchase(item, p, answer.phase));
+        return el("tr", { className: t.cancelled ? "admin-bid--removed" : "" },
+          el("th", { attrs: { scope: "row" } },
+            el("span", { className: "admin-person" },
+              renderAvatar(initials(p.buyer.firstName, p.buyer.lastName), { size: "sm" }),
+              el("span", { className: "admin-bid__who" },
+                el("span", { className: "admin-person__name", text: t.name }),
+                ...(t.cancelled ? [pill("Cancelled", "neutral"), el("span", { className: "admin-bid__note", text: t.cancelled })] : []),
+                // Phones: price and date as a caption, so Cancel purchase fits.
+                el("span", { className: "admin-bid__note admin-bid__when-inline", text: `${t.amount} · ${t.when}` })))),
+          el("td", { className: "table__num admin-bid__amount admin-purchase__price", text: t.amount }),
+          el("td", { className: "admin-bid__when", text: t.when }),
+          el("td", { className: "admin-bid__action" }, ...(t.canCancel ? [cancel] : [])));
+      })
+    : [el("tr", {}, el("td", { className: "table__empty", attrs: { colspan: "4" }, text: "No purchases yet." }))];
+  const captionId = `item-${item.id}-purchases`;
+  const wrap = el("div", { className: "table-wrap", attrs: { role: "region", "aria-labelledby": captionId, "data-table-scroll": "" } },
+    el("table", { className: "table admin-bids admin-purchases", attrs: { "aria-labelledby": captionId } },
+      el("thead", {}, el("tr", {},
+        el("th", { attrs: { scope: "col" }, text: "Buyer" }),
+        el("th", { className: "table__num admin-purchase__price", attrs: { scope: "col" }, text: "Price" }),
+        el("th", { className: "admin-bid__when", attrs: { scope: "col" }, text: "Bought" }),
+        el("th", { attrs: { scope: "col" } }, el("span", { className: "visually-hidden", text: "Actions" })))),
+      el("tbody", {}, ...rows)));
+  enhanceTableScroll(wrap);
+  return el("div", { className: "admin-item__history" },
+    el("p", { className: "visually-hidden", attrs: { id: captionId }, text: `Purchases of ${item.title}, newest first` }), wrap);
+}
+
 function itemCard(item: AdminItem, answer: AdminItems, actions: ItemActions): HTMLLIElement {
   const t = itemRow(item, { phase: answer.phase, now: new Date(answer.now) });
   const headingId = `item-${item.id}-title`;
@@ -225,17 +262,19 @@ function itemCard(item: AdminItem, answer: AdminItems, actions: ItemActions): HT
   );
   const buttons: HTMLElement[] = [];
   let panel: HTMLElement | null = null;
-  if (t.history) {
+  const label = t.history ?? t.purchasesLabel;
+  if (label) {
     const panelId = `item-${item.id}-panel`;
     const isOpen = actions.open.has(item.id);
     const toggle = el("button", { className: "btn btn--secondary admin-item__toggle", attrs: { type: "button", "aria-expanded": String(isOpen), "aria-controls": panelId } },
-      el("span", { text: `${isOpen ? "Hide" : "Show"} ${t.history}` }), el("span", { className: "visually-hidden", text: ` for ${item.title}` }));
-    const shown = el("div", { className: "admin-item__panel", attrs: { id: panelId, ...(isOpen ? {} : { hidden: "" }) } }, bidTable(item, answer, actions));
+      el("span", { text: `${isOpen ? "Hide" : "Show"} ${label}` }), el("span", { className: "visually-hidden", text: ` for ${item.title}` }));
+    const shown = el("div", { className: "admin-item__panel", attrs: { id: panelId, ...(isOpen ? {} : { hidden: "" }) } },
+      item.type === "auction" ? bidTable(item, answer, actions) : purchaseTable(item, answer, actions));
     panel = shown;
     toggle.addEventListener("click", () => {
       const open = toggle.getAttribute("aria-expanded") !== "true";
       toggle.setAttribute("aria-expanded", String(open));
-      toggle.firstChild!.textContent = `${open ? "Hide" : "Show"} ${t.history}`;
+      toggle.firstChild!.textContent = `${open ? "Hide" : "Show"} ${label}`;
       shown.hidden = !open;
       if (open) actions.open.add(item.id); else actions.open.delete(item.id);
     });
@@ -258,7 +297,7 @@ function items(answer: AdminItems, actions: ItemActions): Node[] {
       el("h3", { className: "proof-queue__title", text: `${title} (${list.length})`, attrs: { id } }),
       list.length ? el("ul", { className: "admin-items__list" }, ...list.map((i) => itemCard(i, answer, actions))) : el("p", { className: "admin-glance", text: "No items yet." }));
   return [
-    el("p", { className: "admin-glance", text: `${itemsLine(answer.items)}. Removing a bid or cancelling an item asks first, and can't be undone.` }),
+    el("p", { className: "admin-glance", text: `${itemsLine(answer.items)}. Removing a bid or cancelling a purchase or item asks first, and can't be undone.` }),
     el("div", { className: "admin-alert", attrs: { "data-admin-alert": "" } }),
     group("items-auction", "Silent auction", auction),
     group("items-instant", "Instant sale", instant),
@@ -450,6 +489,7 @@ export function startAdminPage(): void {
     open: new Set<string>(),
     removeBid: (item, bid, phase) => void confirmThenPost(removeBidDialog(item, bid, phase), "Removing…", { action: "remove-bid", bidId: bid.id }, item.id),
     cancel: (item, phase) => void confirmThenPost(cancelItemDialog(item, phase), "Cancelling…", { action: "cancel-item", itemId: item.id }, item.id),
+    cancelPurchase: (item, purchase, phase) => void confirmThenPost(cancelPurchaseDialog(item, purchase, phase), "Cancelling…", { action: "cancel-purchase", purchaseId: purchase.id }, item.id),
   };
 
   failed.querySelector("button")?.addEventListener("click", () => void load());

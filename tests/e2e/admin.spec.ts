@@ -347,11 +347,20 @@ const cabinBids = [
 ];
 function itemOf(over: Record<string, unknown>) {
   return { id: "10", type: "auction", title: "Lakeside Cabin Weekend", coverUrl: "", cancelled: false, cancelledAt: null, submitter: theo,
-    startingBidCents: 15_000, priceCents: null, quantity: null, remaining: null, purchases: 0, highBidCents: 24_000, bids: cabinBids, ...over };
+    startingBidCents: 15_000, priceCents: null, quantity: null, remaining: null, purchases: 0, purchaseList: [] as unknown[], highBidCents: 24_000, bids: cabinBids, ...over };
 }
 const cabin = itemOf({});
 const boardGame = itemOf({ id: "14", title: "Board game night, hosted", cancelled: true, cancelledAt: "2026-11-02T01:00:00.000Z", highBidCents: 2_500, bids: [bidOf("20", jules, 2_500, "2026-11-01T20:00:00.000Z", { isTop: false })] });
-const lemon = itemOf({ id: "21", type: "instant", title: "Lemon squares, a dozen", startingBidCents: null, priceCents: 1_500, quantity: 10, remaining: 7, purchases: 3, highBidCents: null, bids: [] });
+const buyOf = (id: string, buyer: ReturnType<typeof person>, createdAt: string, over: Record<string, unknown> = {}) =>
+  ({ id, buyer, priceCents: 1_500, createdAt, cancelledAt: null, buyerProof: null, ...over });
+const devP = person("4", "Dev", "Kapoor");
+const lemonBuys = [
+  buyOf("33", devP, "2026-11-03T21:00:00.000Z", { buyerProof: "approved" }),
+  buyOf("32", jules, "2026-11-03T18:00:00.000Z"),
+  buyOf("31", owenP, "2026-11-03T16:00:00.000Z"),
+  buyOf("30", priya, "2026-11-03T15:00:00.000Z", { cancelledAt: "2026-11-03T20:00:00.000Z" }),
+];
+const lemon = itemOf({ id: "21", type: "instant", title: "Lemon squares, a dozen", startingBidCents: null, priceCents: 1_500, quantity: 10, remaining: 7, purchases: 3, highBidCents: null, bids: [], purchaseList: lemonBuys });
 const itemsAnswer = (list: unknown[], phase = "live") => ({ ok: true, now: "2026-11-03T23:00:00.000Z", phase, items: list });
 
 async function stubItems(page: Page, list: unknown[]): Promise<void> {
@@ -388,6 +397,7 @@ test("Items: grouped by sale type, bid history opens in place, Remove only on st
   await expect(gone.getByRole("button", { name: /^Remove/ })).toHaveCount(0);
   await expect(cardFor(page, "Lemon squares, a dozen")).toContainText("$15 each · 3 sold · 7 left");
   await expect(cardFor(page, "Lemon squares, a dozen").getByRole("button", { name: /bid history/ })).toHaveCount(0);
+  await expect(cardFor(page, "Lemon squares, a dozen").getByRole("button", { name: "Show purchases (4) for Lemon squares, a dozen" })).toHaveAttribute("aria-expanded", "false");
   await axe(page);
 });
 
@@ -477,3 +487,72 @@ test("after the close: winning bids, and removing the winner says who wins inste
   await c.getByRole("button", { name: "Remove Priya Natarajan's $240 bid" }).click();
   await expect(page.getByRole("dialog")).toContainText("Owen Achterberg becomes the winner at $220. Both donation totals change, and an approved proof for either goes back to review.");
 });
+
+test("Purchases: open in place with buyer and date; Cancel purchase only on standing ones", async ({ page }, info) => {
+  await viewAs(page, "1");
+  await stubItems(page, [cabin, lemon]);
+  await page.goto("/admin/items");
+  const c = cardFor(page, "Lemon squares, a dozen");
+  await c.getByRole("button", { name: /^Show purchases \(4\)/ }).click();
+  await expect(c.getByRole("button", { name: /^Hide purchases/ })).toHaveAttribute("aria-expanded", "true");
+  const table = c.getByRole("table", { name: "Purchases of Lemon squares, a dozen, newest first" });
+  // Below 40rem Price and Bought hide; both are a caption under the name.
+  await expect(table.getByRole("columnheader")).toHaveText(info.project.name === "light-390" ? ["Buyer", "Actions"] : ["Buyer", "Price", "Bought", "Actions"]);
+  await expect(table.locator("tbody tr")).toHaveCount(4);
+  await expect(table.getByRole("button", { name: /^Cancel purchase/ })).toHaveCount(3);
+  await expect(table.getByRole("button", { name: "Cancel purchase (Jules Ferreira's purchase, today at 1:00 PM)" })).toBeVisible();
+  await expect(table.getByRole("row", { name: /Priya Natarajan/ })).toContainText("Cancelled today at 3:00 PM EST.");
+  if (info.project.name === "light-390") {
+    const [scroll, client] = await c.locator(".table-wrap").evaluate((e) => [e.scrollWidth, e.clientWidth]);
+    expect(scroll, "the purchases table fits a phone, Cancel purchase included").toBeLessThanOrEqual(client!);
+  }
+  await axe(page);
+});
+
+test("Cancel purchase: the dialog says whose total, the proof and the stock; then the list redraws", async ({ page }) => {
+  await viewAs(page, "1");
+  await stubItems(page, [cabin, lemon]);
+  const after = { ...lemon, remaining: 8, purchases: 2, purchaseList: [{ ...lemonBuys[0], cancelledAt: "2026-11-03T22:59:00.000Z" }, ...lemonBuys.slice(1)] };
+  const sent: unknown[] = [];
+  await page.route(/\/api\/admin$/, (route) => {
+    sent.push(route.request().postDataJSON());
+    return route.fulfill({ json: { ok: true, message: "Purchase cancelled. The unit is back in stock. 1 approved proof went back to review.", view: "items", answer: itemsAnswer([cabin, after]) } });
+  });
+  await page.goto("/admin/items");
+  const c = cardFor(page, "Lemon squares, a dozen");
+  await c.getByRole("button", { name: /^Show purchases/ }).click();
+  await c.getByRole("button", { name: /^Cancel purchase \(Dev Kapoor's/ }).click();
+  const dialog = page.getByRole("dialog", { name: "Cancel Dev Kapoor's purchase of Lemon squares, a dozen?" });
+  await expect(dialog).toContainText("Dev Kapoor's donation total drops by $15");
+  await expect(dialog).toContainText("Their approved proof goes back to review");
+  await expect(dialog).toContainText("The unit goes back into stock (8 left).");
+  await expect(dialog.getByRole("button", { name: "Keep purchase" })).toBeFocused();
+  await dialog.evaluate((d) => Promise.all((d as unknown as { getAnimations(o: object): { finished: Promise<unknown> }[] }).getAnimations({ subtree: true }).map((a) => a.finished)));
+  await axe(page);
+  await dialog.getByRole("button", { name: "Cancel purchase" }).click();
+  await expect(page.getByText("Purchase cancelled. The unit is back in stock. 1 approved proof went back to review.")).toBeVisible();
+  expect(sent).toEqual([{ action: "cancel-purchase", purchaseId: "33" }]);
+  const redrawn = cardFor(page, "Lemon squares, a dozen");
+  await expect(redrawn).toContainText("$15 each · 2 sold · 8 left");
+  await expect(redrawn.getByRole("table")).toBeVisible();
+  await expect(redrawn.getByRole("button", { name: /^Cancel purchase/ })).toHaveCount(2);
+  await expect(page.locator("#item-21-title")).toBeFocused();
+});
+
+test("after the close the dialog says the unit doesn't return to stock; a second admin's cancel is refused", async ({ page }) => {
+  await viewAs(page, "1");
+  let loads = 0;
+  await page.route(/\/api\/admin\?view=items$/, (route) => { loads++; return route.fulfill({ json: itemsAnswer([lemon], "ended") }); });
+  await page.route(/\/api\/admin$/, (route) => route.fulfill({ status: 409, json: { ok: false, code: "already-cancelled", error: "That purchase was already cancelled." } }));
+  await page.goto("/admin/items");
+  const c = cardFor(page, "Lemon squares, a dozen");
+  await c.getByRole("button", { name: /^Show purchases/ }).click();
+  await c.getByRole("button", { name: /^Cancel purchase \(Jules Ferreira's/ }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toContainText("Bidding has closed, so the unit doesn't go back into stock.");
+  await expect(dialog).not.toContainText("proof");
+  await dialog.getByRole("button", { name: "Cancel purchase" }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "already cancelled" })).toHaveText("That purchase was already cancelled. The list has been updated.");
+  expect(loads).toBe(2);
+});
+

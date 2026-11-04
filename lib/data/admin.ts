@@ -6,13 +6,13 @@ import { currentEventIn, phaseOf, proofDeadlineOf, type CurrentEvent } from "./e
 import { setEventDatesIn } from "./event-dates.ts";
 import type { ResolvePhoto } from "./items.ts";
 import { donationTotalIn } from "./totals.ts";
-import { cancelItemIn, removeBidIn } from "./winners.ts";
+import { cancelItemIn, cancelPurchaseIn, removeBidIn } from "./winners.ts";
 import { isTemplateKey, TEMPLATE_DEFAULTS, TEMPLATE_KEYS } from "../email-templates.ts";
 import { gapLine, reasonProblem, type AdminRefusal, type AdminRefusalCode } from "../../src/components/admin-rules.ts";
 import { checkSettings, nextEventName, resetNameMatches, resetUnlocksAt, toZonedLocal, type SettingsInput, type SettingsProblem } from "../../src/components/settings-rules.ts";
 import { templateProblems, type TemplateFields, type TemplateProblem } from "../../src/components/template-rules.ts";
 import type {
-  AdminBid, AdminEvent, AdminItem, AdminItems, AdminPeople, AdminProof, AdminProofs, AdminSettings, AdminSummary, AdminTemplates, AdminTotals, PersonName,
+  AdminBid, AdminEvent, AdminItem, AdminItems, AdminPurchase, AdminPeople, AdminProof, AdminProofs, AdminSettings, AdminSummary, AdminTemplates, AdminTotals, PersonName,
 } from "../../src/admin-api.ts";
 import type { ProofStatus } from "../../src/components/proof-rules.ts";
 
@@ -289,6 +289,23 @@ export async function adminItemsIn(tx: Tx, resolve: ResolvePhoto): Promise<Admin
       ORDER BY b.created_at DESC, b.id DESC`,
     [event.id],
   );
+  const { rows: buyRows } = await tx.query<{
+    id: Id; item_id: Id; buyer_id: Id; first_name: string; last_name: string; price_cents: number; created_at: Date; cancelled_at: Date | null; proof: ProofStatus | null;
+  }>(
+    `SELECT p.id, p.item_id, p.buyer_id, u.first_name, u.last_name, p.price_cents, p.created_at, p.cancelled_at,
+            (SELECT pr.status FROM proofs pr WHERE pr.event_id = i.event_id AND pr.user_id = p.buyer_id ORDER BY pr.created_at DESC, pr.id DESC LIMIT 1) AS proof
+       FROM purchases p JOIN items i ON i.id = p.item_id JOIN users u ON u.id = p.buyer_id
+      WHERE i.event_id = $1
+      ORDER BY p.created_at DESC, p.id DESC`,
+    [event.id],
+  );
+  const buysByItem = new Map<Id, AdminPurchase[]>();
+  for (const p of buyRows) {
+    buysByItem.set(p.item_id, [...(buysByItem.get(p.item_id) ?? []), {
+      id: p.id, buyer: { id: p.buyer_id, firstName: p.first_name, lastName: p.last_name }, priceCents: Number(p.price_cents),
+      createdAt: p.created_at.toISOString(), cancelledAt: iso(p.cancelled_at), buyerProof: p.proof,
+    }]);
+  }
   const byItem = new Map<Id, typeof bidRows>();
   for (const b of bidRows) byItem.set(b.item_id, [...(byItem.get(b.item_id) ?? []), b]);
 
@@ -309,7 +326,7 @@ export async function adminItemsIn(tx: Tx, resolve: ResolvePhoto): Promise<Admin
       id: r.id, type: r.type, title: r.title, coverUrl: r.cover ? resolve(r.cover) : "", cancelled: r.status === "cancelled", cancelledAt: iso(r.cancelled_at),
       submitter: { id: r.submitter_id, firstName: r.first_name, lastName: r.last_name } satisfies PersonName,
       startingBidCents: n(r.starting), priceCents: n(r.price), quantity: n(r.quantity), remaining: n(r.remaining),
-      purchases: Number(r.purchases), highBidCents: top ? Number(top.amount_cents) : null, bids,
+      purchases: Number(r.purchases), purchaseList: buysByItem.get(r.id) ?? [], highBidCents: top ? Number(top.amount_cents) : null, bids,
     };
   });
   return { ok: true, now: now.toISOString(), phase: phaseOf(event, now), items };
@@ -335,6 +352,32 @@ export async function adminRemoveBidIn(tx: Tx, bidId: Id, adminId: Id): Promise<
   if (bid.removed) return refuse("already-removed", "That bid was already removed.");
   const result = await removeBidIn(tx, bidId, adminId);
   return { ok: true, itemId: result.itemId, proofsReopened: result.proofsReopened };
+}
+
+/**
+ * Cancels one purchase (owner, 6D review; SPEC v1.18 §7.5; DECISIONS #74, #115). The item row is
+ * locked first, as buying does, so two admins cancelling the same purchase run one after the
+ * other and the second is refused; the purchase is then read afresh. The buyer's total drops
+ * and their approved proof is re-checked (cancelPurchaseIn). The unit goes back into stock only
+ * while the sale is live, not after the close: the results are final then.
+ */
+export async function adminCancelPurchaseIn(tx: Tx, purchaseId: Id): Promise<{ ok: true; restocked: boolean; proofsReopened: Id[] } | AdminRefusal> {
+  const event = await currentEventIn(tx);
+  if (!event) return refuse("not-found", "There's no current event.");
+  const { rows: found } = await tx.query<{ item_id: Id }>(
+    `SELECT p.item_id FROM purchases p JOIN items i ON i.id = p.item_id WHERE p.id = $1 AND i.event_id = $2`,
+    [purchaseId, event.id],
+  );
+  if (!found[0]) return refuse("not-found", "That purchase doesn't exist.");
+  const { rows: items } = await tx.query<{ status: string }>(`SELECT status FROM items WHERE id = $1 FOR UPDATE`, [found[0].item_id]);
+  // A new statement after the lock, so it sees a cancellation committed while this one waited.
+  const { rows } = await tx.query<{ cancelled: boolean }>(`SELECT cancelled_at IS NOT NULL AS cancelled FROM purchases WHERE id = $1 FOR UPDATE`, [purchaseId]);
+  if (items[0]!.status !== "active") return refuse("cancelled", "That item is cancelled, so its purchases are already cancelled.");
+  if (rows[0]!.cancelled) return refuse("already-cancelled", "That purchase was already cancelled.");
+  const { proofsReopened } = await cancelPurchaseIn(tx, purchaseId);
+  const restocked = phaseOf(event, await dbNow(tx)) === "live";
+  if (restocked) await tx.query(`UPDATE items SET remaining = remaining + 1, updated_at = now() WHERE id = $1`, [found[0].item_id]);
+  return { ok: true, restocked, proofsReopened };
 }
 
 /** Cancels an item (SPEC §7.3), before or after the close (DECISIONS #110). */

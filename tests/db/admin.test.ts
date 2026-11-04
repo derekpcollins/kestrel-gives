@@ -8,7 +8,7 @@ import { databaseUrl } from "../../scripts/db-target.ts";
 import { directUrl } from "../../scripts/migrate-lib.ts";
 import type { Tx } from "../../lib/data/db.ts";
 import {
-  adminCancelItemIn, adminItemsIn, adminPeopleIn, adminProofsIn, adminRemoveBidIn, adminSettingsIn, adminSummaryIn, adminTemplatesIn,
+  adminCancelItemIn, adminCancelPurchaseIn, adminItemsIn, adminPeopleIn, adminProofsIn, adminRemoveBidIn, adminSettingsIn, adminSummaryIn, adminTemplatesIn,
   approveProofIn, rejectProofIn, resetYearIn, restoreTemplateIn, saveSettingsIn, saveTemplateIn,
 } from "../../lib/data/admin.ts";
 import { currentEventIn, phaseOf } from "../../lib/data/event.ts";
@@ -19,6 +19,7 @@ import { reserveUploadIn } from "../../lib/data/uploads.ts";
 import { jumpIn } from "../../lib/demo/jump.ts";
 import { restoreIn } from "../../lib/demo/restore.ts";
 import { seedIn } from "../../lib/seed/seed.ts";
+import { withTransaction } from "../../lib/data/db.ts";
 import { TEMPLATE_DEFAULTS } from "../../lib/email-templates.ts";
 import type { SettingsInput } from "../../src/components/settings-rules.ts";
 
@@ -213,6 +214,64 @@ describe("admin (rolled back)", () => {
       await db.query(`INSERT INTO proofs (event_id, user_id, amount_cents, owed_cents, image_path, created_at)
                       SELECT event_id, user_id, 10500, 10500, image_path, created_at + interval '1 minute' FROM proofs WHERE id = $1`, [dev]);
       assert.equal((await rejectProofIn(db, dev, maya, "Not clear.", "approved") as { code: string }).code, "superseded");
+    });
+  });
+
+  describe("cancel one purchase (owner, 6D review; DECISIONS #74, #115)", () => {
+    const stock = (tx: Tx, itemId: string) => one<{ remaining: number }>(tx, `SELECT remaining FROM items WHERE id = $1`, [itemId]).then((r) => r.remaining);
+
+    test("while live: the buyer's total drops, their approved proof goes back to review, and the unit returns to stock", async () => {
+      const event = (await currentEventIn(db))!;
+      const dev = await userId(db, "Dev");
+      const { rows } = await db.query<{ id: string; item_id: string; price: number }>(
+        `SELECT p.id, p.item_id, p.price_cents AS price FROM purchases p WHERE p.buyer_id = $1 AND p.cancelled_at IS NULL ORDER BY p.id LIMIT 1`, [dev]);
+      const buy = rows[0]!;
+      const before = { total: await donationTotalIn(db, event.id, dev), stock: await stock(db, buy.item_id), confirmed: (await summary(db)).totals.confirmed.grandCents };
+      const listed = (await adminItemsIn(db, asIs))!.items.find((i) => i.id === buy.item_id)!.purchaseList.find((p) => p.id === buy.id)!;
+      assert.deepEqual([listed.buyer.firstName, listed.buyerProof, listed.cancelledAt], ["Dev", "approved", null]);
+      const r = await adminCancelPurchaseIn(db, buy.id);
+      assert.ok(r.ok);
+      assert.equal(r.restocked, true);
+      assert.equal(r.proofsReopened.length, 1);
+      assert.equal(await donationTotalIn(db, event.id, dev), before.total - Number(buy.price));
+      assert.equal(await stock(db, buy.item_id), before.stock + 1);
+      assert.equal((await summary(db)).totals.confirmed.grandCents, before.confirmed - 10_500, "Dev's approval no longer counts");
+      const view = await proofViewIn(db, event, dev, asIs);
+      assert.equal(view.latest?.status, "pending");
+      const after = (await adminItemsIn(db, asIs))!.items.find((i) => i.id === buy.item_id)!;
+      assert.ok(after.purchaseList.find((p) => p.id === buy.id)!.cancelledAt);
+      assert.equal(after.purchases, after.purchaseList.filter((p) => !p.cancelledAt).length);
+    });
+
+    test("a sold-out item goes back on sale while live", async () => {
+      const buy = await one<{ id: string; item_id: string }>(db,
+        `SELECT p.id, p.item_id FROM purchases p JOIN items i ON i.id = p.item_id WHERE i.title = 'Lemon squares, a dozen' AND p.cancelled_at IS NULL ORDER BY p.id LIMIT 1`);
+      assert.equal(await stock(db, buy.item_id), 0, "seeded sold out");
+      assert.ok((await adminCancelPurchaseIn(db, buy.id)).ok);
+      assert.equal(await stock(db, buy.item_id), 1);
+    });
+
+    test("after the close: cancelled, but the unit doesn't go back into stock", async () => {
+      await jumpIn(db, "ended", new Date());
+      const { rows } = await db.query<{ id: string; item_id: string }>(
+        `SELECT p.id, p.item_id FROM purchases p JOIN items i ON i.id = p.item_id WHERE i.title = 'Hand-knit scarf' AND p.cancelled_at IS NULL LIMIT 1`);
+      const before = await stock(db, rows[0]!.item_id);
+      const r = await adminCancelPurchaseIn(db, rows[0]!.id);
+      assert.ok(r.ok);
+      assert.equal(r.restocked, false);
+      assert.equal(await stock(db, rows[0]!.item_id), before);
+    });
+
+    test("refuses a purchase already cancelled, one on a cancelled item, and one that doesn't exist", async () => {
+      const { rows } = await db.query<{ id: string; item_id: string }>(
+        `SELECT p.id, p.item_id FROM purchases p JOIN items i ON i.id = p.item_id WHERE i.title = 'Hand-knit scarf' AND p.cancelled_at IS NULL ORDER BY p.id`);
+      assert.ok((await adminCancelPurchaseIn(db, rows[0]!.id)).ok);
+      const stockAfter = await stock(db, rows[0]!.item_id);
+      assert.deepEqual(await adminCancelPurchaseIn(db, rows[0]!.id), { ok: false, code: "already-cancelled", message: "That purchase was already cancelled." });
+      assert.equal(await stock(db, rows[0]!.item_id), stockAfter, "no second restock");
+      await adminCancelItemIn(db, rows[0]!.item_id);
+      assert.equal((await adminCancelPurchaseIn(db, rows[1]!.id) as { code: string }).code, "cancelled");
+      assert.equal((await adminCancelPurchaseIn(db, "999999999") as { code: string }).code, "not-found");
     });
   });
 
@@ -466,3 +525,23 @@ describe("/api/admin handler (reads only; refusals write nothing)", () => {
     assert.equal(bad.status, 400);
   });
 });
+
+describe("two admins cancel the same purchase at once (committed; dev is reseeded after)", () => {
+  after(async () => {
+    await withTransaction(pool, (tx) => seedIn(tx, new Date()));
+  });
+
+  test("one cancels and restocks once; the other is refused", async () => {
+    const ids = await withTransaction(pool, async (tx) => {
+      await seedIn(tx, new Date());
+      return one<{ id: string; item_id: string; remaining: number }>(tx,
+        `SELECT p.id, p.item_id, i.remaining FROM purchases p JOIN items i ON i.id = p.item_id WHERE i.title = 'Hand-knit scarf' AND p.cancelled_at IS NULL ORDER BY p.id LIMIT 1`);
+    });
+    const results = await Promise.all([1, 2].map(() => withTransaction(pool, (tx) => adminCancelPurchaseIn(tx, ids.id))));
+    assert.deepEqual(results.map((r) => (r.ok ? "cancelled" : r.code)).sort(), ["already-cancelled", "cancelled"]);
+    const after = await withTransaction(pool, (tx) => one<{ remaining: number; cancelled: number }>(tx,
+      `SELECT i.remaining, (SELECT count(*)::int FROM purchases WHERE id = $1 AND cancelled_at IS NOT NULL) AS cancelled FROM items i WHERE i.id = $2`, [ids.id, ids.item_id]));
+    assert.deepEqual(after, { remaining: Number(ids.remaining) + 1, cancelled: 1 });
+  });
+});
+

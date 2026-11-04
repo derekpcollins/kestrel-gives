@@ -24,6 +24,7 @@ export const ADMIN_REFUSALS = {
   superseded: 409,
   "total-changed": 409,
   "already-removed": 409,
+  "already-cancelled": 409,
   cancelled: 409,
   locked: 409,
   "wrong-name": 422,

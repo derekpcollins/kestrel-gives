@@ -1,8 +1,8 @@
 // The Admin Dashboard page's words (SPEC §8, v1.17; DECISIONS #107, #112; Stage 6B).
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { bidRow, cancelItemDialog, deadlineLine, gapText, groupItems, itemRow, itemsLine, removeBidDialog, standingBids, glanceLine, groupProofs, initials, leadingBids, pageTitle, proofCell, proofReview, queueLine, rejectDialog, SECTIONS, sectionFor, totalCards } from "../../src/pages/admin-rules.ts";
-import type { AdminBid, AdminItem, AdminProof } from "../../src/admin-api.ts";
+import { bidRow, cancelItemDialog, cancelPurchaseDialog, purchaseRow, deadlineLine, gapText, groupItems, itemRow, itemsLine, removeBidDialog, standingBids, glanceLine, groupProofs, initials, leadingBids, pageTitle, proofCell, proofReview, queueLine, rejectDialog, SECTIONS, sectionFor, totalCards } from "../../src/pages/admin-rules.ts";
+import type { AdminBid, AdminItem, AdminProof, AdminPurchase } from "../../src/admin-api.ts";
 
 const totals = (over: Record<string, unknown> = {}) => ({
   totals: {
@@ -154,7 +154,7 @@ describe("items (DECISIONS #114)", () => {
     ({ id, bidder, amountCents, createdAt, removedAt: null, removedBy: null, isTop: false, ...over });
   const cabin = (over: Partial<AdminItem> = {}): AdminItem => ({
     id: "10", type: "auction", title: "Lakeside Cabin Weekend", coverUrl: "", cancelled: false, cancelledAt: null, submitter: who("2", "Theo", "Lindqvist"),
-    startingBidCents: 15_000, priceCents: null, quantity: null, remaining: null, purchases: 0, highBidCents: 31_000,
+    startingBidCents: 15_000, priceCents: null, quantity: null, remaining: null, purchases: 0, purchaseList: [], highBidCents: 31_000,
     bids: [
       bid("3", priya, 31_000, "2026-11-03T22:00:00.000Z", { isTop: true }),
       bid("2", owen, 28_000, "2026-11-03T21:00:00.000Z"),
@@ -162,10 +162,31 @@ describe("items (DECISIONS #114)", () => {
     ],
     ...over,
   });
+  const buy = (id: string, buyer: AdminPurchase["buyer"], over: Partial<AdminPurchase> = {}): AdminPurchase =>
+    ({ id, buyer, priceCents: 1_500, createdAt: "2026-11-03T21:00:00.000Z", cancelledAt: null, buyerProof: null, ...over });
   const lemon = (over: Partial<AdminItem> = {}): AdminItem => ({
     ...cabin(), id: "11", type: "instant", title: "Lemon squares", startingBidCents: null, priceCents: 1_500, quantity: 10, remaining: 7, purchases: 3, highBidCents: null, bids: [], ...over,
   });
 
+  test("purchase rows: when bought, cancelled when, and Cancel only on standing purchases of active items", () => {
+    const ctx = { now, timeZone: zone };
+    const t = purchaseRow(buy("1", jules), lemon(), ctx);
+    assert.deepEqual([t.name, t.amount, t.when, t.cancelled, t.canCancel, t.cancelLabel], ["Jules Ferreira", "$15", "today at 4:00 PM", null, true, " (Jules Ferreira's purchase, today at 4:00 PM)"]);
+    const gone = purchaseRow(buy("2", owen, { cancelledAt: "2026-11-03T22:00:00.000Z" }), lemon(), ctx);
+    assert.deepEqual([gone.cancelled, gone.canCancel], ["Cancelled today at 5:00 PM EST.", false]);
+    assert.equal(purchaseRow(buy("1", jules), lemon({ cancelled: true }), ctx).canCancel, false);
+  });
+  test("cancel purchase dialog: whose total, the proof, and stock only while live", () => {
+    const live = cancelPurchaseDialog(lemon(), buy("1", jules, { buyerProof: "approved" }), "live");
+    assert.equal(live.title, "Cancel Jules Ferreira's purchase of Lemon squares?");
+    assert.equal(live.body, "Jules Ferreira's donation total drops by $15, and they'll see the cancellation on Your Items. Their approved proof goes back to review, since it no longer matches their total. The unit goes back into stock (8 left). This can't be undone.");
+    assert.deepEqual([live.confirmLabel, live.cancelLabel], ["Cancel purchase", "Keep purchase"]);
+    assert.match(cancelPurchaseDialog(lemon(), buy("1", jules, { buyerProof: "pending" }), "live").body, /Their proof waiting for review will be checked against the new total\./);
+    const ended = cancelPurchaseDialog(lemon(), buy("1", jules), "ended").body;
+    assert.match(ended, /Bidding has closed, so the unit doesn't go back into stock\./);
+    assert.doesNotMatch(ended, /proof/);
+    assert.match(cancelPurchaseDialog(lemon(), buy("1", jules, { buyerProof: "rejected" }), "upcoming").body, /The sale isn't open, so the unit doesn't go back into stock\./);
+  });
   test("groups by sale type; the line counts cancelled ones", () => {
     const list = [cabin(), lemon(), cabin({ id: "12", cancelled: true })];
     assert.deepEqual(Object.values(groupItems(list)).map((g) => g.map((i) => i.id)), [["10", "12"], ["11"]]);
@@ -184,6 +205,9 @@ describe("items (DECISIONS #114)", () => {
     assert.equal(itemRow(cabin({ bids: [] }), live).figures, "Starting bid $150 · No bids yet");
     assert.equal(itemRow(cabin(), live).history, "bid history (3 bids)");
     assert.equal(itemRow(lemon(), live).figures, "$15 each · 3 sold · 7 left");
+    assert.equal(itemRow(lemon({ purchases: 2, remaining: 7 }), live).figures, "$15 each · 2 sold · 7 left", "sold counts standing purchases (a cancel after close doesn't restock)");
+    assert.equal(itemRow(lemon({ purchaseList: [buy("1", jules), buy("2", owen, { cancelledAt: "2026-11-03T22:00:00.000Z" })] }), live).purchasesLabel, "purchases (2)");
+    assert.equal(itemRow(cabin(), live).purchasesLabel, null);
     assert.equal(itemRow(lemon(), live).history, null);
     assert.deepEqual(itemRow(lemon({ remaining: 0 }), live).status, { label: "Sold out", tone: "neutral" });
     const gone = itemRow(cabin({ cancelled: true, cancelledAt: "2026-11-03T21:00:00.000Z" }), live);

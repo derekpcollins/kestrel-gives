@@ -135,5 +135,6 @@
   .admin-bids th, .admin-bids td { padding-inline: var(--space-2); }
   .admin-bids tr > :first-child { padding-inline-start: var(--space-3); }
   .admin-bids tr > :last-child { padding-inline-end: var(--space-3); }
+  .admin-purchases .admin-purchase__price { display: none; } /* the price joins the caption under the name */
   .admin-bids .avatar { display: none; } /* the Top bid pill names the leader; the avatar would push Remove off screen */
 }
