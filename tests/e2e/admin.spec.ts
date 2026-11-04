@@ -34,7 +34,7 @@ async function stubSummary(page: Page, phase: "live" | "ended"): Promise<void> {
 
 async function axe(page: Page): Promise<void> {
   const { violations } = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
-  expect(violations.map((v) => `${v.id}: ${v.help}`)).toEqual([]);
+  expect(violations.map((v) => `${v.id}: ${v.help} @ ${v.nodes.slice(0, 3).map((n) => n.target.join(" ")).join(", ")}`)).toEqual([]);
 }
 
 test("Totals while live: three cards, the gap line, and leading bids kept apart and labeled not final", async ({ page }) => {
@@ -167,7 +167,7 @@ test("Proof review: waiting first with the short warning, then reviewed with who
   const owenCard = page.getByRole("listitem", { name: "Owen Achterberg" });
   await expect(owenCard).toContainText("Rejected by Maya Okafor");
   await expect(owenCard).toContainText("Reason: The screenshot doesn't show the donation amount.");
-  await expect(owenCard.getByRole("button")).toHaveText([/View larger/, "Approve Owen Achterberg's proof instead"]);
+  await expect(owenCard.getByRole("button")).toHaveText([/View larger/, "Approve instead (Owen Achterberg's proof)"]);
   await axe(page);
 });
 
@@ -252,15 +252,15 @@ test("reviewed cards offer the other decision; buttons are the regular 44px size
   const rosa = page.getByRole("listitem", { name: "Rosa Delgado" });
   await expect(rosa.getByRole("button", { name: /instead/ })).toHaveCount(0);
   const reverse = [
-    page.getByRole("listitem", { name: "Dev Kapoor" }).getByRole("button", { name: "Reject Dev Kapoor's proof instead" }),
-    page.getByRole("listitem", { name: "Owen Achterberg" }).getByRole("button", { name: "Approve Owen Achterberg's proof instead" }),
+    page.getByRole("listitem", { name: "Dev Kapoor" }).getByRole("button", { name: "Reject instead (Dev Kapoor's proof)" }),
+    page.getByRole("listitem", { name: "Owen Achterberg" }).getByRole("button", { name: "Approve instead (Owen Achterberg's proof)" }),
   ];
   for (const b of reverse) await expect(b).toBeVisible();
   for (const b of [rosa.getByRole("button", { name: /^Approve/ }), rosa.getByRole("button", { name: /^Reject/ }), ...reverse]) {
     expect((await b.boundingBox())!.height).toBeGreaterThanOrEqual(44);
   }
-  await expect(reverse[0]!).toHaveText("Reject Dev Kapoor's proof instead"); // visible text is "Reject instead"
-  await expect(reverse[0]!.locator(".visually-hidden")).toHaveText(" Dev Kapoor's proof");
+  await expect(reverse[0]!).toHaveText("Reject instead (Dev Kapoor's proof)"); // the hidden part follows the visible "Reject instead"
+  await expect(reverse[0]!.locator(".visually-hidden")).toHaveText(" (Dev Kapoor's proof)");
 });
 
 test("Reject instead: the same dialog with a required reason, saying it leaves the confirmed totals", async ({ page }) => {
@@ -273,7 +273,7 @@ test("Reject instead: the same dialog with a required reason, saying it leaves t
     return route.fulfill({ json: { ok: true, message: "Proof rejected instead. It's no longer confirmed, and they'll see your reason.", view: "proofs", answer: proofsAnswer([proof({}), devRejected, owen]) } });
   });
   await page.goto("/admin/proofs");
-  await page.getByRole("button", { name: "Reject Dev Kapoor's proof instead" }).click();
+  await page.getByRole("button", { name: "Reject instead (Dev Kapoor's proof)" }).click();
   const dialog = page.getByRole("dialog", { name: "Reject Dev Kapoor's approved proof?" });
   await expect(dialog).toContainText("takes its $105 out of the confirmed totals");
   await dialog.getByRole("button", { name: "Reject instead" }).click();
@@ -286,7 +286,7 @@ test("Reject instead: the same dialog with a required reason, saying it leaves t
   expect(sent).toEqual({ action: "reject-proof", proofId: "2", reason: "Wrong screenshot.", fromStatus: "approved" });
   const card = page.getByRole("listitem", { name: "Dev Kapoor" });
   await expect(card).toContainText("Reason: Wrong screenshot.");
-  await expect(card.getByRole("button", { name: "Approve Dev Kapoor's proof instead" })).toBeVisible();
+  await expect(card.getByRole("button", { name: "Approve instead (Dev Kapoor's proof)" })).toBeVisible();
   await expect(page.locator("#proof-2-name")).toBeFocused();
 });
 
@@ -300,12 +300,12 @@ test("Approve instead: one click, with the total seen and the status it reverses
     return route.fulfill({ json: { ok: true, message: "Proof approved instead. The rejection is cleared.", view: "proofs", answer: proofsAnswer([proof({}), dev, owenApproved]) } });
   });
   await page.goto("/admin/proofs");
-  await page.getByRole("button", { name: "Approve Owen Achterberg's proof instead" }).click();
+  await page.getByRole("button", { name: "Approve instead (Owen Achterberg's proof)" }).click();
   await expect(page.getByText("Proof approved instead. The rejection is cleared.")).toBeVisible();
   expect(sent).toEqual({ action: "approve-proof", proofId: "3", totalCents: 3_500, fromStatus: "rejected" });
   const card = page.getByRole("listitem", { name: "Owen Achterberg" });
   await expect(card).not.toContainText("Reason:");
-  await expect(card.getByRole("button", { name: "Reject Owen Achterberg's proof instead" })).toBeVisible();
+  await expect(card.getByRole("button", { name: "Reject instead (Owen Achterberg's proof)" })).toBeVisible();
   await expect(page.locator("#proof-3-name")).toBeFocused();
 });
 
@@ -330,4 +330,150 @@ test("6B fixes: zero totals are muted, and People's Not uploaded is neutral whil
   await page.goto("/admin/people");
   await expect(page.getByRole("row", { name: /Jules Ferreira/ }).locator(".pill")).toHaveText("Not uploaded");
   await expect(page.getByRole("row", { name: /Jules Ferreira/ }).locator(".pill")).toHaveAttribute("class", "pill");
+});
+
+// ---------------------------------------------------------------------------------------------
+// Items (SPEC §7.3, §7.4, §8; DECISIONS #114; Stage 6D). Stubbed; tests/db/admin.test.ts covers
+// remove bid and cancel item against the database, before and after the close.
+
+const theo = person("2", "Theo", "Lindqvist");
+const bidOf = (id: string, bidder: ReturnType<typeof person>, amountCents: number, createdAt: string, over: Record<string, unknown> = {}) =>
+  ({ id, bidder, amountCents, createdAt, removedAt: null, removedBy: null, isTop: false, ...over });
+const priya = person("5", "Priya", "Natarajan"), owenP = person("7", "Owen", "Achterberg"), jules = person("3", "Jules", "Ferreira");
+const cabinBids = [
+  bidOf("13", priya, 24_000, "2026-11-03T22:00:00.000Z", { isTop: true }),
+  bidOf("12", owenP, 22_000, "2026-11-03T15:00:00.000Z"),
+  bidOf("11", jules, 20_000, "2026-11-03T05:00:00.000Z", { removedAt: "2026-11-03T21:00:00.000Z", removedBy: maya }),
+];
+function itemOf(over: Record<string, unknown>) {
+  return { id: "10", type: "auction", title: "Lakeside Cabin Weekend", coverUrl: "", cancelled: false, cancelledAt: null, submitter: theo,
+    startingBidCents: 15_000, priceCents: null, quantity: null, remaining: null, purchases: 0, highBidCents: 24_000, bids: cabinBids, ...over };
+}
+const cabin = itemOf({});
+const boardGame = itemOf({ id: "14", title: "Board game night, hosted", cancelled: true, cancelledAt: "2026-11-02T01:00:00.000Z", highBidCents: 2_500, bids: [bidOf("20", jules, 2_500, "2026-11-01T20:00:00.000Z", { isTop: false })] });
+const lemon = itemOf({ id: "21", type: "instant", title: "Lemon squares, a dozen", startingBidCents: null, priceCents: 1_500, quantity: 10, remaining: 7, purchases: 3, highBidCents: null, bids: [] });
+const itemsAnswer = (list: unknown[], phase = "live") => ({ ok: true, now: "2026-11-03T23:00:00.000Z", phase, items: list });
+
+async function stubItems(page: Page, list: unknown[]): Promise<void> {
+  await page.route(/\/api\/admin\?view=items$/, (route) => route.fulfill({ json: itemsAnswer(list) }));
+}
+const cardFor = (page: Page, title: string) => page.getByRole("listitem", { name: title });
+
+test("Items: grouped by sale type, bid history opens in place, Remove only on standing bids of active items", async ({ page }) => {
+  await viewAs(page, "1");
+  await stubItems(page, [cabin, boardGame, lemon]);
+  await page.goto("/admin/items");
+  await expect(page).toHaveTitle("Items · Admin Dashboard · Kestrel Gives");
+  await expect(page.getByRole("navigation", { name: "Admin sections" }).getByRole("link", { name: "Items" })).toHaveAttribute("aria-current", "page");
+  await expect(page.locator(".admin-glance")).toContainText("3 items · 1 cancelled");
+  await expect(page.locator(".admin-items > h3")).toHaveText(["Silent auction (2)", "Instant sale (1)"]);
+  const c = cardFor(page, "Lakeside Cabin Weekend");
+  await expect(c).toContainText("Top bid $240 · 2 bids");
+  await expect(c).toContainText("Donated by Theo Lindqvist");
+  await expect(c.getByRole("link", { name: "Lakeside Cabin Weekend" })).toHaveAttribute("href", "/items/10");
+  const toggle = c.getByRole("button", { name: "Show bid history (3 bids) for Lakeside Cabin Weekend" });
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await expect(c.getByRole("table")).toBeHidden();
+  await toggle.click();
+  await expect(c.getByRole("button", { name: /^Hide bid history/ })).toHaveAttribute("aria-expanded", "true");
+  const table = c.getByRole("table", { name: "Bid history for Lakeside Cabin Weekend, newest first" });
+  await expect(table.getByRole("row", { name: /Priya Natarajan/ })).toContainText("Top bid");
+  await expect(table.getByRole("button", { name: /^Remove/ })).toHaveCount(2);
+  await expect(table.getByRole("button", { name: "Remove Priya Natarajan's $240 bid" })).toBeVisible();
+  await expect(table.getByRole("row", { name: /Jules Ferreira/ })).toContainText("Removed by Maya Okafor today at 4:00 PM EST.");
+  const gone = cardFor(page, "Board game night, hosted");
+  await expect(gone).toContainText("Cancelled");
+  await expect(gone.getByRole("button", { name: /Cancel item/ })).toHaveCount(0);
+  await gone.getByRole("button", { name: /bid history/ }).click();
+  await expect(gone.getByRole("button", { name: /^Remove/ })).toHaveCount(0);
+  await expect(cardFor(page, "Lemon squares, a dozen")).toContainText("$15 each · 3 sold · 7 left");
+  await expect(cardFor(page, "Lemon squares, a dozen").getByRole("button", { name: /bid history/ })).toHaveCount(0);
+  await axe(page);
+});
+
+test("Remove bid: Keep bid sends nothing; Remove bid posts, redraws with the history still open, and says so", async ({ page }) => {
+  await viewAs(page, "1");
+  await stubItems(page, [cabin, lemon]);
+  const after = itemOf({ highBidCents: 22_000, bids: [{ ...cabinBids[0], isTop: false, removedAt: "2026-11-03T22:59:00.000Z", removedBy: maya }, { ...cabinBids[1], isTop: true }, cabinBids[2]] });
+  const sent: unknown[] = [];
+  await page.route(/\/api\/admin$/, (route) => {
+    sent.push(route.request().postDataJSON());
+    return route.fulfill({ json: { ok: true, message: "Bid removed. The top bid has been updated.", view: "items", answer: itemsAnswer([after, lemon]) } });
+  });
+  await page.goto("/admin/items");
+  const c = cardFor(page, "Lakeside Cabin Weekend");
+  await c.getByRole("button", { name: /bid history/ }).click();
+  await c.getByRole("button", { name: "Remove Priya Natarajan's $240 bid" }).click();
+  const dialog = page.getByRole("dialog", { name: "Remove Priya Natarajan's $240 bid?" });
+  await expect(dialog).toContainText("The top bid goes back to $220 from Owen Achterberg.");
+  await expect(dialog).toContainText("This can't be undone.");
+  await expect(dialog.getByRole("button", { name: "Keep bid" })).toBeFocused();
+  await dialog.evaluate((d) => Promise.all((d as unknown as { getAnimations(o: object): { finished: Promise<unknown> }[] }).getAnimations({ subtree: true }).map((a) => a.finished))); // contrast is checked once it has faded in
+  await axe(page);
+  await dialog.getByRole("button", { name: "Keep bid" }).click();
+  await expect(dialog).toBeHidden();
+  expect(sent).toEqual([]);
+  await c.getByRole("button", { name: "Remove Priya Natarajan's $240 bid" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Remove bid" }).click();
+  await expect(page.getByText("Bid removed. The top bid has been updated.")).toBeVisible();
+  expect(sent).toEqual([{ action: "remove-bid", bidId: "13" }]);
+  const redrawn = cardFor(page, "Lakeside Cabin Weekend");
+  await expect(redrawn).toContainText("Top bid $220 · 1 bid");
+  await expect(redrawn.getByRole("table")).toBeVisible();
+  await expect(redrawn.getByRole("row", { name: /Owen Achterberg/ })).toContainText("Top bid");
+  await expect(page.locator("#item-10-title")).toBeFocused();
+});
+
+test("Cancel item: the dialog says whose totals change; the card then shows Cancelled", async ({ page }) => {
+  await viewAs(page, "1");
+  await stubItems(page, [cabin, lemon]);
+  let sent: unknown = null;
+  await page.route(/\/api\/admin$/, (route) => {
+    sent = route.request().postDataJSON();
+    return route.fulfill({ json: { ok: true, message: "Item cancelled. Its bids and purchases no longer count.", view: "items", answer: itemsAnswer([cabin, { ...lemon, cancelled: true, cancelledAt: "2026-11-03T22:59:00.000Z", purchases: 0 }]) } });
+  });
+  await page.goto("/admin/items");
+  await cardFor(page, "Lemon squares, a dozen").getByRole("button", { name: "Cancel item (Lemon squares, a dozen)" }).click();
+  const dialog = page.getByRole("dialog", { name: "Cancel Lemon squares, a dozen?" });
+  await expect(dialog).toContainText("Its 3 purchases are cancelled and come off those donation totals.");
+  await expect(dialog).toContainText("An approved proof for a changed total goes back to review.");
+  await dialog.getByRole("button", { name: "Cancel item" }).click();
+  await expect(page.getByText("Item cancelled. Its bids and purchases no longer count.")).toBeVisible();
+  expect(sent).toEqual({ action: "cancel-item", itemId: "21" });
+  const card = cardFor(page, "Lemon squares, a dozen");
+  await expect(card).toContainText("Cancelled today at 5:59 PM EST.");
+  await expect(card.getByRole("button", { name: /Cancel item/ })).toHaveCount(0);
+  await expect(page.locator("#item-21-title")).toBeFocused();
+});
+
+test("a refused removal reloads the list and says why", async ({ page }) => {
+  await viewAs(page, "1");
+  let loads = 0;
+  await page.route(/\/api\/admin\?view=items$/, (route) => { loads++; return route.fulfill({ json: itemsAnswer([cabin]) }); });
+  await page.route(/\/api\/admin$/, (route) => route.fulfill({ status: 409, json: { ok: false, code: "already-removed", error: "That bid was already removed." } }));
+  await page.goto("/admin/items");
+  const c = cardFor(page, "Lakeside Cabin Weekend");
+  await c.getByRole("button", { name: /bid history/ }).click();
+  await c.getByRole("button", { name: "Remove Owen Achterberg's $220 bid" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Remove bid" }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "already removed" })).toHaveText("That bid was already removed. The list has been updated.");
+  await expect(page.getByRole("dialog")).toBeHidden();
+  expect(loads).toBe(2);
+  await expect(cardFor(page, "Lakeside Cabin Weekend").getByRole("table")).toBeVisible(); // still open after the reload
+});
+
+test("after the close: winning bids, and removing the winner says who wins instead", async ({ page }, info) => {
+  await viewAs(page, "1");
+  await page.route(/\/api\/admin\?view=items$/, (route) => route.fulfill({ json: itemsAnswer([cabin], "ended") }));
+  await page.goto("/admin/items");
+  const c = cardFor(page, "Lakeside Cabin Weekend");
+  await expect(c).toContainText("Winning bid $240 · 2 bids");
+  await c.getByRole("button", { name: /bid history/ }).click();
+  await expect(c.getByRole("row", { name: /Priya Natarajan/ })).toContainText("Winning bid");
+  if (info.project.name === "light-390") {
+    const [scroll, client] = await c.locator(".table-wrap").evaluate((e) => [e.scrollWidth, e.clientWidth]);
+    expect(scroll, "the bid table fits a phone, Remove included").toBeLessThanOrEqual(client!);
+  }
+  await c.getByRole("button", { name: "Remove Priya Natarajan's $240 bid" }).click();
+  await expect(page.getByRole("dialog")).toContainText("Owen Achterberg becomes the winner at $220. Both donation totals change, and an approved proof for either goes back to review.");
 });

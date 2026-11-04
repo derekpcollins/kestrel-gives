@@ -1,8 +1,8 @@
 // The Admin Dashboard page's words (SPEC §8, v1.17; DECISIONS #107, #112; Stage 6B).
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { deadlineLine, gapText, glanceLine, groupProofs, initials, leadingBids, pageTitle, proofCell, proofReview, queueLine, rejectDialog, SECTIONS, sectionFor, totalCards } from "../../src/pages/admin-rules.ts";
-import type { AdminProof } from "../../src/admin-api.ts";
+import { bidRow, cancelItemDialog, deadlineLine, gapText, groupItems, itemRow, itemsLine, removeBidDialog, standingBids, glanceLine, groupProofs, initials, leadingBids, pageTitle, proofCell, proofReview, queueLine, rejectDialog, SECTIONS, sectionFor, totalCards } from "../../src/pages/admin-rules.ts";
+import type { AdminBid, AdminItem, AdminProof } from "../../src/admin-api.ts";
 
 const totals = (over: Record<string, unknown> = {}) => ({
   totals: {
@@ -20,7 +20,8 @@ describe("admin sections", () => {
     assert.equal(sectionFor("/admin.html")?.key, "totals");
     assert.equal(sectionFor("/admin/people")?.key, "people");
     assert.equal(sectionFor("/admin/nope"), null);
-    assert.deepEqual(SECTIONS.map((s) => s.label), ["Totals", "People", "Proof review"]);
+    assert.deepEqual(SECTIONS.map((s) => s.label), ["Totals", "People", "Proof review", "Items"]);
+    assert.equal(sectionFor("/admin/items")?.key, "items");
     assert.equal(sectionFor("/admin/proofs")?.key, "proofs");
     assert.equal(pageTitle(SECTIONS[1]!), "People · Admin Dashboard · Kestrel Gives");
   });
@@ -141,5 +142,84 @@ describe("proof review", () => {
     assert.equal(d.maxLength, 300);
     assert.equal(d.check("  "), "Enter a reason. The person will see it.");
     assert.equal(d.check("Cut off."), null);
+  });
+});
+
+describe("items (DECISIONS #114)", () => {
+  const now = new Date("2026-11-03T23:00:00.000Z");
+  const zone = "America/New_York";
+  const who = (id: string, firstName: string, lastName: string) => ({ id, firstName, lastName });
+  const priya = who("5", "Priya", "Natarajan"), owen = who("7", "Owen", "Achterberg"), jules = who("3", "Jules", "Ferreira");
+  const bid = (id: string, bidder: AdminBid["bidder"], amountCents: number, createdAt: string, over: Partial<AdminBid> = {}): AdminBid =>
+    ({ id, bidder, amountCents, createdAt, removedAt: null, removedBy: null, isTop: false, ...over });
+  const cabin = (over: Partial<AdminItem> = {}): AdminItem => ({
+    id: "10", type: "auction", title: "Lakeside Cabin Weekend", coverUrl: "", cancelled: false, cancelledAt: null, submitter: who("2", "Theo", "Lindqvist"),
+    startingBidCents: 15_000, priceCents: null, quantity: null, remaining: null, purchases: 0, highBidCents: 31_000,
+    bids: [
+      bid("3", priya, 31_000, "2026-11-03T22:00:00.000Z", { isTop: true }),
+      bid("2", owen, 28_000, "2026-11-03T21:00:00.000Z"),
+      bid("1", jules, 30_000, "2026-11-03T20:00:00.000Z", { removedAt: "2026-11-03T22:30:00.000Z", removedBy: who("1", "Maya", "Okafor") }),
+    ],
+    ...over,
+  });
+  const lemon = (over: Partial<AdminItem> = {}): AdminItem => ({
+    ...cabin(), id: "11", type: "instant", title: "Lemon squares", startingBidCents: null, priceCents: 1_500, quantity: 10, remaining: 7, purchases: 3, highBidCents: null, bids: [], ...over,
+  });
+
+  test("groups by sale type; the line counts cancelled ones", () => {
+    const list = [cabin(), lemon(), cabin({ id: "12", cancelled: true })];
+    assert.deepEqual(Object.values(groupItems(list)).map((g) => g.map((i) => i.id)), [["10", "12"], ["11"]]);
+    assert.equal(itemsLine(list), "3 items · 1 cancelled");
+    assert.equal(itemsLine([lemon()]), "1 item");
+  });
+  test("standing bids exclude removed ones, top first (ties go to the earlier bid)", () => {
+    assert.deepEqual(standingBids(cabin()).map((b) => b.id), ["3", "2"]);
+    const tie = cabin({ bids: [bid("5", owen, 5_000, "2026-11-03T21:00:00.000Z"), bid("4", priya, 5_000, "2026-11-03T20:00:00.000Z")] });
+    assert.deepEqual(standingBids(tie).map((b) => b.id), ["4", "5"]);
+  });
+  test("row figures by type and phase; cancelled and sold out show a status", () => {
+    const live = { phase: "live" as const, now, timeZone: zone };
+    assert.equal(itemRow(cabin(), live).figures, "Top bid $310 · 2 bids");
+    assert.equal(itemRow(cabin(), { ...live, phase: "ended" }).figures, "Winning bid $310 · 2 bids");
+    assert.equal(itemRow(cabin({ bids: [] }), live).figures, "Starting bid $150 · No bids yet");
+    assert.equal(itemRow(cabin(), live).history, "bid history (3 bids)");
+    assert.equal(itemRow(lemon(), live).figures, "$15 each · 3 sold · 7 left");
+    assert.equal(itemRow(lemon(), live).history, null);
+    assert.deepEqual(itemRow(lemon({ remaining: 0 }), live).status, { label: "Sold out", tone: "neutral" });
+    const gone = itemRow(cabin({ cancelled: true, cancelledAt: "2026-11-03T21:00:00.000Z" }), live);
+    assert.deepEqual([gone.status?.label, gone.cancelled, gone.canCancel], ["Cancelled", "Cancelled today at 4:00 PM EST.", false]);
+    assert.equal(itemRow(cabin(), live).donor, "Donated by Theo Lindqvist");
+  });
+  test("bid rows: top or winning, removed by whom, and Remove only for standing bids on active items", () => {
+    const live = { phase: "live" as const, now, timeZone: zone };
+    const [top, other, removed] = cabin().bids.map((b) => bidRow(b, cabin(), live));
+    assert.deepEqual([top!.top, top!.canRemove, top!.removeLabel], ["Top bid", true, " Priya Natarajan's $310 bid"]);
+    assert.equal(bidRow(cabin().bids[0]!, cabin(), { ...live, phase: "ended" }).top, "Winning bid");
+    assert.equal(other!.top, null);
+    assert.deepEqual([removed!.removed, removed!.canRemove], ["Removed by Maya Okafor today at 5:30 PM EST.", false]);
+    assert.equal(bidRow(cabin().bids[0]!, cabin({ cancelled: true }), live).canRemove, false);
+  });
+  test("remove bid dialog: what happens to the top bid or the winner", () => {
+    const [top, other] = cabin().bids;
+    assert.equal(removeBidDialog(cabin(), top!, "live").title, "Remove Priya Natarajan's $310 bid?");
+    assert.match(removeBidDialog(cabin(), top!, "live").body, /^On Lakeside Cabin Weekend\. The top bid goes back to \$280 from Owen Achterberg\./);
+    assert.match(removeBidDialog(cabin(), top!, "ended").body, /Owen Achterberg becomes the winner at \$280\. Both donation totals change/);
+    assert.match(removeBidDialog(cabin(), other!, "live").body, /The top bid stays \$310 from Priya Natarajan\./);
+    const alone = cabin({ bids: [top!] });
+    assert.match(removeBidDialog(alone, top!, "live").body, /No bids will be left, so the next bid starts at \$150\./);
+    assert.match(removeBidDialog(alone, top!, "ended").body, /No one wins this item\. Priya's donation total drops by \$310/);
+    assert.match(removeBidDialog(cabin(), top!, "live").body, /This can't be undone\.$/);
+    assert.deepEqual([removeBidDialog(cabin(), top!, "live").confirmLabel, removeBidDialog(cabin(), top!, "live").cancelLabel], ["Remove bid", "Keep bid"]);
+  });
+  test("cancel item dialog says whose totals change", () => {
+    const live = cancelItemDialog(cabin(), "live");
+    assert.equal(live.title, "Cancel Lakeside Cabin Weekend?");
+    assert.match(live.body, /Its 2 bids stop counting\. This can't be undone\.$/);
+    assert.doesNotMatch(live.body, /approved proof/);
+    assert.match(cancelItemDialog(cabin(), "ended").body, /Priya Natarajan no longer wins it, so their donation total drops by \$310\. An approved proof for a changed total goes back to review\./);
+    assert.match(cancelItemDialog(lemon(), "live").body, /Its 3 purchases are cancelled and come off those donation totals\./);
+    assert.match(cancelItemDialog(lemon({ purchases: 1 }), "live").body, /Its 1 purchase is cancelled/);
+    assert.doesNotMatch(cancelItemDialog(lemon({ purchases: 0 }), "live").body, /purchase/);
+    assert.deepEqual([live.confirmLabel, live.cancelLabel], ["Cancel item", "Keep item"]);
   });
 });

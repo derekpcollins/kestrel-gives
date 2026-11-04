@@ -27,7 +27,7 @@ function readView(tx: Tx, view: AdminView): Promise<unknown> {
     case "summary": return adminSummaryIn(tx);
     case "people": return adminPeopleIn(tx);
     case "proofs": return adminProofsIn(tx, resolvePhoto);
-    case "items": return adminItemsIn(tx);
+    case "items": return adminItemsIn(tx, resolvePhoto);
     case "settings": return adminSettingsIn(tx);
     case "templates": return adminTemplatesIn(tx);
   }
@@ -56,6 +56,9 @@ const VIEW_AFTER: Record<AdminAction["action"], AdminView> = {
 
 type Outcome = { ok: true; message: string; files?: string[] } | AdminRefusal | { ok: false; code: "invalid"; message: string; problems: unknown[] };
 
+/** " 1 approved proof went back to review." when a total change re-opened any (SPEC §7.6). */
+const reopened = (n: number) => (n === 0 ? "" : n === 1 ? " 1 approved proof went back to review." : ` ${n} approved proofs went back to review.`);
+
 async function act(tx: Tx, adminId: string, a: AdminAction): Promise<Outcome> {
   switch (a.action) {
     case "approve-proof": {
@@ -68,11 +71,11 @@ async function act(tx: Tx, adminId: string, a: AdminAction): Promise<Outcome> {
     }
     case "remove-bid": {
       const r = await adminRemoveBidIn(tx, a.bidId, adminId);
-      return r.ok ? { ok: true, message: "Bid removed. The high bid has been updated." } : r;
+      return r.ok ? { ok: true, message: `Bid removed. The top bid has been updated.${reopened(r.proofsReopened.length)}` } : r;
     }
     case "cancel-item": {
       const r = await adminCancelItemIn(tx, a.itemId);
-      return r.ok ? { ok: true, message: "Item cancelled. Its bids and purchases no longer count." } : r;
+      return r.ok ? { ok: true, message: `Item cancelled. Its bids and purchases no longer count.${reopened(r.proofsReopened.length)}` } : r;
     }
     case "save-settings": {
       const r = await saveSettingsIn(tx, a.settings);

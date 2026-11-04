@@ -3,7 +3,7 @@
 // section nav is plain links with aria-current (DECISIONS entry 59). Employees see why they
 // can't use it, both from the app state and from the API's 403. Redraws when the demo bar
 // changes who's viewing or the phase; only the newest answer is drawn.
-import type { AdminPeople, AdminProof, AdminProofs, AdminSummary } from "../admin-api.ts";
+import type { AdminBid, AdminItem, AdminItems, AdminPeople, AdminProof, AdminProofs, AdminSummary } from "../admin-api.ts";
 import type { AppState } from "../app-state.ts";
 import { renderAvatar } from "../components/avatar.ts";
 import { el } from "../components/dom.ts";
@@ -12,7 +12,7 @@ import { confirmDialog } from "../components/dialog.ts";
 import { enhanceTableScroll } from "../components/table.ts";
 import { showToast } from "../components/toast.ts";
 import {
-  deadlineLine, GENERAL_DESCRIPTION, gapText, glanceLine, groupProofs, proofReview, queueLine, rejectDialog, initials, leadingBids, money, NOT_ADMIN, pageTitle, proofCell, SECTIONS, sectionFor, totalCards, TOTALS_KEY, type Section,
+  bidRow, cancelItemDialog, deadlineLine, GENERAL_DESCRIPTION, groupItems, itemRow, itemsLine, removeBidDialog, gapText, glanceLine, groupProofs, proofReview, queueLine, rejectDialog, initials, leadingBids, money, NOT_ADMIN, pageTitle, proofCell, SECTIONS, sectionFor, totalCards, TOTALS_KEY, type Section,
 } from "./admin-rules.ts";
 
 const pill = (label: string, tone: string) => el("span", { className: `pill${tone === "neutral" ? "" : ` pill--${tone}`}`, text: label });
@@ -140,9 +140,9 @@ function proofCard(p: AdminProof, answer: AdminProofs, actions: ProofActions): H
     card.append(el("div", { className: "proof-review__actions" }, approve, reject));
   } else if (t.instead) {
     // Reverse a decision (owner, 6C review): secondary, since it overturns one already made.
-    // Shown "Approve instead"; read "Approve Owen Achterberg's proof instead".
+    // Shown "Approve instead"; read "Approve instead (Owen Achterberg's proof)" (the visible words first, WCAG 2.5.3).
     const button = el("button", { className: "btn btn--secondary", attrs: { type: "button" } },
-      t.instead === "approve" ? "Approve" : "Reject", el("span", { className: "visually-hidden", text: ` ${t.name}'s proof` }), " instead");
+      t.instead === "approve" ? "Approve instead" : "Reject instead", el("span", { className: "visually-hidden", text: ` (${t.name}'s proof)` }));
     button.addEventListener("click", () => (t.instead === "approve" ? actions.approve(p, button) : actions.reject(p)));
     card.append(el("div", { className: "proof-review__actions" }, button));
   }
@@ -161,6 +161,107 @@ function proofs(answer: AdminProofs, actions: ProofActions): Node[] {
     el("div", { className: "admin-alert", attrs: { "data-admin-alert": "" } }),
     group("queue-waiting", "Waiting for review", waiting, "Nothing is waiting for review."),
     group("queue-reviewed", "Reviewed", reviewed, answer.proofs.length ? "Nothing reviewed yet." : "No one has uploaded proof yet. Proofs show up here when people upload them."),
+  ];
+}
+
+/** What an item row's buttons do. `open` holds the items whose bid history is showing, kept across redraws. */
+interface ItemActions {
+  removeBid(item: AdminItem, bid: AdminBid, phase: AdminItems["phase"]): void;
+  cancel(item: AdminItem, phase: AdminItems["phase"]): void;
+  open: Set<string>;
+}
+
+function bidTable(item: AdminItem, answer: AdminItems, actions: ItemActions): HTMLElement {
+  const ctx = { phase: answer.phase, now: new Date(answer.now) };
+  const rows = item.bids.length
+    ? item.bids.map((b) => {
+        const t = bidRow(b, item, ctx);
+        const remove = el("button", { className: "btn btn--secondary btn--sm", attrs: { type: "button" } }, "Remove", el("span", { className: "visually-hidden", text: t.removeLabel }));
+        remove.addEventListener("click", () => actions.removeBid(item, b, answer.phase));
+        return el("tr", { className: t.removed ? "admin-bid--removed" : "" },
+          el("th", { attrs: { scope: "row" } },
+            el("span", { className: "admin-person" },
+              renderAvatar(initials(b.bidder.firstName, b.bidder.lastName), { size: "sm", crowned: Boolean(t.top) }),
+              el("span", { className: "admin-bid__who" },
+                el("span", { className: "admin-person__name", text: t.name }),
+                ...(t.top ? [pill(t.top, "success")] : []),
+                ...(t.removed ? [pill("Removed", "neutral"), el("span", { className: "admin-bid__note", text: t.removed })] : []),
+                // Below 40rem the Time column hides and the time shows here instead (only one is ever displayed).
+                el("span", { className: "admin-bid__note admin-bid__when-inline", text: t.when })))),
+          el("td", { className: "table__num admin-bid__amount", text: t.amount }),
+          el("td", { className: "admin-bid__when", text: t.when }),
+          el("td", { className: "admin-bid__action" }, ...(t.canRemove ? [remove] : [])));
+      })
+    : [el("tr", {}, el("td", { className: "table__empty", attrs: { colspan: "4" }, text: "No bids yet." }))];
+  const captionId = `item-${item.id}-history`;
+  const wrap = el("div", { className: "table-wrap", attrs: { role: "region", "aria-labelledby": captionId, "data-table-scroll": "" } },
+    el("table", { className: "table admin-bids", attrs: { "aria-labelledby": captionId } },
+      el("thead", {}, el("tr", {},
+        el("th", { attrs: { scope: "col" }, text: "Bidder" }),
+        el("th", { className: "table__num", attrs: { scope: "col" }, text: "Amount" }),
+        el("th", { className: "admin-bid__when", attrs: { scope: "col" }, text: "Time" }),
+        el("th", { attrs: { scope: "col" } }, el("span", { className: "visually-hidden", text: "Actions" })))),
+      el("tbody", {}, ...rows)));
+  enhanceTableScroll(wrap);
+  return el("div", { className: "admin-item__history" },
+    el("p", { className: "visually-hidden", attrs: { id: captionId }, text: `Bid history for ${item.title}, newest first` }), wrap);
+}
+
+function itemCard(item: AdminItem, answer: AdminItems, actions: ItemActions): HTMLLIElement {
+  const t = itemRow(item, { phase: answer.phase, now: new Date(answer.now) });
+  const headingId = `item-${item.id}-title`;
+  const card = el("li", { className: `card card--flat admin-item${item.cancelled ? " admin-item--cancelled" : ""}`, attrs: { "aria-labelledby": headingId, "data-item-id": item.id } },
+    el("div", { className: "admin-item__main" },
+      item.coverUrl ? el("img", { className: "admin-item__thumb", attrs: { src: item.coverUrl, alt: "", loading: "lazy" } }) : el("span", { className: "admin-item__thumb", attrs: { "aria-hidden": "true" } }),
+      el("div", { className: "admin-item__text" },
+        el("div", { className: "admin-item__head" },
+          el("h4", { className: "admin-item__title", attrs: { id: headingId, tabindex: "-1" } }, el("a", { attrs: { href: `/items/${item.id}` }, text: item.title })),
+          ...(t.status ? [pill(t.status.label, t.status.tone)] : [])),
+        el("p", { className: "admin-item__figures", text: t.figures }),
+        el("p", { className: "admin-item__donor", text: t.donor }),
+        ...(t.cancelled ? [el("p", { className: "admin-item__donor", text: t.cancelled })] : []),
+      ),
+    ),
+  );
+  const buttons: HTMLElement[] = [];
+  let panel: HTMLElement | null = null;
+  if (t.history) {
+    const panelId = `item-${item.id}-panel`;
+    const isOpen = actions.open.has(item.id);
+    const toggle = el("button", { className: "btn btn--secondary admin-item__toggle", attrs: { type: "button", "aria-expanded": String(isOpen), "aria-controls": panelId } },
+      el("span", { text: `${isOpen ? "Hide" : "Show"} ${t.history}` }), el("span", { className: "visually-hidden", text: ` for ${item.title}` }));
+    const shown = el("div", { className: "admin-item__panel", attrs: { id: panelId, ...(isOpen ? {} : { hidden: "" }) } }, bidTable(item, answer, actions));
+    panel = shown;
+    toggle.addEventListener("click", () => {
+      const open = toggle.getAttribute("aria-expanded") !== "true";
+      toggle.setAttribute("aria-expanded", String(open));
+      toggle.firstChild!.textContent = `${open ? "Hide" : "Show"} ${t.history}`;
+      shown.hidden = !open;
+      if (open) actions.open.add(item.id); else actions.open.delete(item.id);
+    });
+    buttons.push(toggle);
+  }
+  if (t.canCancel) {
+    const cancel = el("button", { className: "btn btn--secondary", attrs: { type: "button" } }, "Cancel item", el("span", { className: "visually-hidden", text: ` (${item.title})` }));
+    cancel.addEventListener("click", () => actions.cancel(item, answer.phase));
+    buttons.push(cancel);
+  }
+  if (buttons.length) card.append(el("div", { className: "admin-item__actions" }, ...buttons));
+  if (panel) card.append(panel);
+  return card;
+}
+
+function items(answer: AdminItems, actions: ItemActions): Node[] {
+  const { auction, instant } = groupItems(answer.items);
+  const group = (id: string, title: string, list: AdminItem[]) =>
+    el("section", { className: "admin-items", attrs: { "aria-labelledby": id } },
+      el("h3", { className: "proof-queue__title", text: `${title} (${list.length})`, attrs: { id } }),
+      list.length ? el("ul", { className: "admin-items__list" }, ...list.map((i) => itemCard(i, answer, actions))) : el("p", { className: "admin-glance", text: "No items yet." }));
+  return [
+    el("p", { className: "admin-glance", text: `${itemsLine(answer.items)}. Removing a bid or cancelling an item asks first, and can't be undone.` }),
+    el("div", { className: "admin-alert", attrs: { "data-admin-alert": "" } }),
+    group("items-auction", "Silent auction", auction),
+    group("items-instant", "Instant sale", instant),
   ];
 }
 
@@ -211,7 +312,7 @@ export function startAdminPage(): void {
     denied.hidden = true;
     body.hidden = false;
     content.setAttribute("aria-busy", "true");
-    const view = section.key === "totals" ? "summary" : section.key;  // people, proofs
+    const view = section.key === "totals" ? "summary" : section.key;  // people, proofs, items
     let status: number | null = null;
     let answer: unknown = null;
     try {
@@ -232,7 +333,8 @@ export function startAdminPage(): void {
     failed.hidden = true;
     content.replaceChildren(...(section.key === "totals" ? totals(answer as AdminSummary)
       : section.key === "people" ? people(answer as AdminPeople)
-      : proofs(answer as AdminProofs, actions)));
+      : section.key === "proofs" ? proofs(answer as AdminProofs, actions)
+      : items(answer as AdminItems, itemActions)));
     hydrateIcons(content);
   };
 
@@ -308,6 +410,46 @@ export function startAdminPage(): void {
         await load();
       }
     },
+  };
+
+  const redrawItems = (answer: AdminItems) => {
+    content.replaceChildren(...items(answer, itemActions));
+    hydrateIcons(content);
+  };
+  const focusItem = (id: string) => content.querySelector<HTMLElement>(`#item-${id}-title`)?.focus();
+  /** Remove bid and Cancel item: a danger dialog, then the list redraws from the answer. */
+  const confirmThenPost = async (words: { title: string; body: string; confirmLabel: string; cancelLabel: string }, busyLabel: string, body: Record<string, unknown>, itemId: string) => {
+    let answer: AdminItems | null = null;
+    let message = "";
+    let stale = false;
+    let staleMessage = "";
+    const done = await confirmDialog({
+      variant: "danger", title: words.title, body: words.body, confirmLabel: words.confirmLabel, cancelLabel: words.cancelLabel, busyLabel,
+      onConfirm: async () => {
+        try {
+          const r = await post(body);
+          answer = r.answer as AdminItems;
+          message = r.message;
+        } catch (error) {
+          const status = (error as { status?: number }).status;
+          if (status === 409 || status === 404) { stale = true; staleMessage = error instanceof Error ? error.message : ""; return; }
+          throw error;
+        }
+      },
+    });
+    if (done && answer) {
+      redrawItems(answer);
+      showToast(message, { tone: "success" });
+      focusItem(itemId);
+    } else if (stale) {
+      await load();
+      alertWith(`${staleMessage} The list has been updated.`);
+    }
+  };
+  const itemActions: ItemActions = {
+    open: new Set<string>(),
+    removeBid: (item, bid, phase) => void confirmThenPost(removeBidDialog(item, bid, phase), "Removing…", { action: "remove-bid", bidId: bid.id }, item.id),
+    cancel: (item, phase) => void confirmThenPost(cancelItemDialog(item, phase), "Cancelling…", { action: "cancel-item", itemId: item.id }, item.id),
   };
 
   failed.querySelector("button")?.addEventListener("click", () => void load());

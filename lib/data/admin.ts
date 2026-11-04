@@ -260,17 +260,18 @@ export async function rejectProofIn(tx: Tx, proofId: Id, adminId: Id, reason: st
 // ---------------------------------------------------------------------------------------------
 // Items
 
-export async function adminItemsIn(tx: Tx): Promise<AdminItems | null> {
+export async function adminItemsIn(tx: Tx, resolve: ResolvePhoto): Promise<AdminItems | null> {
   const event = await currentEventIn(tx);
   if (!event) return null;
   const now = await dbNow(tx);
   const { rows } = await tx.query<{
     id: Id; type: "auction" | "instant"; title: string; status: string; cancelled_at: Date | null;
-    submitter_id: Id; first_name: string; last_name: string;
+    submitter_id: Id; first_name: string; last_name: string; cover: string | null;
     starting: number | null; price: number | null; quantity: number | null; remaining: number | null; winning_bid_id: Id | null; purchases: number;
   }>(
     `SELECT i.id, i.type, i.title, i.status, i.cancelled_at, u.id AS submitter_id, u.first_name, u.last_name,
             i.starting_bid_cents AS starting, i.price_cents AS price, i.quantity, i.remaining, i.winning_bid_id,
+            (SELECT p.path FROM item_photos p WHERE p.item_id = i.id ORDER BY p.position LIMIT 1) AS cover,
             (SELECT count(*)::int FROM purchases p WHERE p.item_id = i.id AND p.cancelled_at IS NULL) AS purchases
        FROM items i JOIN users u ON u.id = i.submitter_id
       WHERE i.event_id = $1
@@ -305,7 +306,7 @@ export async function adminItemsIn(tx: Tx): Promise<AdminItems | null> {
       isTop: b.id === crowned,
     }));
     return {
-      id: r.id, type: r.type, title: r.title, cancelled: r.status === "cancelled", cancelledAt: iso(r.cancelled_at),
+      id: r.id, type: r.type, title: r.title, coverUrl: r.cover ? resolve(r.cover) : "", cancelled: r.status === "cancelled", cancelledAt: iso(r.cancelled_at),
       submitter: { id: r.submitter_id, firstName: r.first_name, lastName: r.last_name } satisfies PersonName,
       startingBidCents: n(r.starting), priceCents: n(r.price), quantity: n(r.quantity), remaining: n(r.remaining),
       purchases: Number(r.purchases), highBidCents: top ? Number(top.amount_cents) : null, bids,

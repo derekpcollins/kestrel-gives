@@ -98,3 +98,42 @@
 @media (min-width: 40rem) {
   .proof-review__main { grid-template-columns: auto 1fr; }
 }
+
+/* Items (DESIGN-SYSTEM.md › Admin item row): one card per item, grouped by sale type. The bid
+   history opens in place (a disclosure); Remove and Cancel item each ask in a danger dialog. */
+.admin-items { display: grid; gap: var(--space-4); }
+.admin-items__list { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.admin-item { display: grid; gap: var(--space-3); padding: var(--space-4); }
+.admin-item__main { display: grid; grid-template-columns: auto 1fr; gap: var(--space-4); align-items: start; }
+.admin-item__thumb {
+  display: block; width: calc(var(--size-target) * 1.5); aspect-ratio: 1; object-fit: cover;
+  border-radius: var(--radius-md); background: var(--color-surface-muted);
+}
+.admin-item__text { display: grid; gap: var(--space-1); min-width: 0; }
+.admin-item__head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); }
+.admin-item__title { margin: 0; font: var(--type-heading-3); }
+.admin-item__title a { color: var(--color-text); text-decoration-thickness: var(--border-thin); text-underline-offset: var(--space-1); }
+.admin-item__title:focus-visible { outline: var(--focus-width) solid var(--color-focus); outline-offset: var(--focus-offset); }
+.admin-item__figures { margin: 0; font: var(--type-body); font-weight: var(--weight-semibold); color: var(--color-text); font-variant-numeric: var(--figures-amount); }
+.admin-item__donor { margin: 0; font: var(--type-caption); color: var(--color-text-muted); }
+.admin-item__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.admin-item--cancelled .admin-item__thumb { opacity: 0.5; } /* like a muted item tile */
+.admin-item--cancelled .admin-item__figures { color: var(--color-text-muted); }
+.admin-bid__who { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); }
+.admin-bid__note { flex-basis: 100%; font: var(--type-caption); color: var(--color-text-muted); }
+.admin-bid__when { white-space: nowrap; color: var(--color-text-muted); }
+.admin-bid__action { text-align: right; }
+.admin-bid--removed .admin-person__name, .admin-bid--removed .admin-bid__amount { color: var(--color-text-muted); }
+.admin-bid--removed .admin-bid__amount { text-decoration: line-through; }
+/* Phones: the Time column hides and the time is a caption line under the name (like Bid history). */
+@media (min-width: 40rem) {
+  .admin-bid__when-inline { display: none; }
+}
+@media (width < 40rem) {
+  .admin-bids .admin-bid__when { display: none; }
+  .admin-bids th[scope="row"] { white-space: normal; }
+  .admin-bids th, .admin-bids td { padding-inline: var(--space-2); }
+  .admin-bids tr > :first-child { padding-inline-start: var(--space-3); }
+  .admin-bids tr > :last-child { padding-inline-end: var(--space-3); }
+  .admin-bids .avatar { display: none; } /* the Top bid pill names the leader; the avatar would push Remove off screen */
+}

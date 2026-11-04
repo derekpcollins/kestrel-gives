@@ -20,6 +20,10 @@
       "destination": "/admin"
     },
     {
+      "source": "/admin/items",
+      "destination": "/admin"
+    },
+    {
       "source": "/your-items/proof",
       "destination": "/proof"
     },

@@ -130,6 +130,8 @@ export interface AdminItem {
   id: string;
   type: "auction" | "instant";
   title: string;
+  /** The first photo, resolved; "" if none. */
+  coverUrl: string;
   cancelled: boolean;
   cancelledAt: string | null;
   submitter: PersonName;

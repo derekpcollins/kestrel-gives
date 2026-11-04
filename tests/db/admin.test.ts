@@ -217,6 +217,21 @@ describe("admin (rolled back)", () => {
   });
 
   describe("items: remove bid and cancel, before and after the close (DECISIONS #110)", () => {
+    test("the list: every item, active first, with its cover photo, bids newest first and the crown on the top bid", async () => {
+      const { items, phase } = (await adminItemsIn(db, (path) => `resolved:${path}`))!;
+      const { rows } = await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM items WHERE event_id = (SELECT id FROM events WHERE is_current)`);
+      assert.equal(items.length, rows[0]!.n);
+      assert.equal(phase, "live");
+      const firstCancelled = items.findIndex((i) => i.cancelled);
+      assert.ok(firstCancelled === -1 || items.slice(firstCancelled).every((i) => i.cancelled), "active items come first");
+      for (const i of items) assert.match(i.coverUrl, /^resolved:seed\//, i.title);
+      const cabin = items.find((i) => i.title === "Lakeside Cabin Weekend")!;
+      const times = cabin.bids.map((b) => Date.parse(b.createdAt));
+      assert.deepEqual(times, [...times].sort((a, b) => b - a));
+      assert.equal(cabin.bids.filter((b) => b.isTop).length, 1);
+      assert.equal(cabin.bids.find((b) => b.isTop)!.amountCents, cabin.highBidCents);
+    });
+
     test("remove the winning bid after close: the next bid wins, totals and proofs follow", async () => {
       await jumpIn(db, "ended", new Date());
       const cabin = await winningBid(db, "Lakeside Cabin Weekend");
@@ -238,7 +253,7 @@ describe("admin (rolled back)", () => {
       assert.equal(after.totals.pledged.grandCents, await everyonesTotal(db));
       assert.equal(after.totals.confirmed.grandCents, before.totals.confirmed.grandCents - owed, "Priya's proof went back to pending");
 
-      const item = (await adminItemsIn(db))!.items.find((i) => i.title === "Lakeside Cabin Weekend")!;
+      const item = (await adminItemsIn(db, asIs))!.items.find((i) => i.title === "Lakeside Cabin Weekend")!;
       const removed = item.bids.find((b) => b.id === cabin.id)!;
       assert.deepEqual([removed.removedBy?.firstName, removed.isTop], ["Maya", false]);
       assert.equal(item.bids.find((b) => b.isTop)?.bidder.firstName, "Owen");
@@ -249,7 +264,7 @@ describe("admin (rolled back)", () => {
     test("remove a bid while live: the high bid recalculates; a cancelled item's bids are refused", async () => {
       const top = await one<{ id: string }>(db, `SELECT b.id FROM bids b JOIN items i ON i.id = b.item_id WHERE i.title = 'Guitar lessons, four weeks' ORDER BY b.amount_cents DESC LIMIT 1`);
       assert.ok((await adminRemoveBidIn(db, top.id, maya)).ok);
-      assert.equal((await adminItemsIn(db))!.items.find((i) => i.title === "Guitar lessons, four weeks")!.highBidCents, 7_000);
+      assert.equal((await adminItemsIn(db, asIs))!.items.find((i) => i.title === "Guitar lessons, four weeks")!.highBidCents, 7_000);
       const board = await one<{ id: string }>(db, `SELECT b.id FROM bids b JOIN items i ON i.id = b.item_id WHERE i.title = 'Board game night, hosted' LIMIT 1`);
       assert.equal((await adminRemoveBidIn(db, board.id, maya) as { code: string }).code, "cancelled");
     });
@@ -265,7 +280,7 @@ describe("admin (rolled back)", () => {
       assert.equal(s.totals.confirmed.grandCents, 0);
       assert.equal(s.totals.gapLine, null);
       assert.equal((await adminCancelItemIn(db, lemon) as { code: string }).code, "cancelled");
-      const listed = (await adminItemsIn(db))!.items.find((i) => i.id === lemon)!;
+      const listed = (await adminItemsIn(db, asIs))!.items.find((i) => i.id === lemon)!;
       assert.deepEqual([listed.cancelled, listed.purchases], [true, 0]);
     });
   });
