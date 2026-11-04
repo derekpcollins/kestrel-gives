@@ -817,3 +817,16 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   - After the close: removing the winning bid made Owen the winner.
   - Restored after each round. Function logs: info only (`.review/m6-6d/preview-checks.txt`).
 
+
+### 2026-11-03 — 6D purchase cancel and Stage 6E: settings and templates (20:40 – 21:50 EST)
+- **Owner stepped in:** approved 6D with its three choices, and asked for one addition first: cancel a single purchase. That meant a Show purchases (N) disclosure, a danger dialog with words from the data, and restock only while the sale is open (their lean in #74). They also asked for a test of two admins cancelling at once. Then 6E.
+- **Built (6D addition):** the purchases table and Cancel purchase. The item row is locked so two admins serialize; the second is refused and the unit is restocked once (DECISIONS #74, #115; SPEC v1.18).
+- **Built (6E):** `/admin/settings`, one form on the server's own rules. If a save changes the phase, a dialog says what changes first. After saving, the shell fetches the app state again so the header and banner follow. `/admin/templates` has a card per template and an in-place editor: live preview, variable checks as you type, and Insert variable at the cursor. Save, Discard and Restore default (DECISIONS #116).
+- **Caught or hard:** the form needs to know the phase a save will cause, so it uses the server's rule on the answer's database time; a unit test compares the two every half hour across an event. In my screenshots, the settings form repeated its section heading and the variable menu options were centered (`.btn` won the cascade); both fixed. In zsh, `path` is a special variable, which broke a Preview loop until renamed.
+- **Tests:** unit 297 (13 new), DB 118 (purchase cancel live, ended, refusals and the concurrent two-admin case; a new zone with the phase preview), browser 260 a11y and keyboard (9 new at 390 and 1280), 20 reflow, 80 visual. `admin-settings` and `admin-templates` joined the screen checks. `npm audit` shows only the accepted advisory.
+- **Screenshots:** `.review/m6-6e/`, 32 PNGs on local dev (9 for the purchase cancel), with Restore after. No page errors.
+- **Preview (21:40 EST):** `kestrel-gives-qt8yvkd0y` on the dev database:
+  - Settings: bad values refused by field (422). Renaming showed at once in the app state. A past close ended bidding. Pacific dates in January reopened it (stored as 01:00 UTC). Clearing the dates made it Not scheduled yet.
+  - Templates: an unknown variable was refused; save, then Restore default worked; an unknown template 404; Jules 403.
+  - Purchase cancel: live restocked (6 sold 0 left to 5 sold 1 left); again was refused; two admins at once gave one success and one refusal, restocked once; after the close there was no restock.
+  - Restored after each round, back to the seed. Function logs: info only (`.review/m6-6e/preview-checks.txt`).
