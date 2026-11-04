@@ -3,7 +3,7 @@
 // section nav is plain links with aria-current (DECISIONS entry 59). Employees see why they
 // can't use it, both from the app state and from the API's 403. Redraws when the demo bar
 // changes who's viewing or the phase; only the newest answer is drawn.
-import type { AdminBid, AdminItem, AdminItems, AdminPurchase, AdminPeople, AdminProof, AdminProofs, AdminSummary } from "../admin-api.ts";
+import type { AdminBid, AdminItem, AdminItems, AdminPurchase, AdminPeople, AdminProof, AdminProofs, AdminSettings, AdminSummary, AdminTemplates } from "../admin-api.ts";
 import type { AppState } from "../app-state.ts";
 import { renderAvatar } from "../components/avatar.ts";
 import { el } from "../components/dom.ts";
@@ -14,6 +14,7 @@ import { showToast } from "../components/toast.ts";
 import {
   bidRow, cancelItemDialog, cancelPurchaseDialog, purchaseRow, deadlineLine, GENERAL_DESCRIPTION, groupItems, itemRow, itemsLine, removeBidDialog, gapText, glanceLine, groupProofs, proofReview, queueLine, rejectDialog, initials, leadingBids, money, NOT_ADMIN, pageTitle, proofCell, SECTIONS, sectionFor, totalCards, TOTALS_KEY, type Section,
 } from "./admin-rules.ts";
+import { settingsSection, templatesSection, type SectionHost, type TemplateState } from "./admin-settings.ts";
 
 const pill = (label: string, tone: string) => el("span", { className: `pill${tone === "neutral" ? "" : ` pill--${tone}`}`, text: label });
 
@@ -312,8 +313,8 @@ async function post(body: Record<string, unknown>): Promise<{ message: string; a
   } catch {
     throw new Error("We couldn't reach the server. Check your connection and try again.");
   }
-  const json = (await response.json().catch(() => ({}))) as { message?: string; error?: string; answer?: unknown };
-  if (!response.ok) throw Object.assign(new Error(json.error ?? "Something went wrong. Please try again."), { status: response.status });
+  const json = (await response.json().catch(() => ({}))) as { message?: string; error?: string; answer?: unknown; problems?: unknown };
+  if (!response.ok) throw Object.assign(new Error(json.error ?? "Something went wrong. Please try again."), { status: response.status, problems: json.problems });
   return { message: json.message ?? "Done.", answer: json.answer };
 }
 
@@ -351,7 +352,7 @@ export function startAdminPage(): void {
     denied.hidden = true;
     body.hidden = false;
     content.setAttribute("aria-busy", "true");
-    const view = section.key === "totals" ? "summary" : section.key;  // people, proofs, items
+    const view = section.key === "totals" ? "summary" : section.key;  // people, proofs, items, settings, templates
     let status: number | null = null;
     let answer: unknown = null;
     try {
@@ -373,6 +374,8 @@ export function startAdminPage(): void {
     content.replaceChildren(...(section.key === "totals" ? totals(answer as AdminSummary)
       : section.key === "people" ? people(answer as AdminPeople)
       : section.key === "proofs" ? proofs(answer as AdminProofs, actions)
+      : section.key === "settings" ? settingsSection(answer as AdminSettings, host)
+      : section.key === "templates" ? templatesSection(answer as AdminTemplates, templateState, host)
       : items(answer as AdminItems, itemActions)));
     hydrateIcons(content);
   };
@@ -492,11 +495,26 @@ export function startAdminPage(): void {
     cancelPurchase: (item, purchase, phase) => void confirmThenPost(cancelPurchaseDialog(item, purchase, phase), "Cancelling…", { action: "cancel-purchase", purchaseId: purchase.id }, item.id),
   };
 
+  // Event settings and Email templates (src/pages/admin-settings.ts).
+  const templateState: TemplateState = { drafts: new Map() };
+  /** After saving settings the app state is fetched again; its redraw keeps focus on Save. */
+  let refocusSave = false;
+  const host: SectionHost = {
+    post,
+    reloadWith: async (message) => { await load(); alertWith(message); },
+    alert: (message) => alertWith(message),
+    denied: () => showDenied(),
+    redraw: (nodes) => { content.replaceChildren(...nodes); hydrateIcons(content); },
+    refreshApp: () => { refocusSave = true; document.dispatchEvent(new CustomEvent("kg:refresh")); },
+  };
+
   failed.querySelector("button")?.addEventListener("click", () => void load());
   document.addEventListener("kg:state", (event) => {
     const state = (event as CustomEvent<AppState>).detail;
     if (!state.viewer) return;
-    if (state.viewer.role !== "admin") showDenied();
-    else void load();
+    if (state.viewer.role !== "admin") return showDenied();
+    const focusSave = refocusSave;
+    refocusSave = false;
+    void load().then(() => { if (focusSave) content.querySelector<HTMLElement>("[data-settings-save]")?.focus(); });
   });
 }

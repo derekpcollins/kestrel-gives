@@ -20,7 +20,9 @@ describe("admin sections", () => {
     assert.equal(sectionFor("/admin.html")?.key, "totals");
     assert.equal(sectionFor("/admin/people")?.key, "people");
     assert.equal(sectionFor("/admin/nope"), null);
-    assert.deepEqual(SECTIONS.map((s) => s.label), ["Totals", "People", "Proof review", "Items"]);
+    assert.deepEqual(SECTIONS.map((s) => s.label), ["Totals", "People", "Proof review", "Items", "Event settings", "Email templates"]);
+    assert.equal(sectionFor("/admin/settings")?.key, "settings");
+    assert.equal(sectionFor("/admin/templates")?.key, "templates");
     assert.equal(sectionFor("/admin/items")?.key, "items");
     assert.equal(sectionFor("/admin/proofs")?.key, "proofs");
     assert.equal(pageTitle(SECTIONS[1]!), "People · Admin Dashboard · Kestrel Gives");

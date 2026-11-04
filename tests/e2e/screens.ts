@@ -31,6 +31,8 @@ export const SCREENS: readonly Screen[] = [
   { name: "admin-people", path: "/admin/people", viewer: "1" },
   { name: "admin-proofs", path: "/admin/proofs", viewer: "1" },
   { name: "admin-items", path: "/admin/items", viewer: "1" },
+  { name: "admin-settings", path: "/admin/settings", viewer: "1" },
+  { name: "admin-templates", path: "/admin/templates", viewer: "1" },
   { name: "design-system", path: "/design-system/" }, // every component, every state
 ];
 

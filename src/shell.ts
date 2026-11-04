@@ -75,6 +75,9 @@ export async function startShell(): Promise<Shell> {
     restore: async () => show(await demo({ action: "restore" })),
   };
 
+  // A page that changed what the app state shows (an admin saving new dates) asks for it again.
+  document.addEventListener("kg:refresh", () => void call("/api/app").then(show).catch(() => {}));
+
   try {
     const state = await call("/api/app");
     bar = renderDemoBar(state, actions);

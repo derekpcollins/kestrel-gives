@@ -5,7 +5,7 @@
 import { messageFor, moneyProblem, summaryTitle, type FieldInfo } from "./form-rules.ts";
 import { icon } from "./icons.ts";
 
-type Control = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+export type Control = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
 
 const customChecks = new WeakMap<Element, () => string>();
 
@@ -88,8 +88,8 @@ export function showServerProblems(form: HTMLFormElement, problems: readonly { c
   showSummary(form, problems.map(({ control, message }) => ({ control, label: labelFor(control), message })));
 }
 
-/** Shows or clears one control's message. */
-function setFieldMessage(control: Control, message: string): string {
+/** Shows or clears one control's message (also used for live checks, like a template's variables). */
+export function setFieldMessage(control: Control, message: string): string {
   const field = control.closest<HTMLElement>(".field");
   if (!field) return message;
   const group = control.type === "radio" ? Array.from(field.querySelectorAll<HTMLInputElement>(`input[name="${CSS.escape(control.name)}"]`)) : [control];

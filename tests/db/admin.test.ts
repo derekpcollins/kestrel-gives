@@ -20,6 +20,7 @@ import { jumpIn } from "../../lib/demo/jump.ts";
 import { restoreIn } from "../../lib/demo/restore.ts";
 import { seedIn } from "../../lib/seed/seed.ts";
 import { withTransaction } from "../../lib/data/db.ts";
+import { phaseFor } from "../../src/pages/admin-settings-rules.ts";
 import { TEMPLATE_DEFAULTS } from "../../lib/email-templates.ts";
 import type { SettingsInput } from "../../src/components/settings-rules.ts";
 
@@ -373,6 +374,21 @@ describe("admin (rolled back)", () => {
       assert.equal(e.winnersFinalizedAt, null);
       assert.equal(phaseOf(e, new Date()), "unscheduled");
       assert.equal((await one<{ n: number }>(db, `SELECT count(*)::int AS n FROM items WHERE winning_bid_id IS NOT NULL`)).n, 0);
+    });
+
+    test("a new zone reads the same wall times there; the form's phase preview matches the saved phase", async () => {
+      const v: SettingsInput = { ...(await values()), timeZone: "America/Los_Angeles", submissionsOpen: "2026-10-01T09:00", biddingOpens: "2026-10-20T09:00", biddingCloses: "2027-01-15T17:00" };
+      const answer = (await adminSettingsIn(db))!;
+      const before = phaseFor(answer.values, new Date(answer.now));
+      const after = phaseFor(v, new Date(answer.now));
+      assert.deepEqual(await saveSettingsIn(db, v), { ok: true });
+      const e = (await currentEventIn(db))!;
+      assert.equal(e.timeZone, "America/Los_Angeles");
+      assert.equal(e.biddingClosesAt?.toISOString(), "2027-01-16T01:00:00.000Z"); // 5 PM PST
+      const back = (await adminSettingsIn(db))!;
+      assert.equal(back.values.biddingCloses, "2027-01-15T17:00");
+      assert.equal(after, phaseOf(e, new Date(back.now)));
+      assert.ok(before);
     });
 
     test("bad settings save nothing and say why, by field", async () => {

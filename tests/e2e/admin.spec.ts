@@ -556,3 +556,231 @@ test("after the close the dialog says the unit doesn't return to stock; a second
   expect(loads).toBe(2);
 });
 
+
+// ---------------------------------------------------------------------------------------------
+// 6E: Event settings and Email templates (SPEC §7.1, §7.7; DECISIONS entry 116). Stubbed answers.
+
+const settingsValues = {
+  name: "Kestrel Gives 2026", timeZone: "America/New_York",
+  submissionsOpen: "2026-10-20T22:00", biddingOpens: "2026-11-01T21:00", biddingCloses: "2026-11-05T21:00",
+  minStartingBidCents: 1_000, bidIncrementCents: 500, proofDeadlineDays: 7, givingPlatformUrl: "/giving",
+};
+const settingsAnswer = (values = settingsValues) => ({ ok: true, now: "2026-11-03T20:00:00.000Z", values });
+
+async function stubSettings(page: Page, values = settingsValues): Promise<void> {
+  await page.route(/\/api\/admin\?view=settings$/, (route) => route.fulfill({ json: settingsAnswer(values) }));
+}
+
+test("Event settings: the form shows the saved values, the phase now and the zone", async ({ page }) => {
+  await viewAs(page, "1");
+  await stubSettings(page);
+  await page.goto("/admin/settings");
+  await expect(page).toHaveTitle("Event settings · Admin Dashboard · Kestrel Gives");
+  const form = page.getByRole("form", { name: "Event settings" });
+  await expect(form).toContainText("Phase now: Bidding is open.");
+  await expect(form.getByLabel("Event name")).toHaveValue("Kestrel Gives 2026");
+  await expect(form.getByLabel("Time zone")).toHaveValue("America/New_York");
+  await expect(form.getByLabel("Bidding closes")).toHaveValue("2026-11-05T21:00");
+  await expect(form.getByLabel("Bidding closes")).toHaveAccessibleDescription(/Times are in America\/New_York \(EST\)/);
+  await expect(form.getByLabel("Default minimum starting bid")).toHaveValue("10");
+  await expect(form.getByLabel("Bid increment")).toHaveValue("5");
+  await expect(form.getByLabel("Proof deadline")).toHaveValue("7");
+  await expect(form.getByLabel(/Giving platform address/)).toHaveValue("/giving");
+  await form.getByLabel("Time zone").selectOption("America/Los_Angeles");
+  await expect(form.getByLabel("Bidding closes")).toHaveAccessibleDescription(/Times are in America\/Los_Angeles \(PST\)/);
+  await axe(page);
+});
+
+test("Event settings: problems show under their fields with a summary, and nothing is sent", async ({ page }) => {
+  await viewAs(page, "1");
+  await stubSettings(page);
+  const sent: unknown[] = [];
+  await page.route(/\/api\/admin$/, (route) => { sent.push(route.request().postDataJSON()); return route.fulfill({ status: 500, json: {} }); });
+  await page.goto("/admin/settings");
+  const form = page.getByRole("form", { name: "Event settings" });
+  await form.getByLabel("Event name").fill("");
+  await form.getByLabel("Bid increment").fill("2.50");
+  await form.getByRole("button", { name: "Save settings" }).click();
+  await expect(page.locator(".error-summary")).toBeFocused();
+  await expect(form.getByLabel("Event name")).toHaveAttribute("aria-invalid", "true");
+  await expect(form.getByLabel("Bid increment")).toHaveAttribute("aria-invalid", "true");
+  await form.getByLabel("Event name").fill("Kestrel Gives 2026");
+  await form.getByLabel("Bid increment").fill("5");
+  await form.getByLabel("Bidding opens").fill("");
+  await form.getByLabel(/Giving platform address/).fill("http://example.test");
+  await form.getByRole("button", { name: "Save settings" }).click();
+  await expect(form).toContainText("Set all three dates, or leave all three empty.");
+  await expect(form).toContainText("Enter an address that starts with https://");
+  await axe(page);
+  expect(sent).toEqual([]);
+});
+
+test("Event settings: a save that keeps the phase posts at once; the toast says so and focus stays on Save", async ({ page }) => {
+  await viewAs(page, "1");
+  await stubSettings(page);
+  const sent: unknown[] = [];
+  const saved = { ...settingsValues, name: "Kestrel Gives 2026 Fall", bidIncrementCents: 1_000 };
+  await page.route(/\/api\/admin$/, (route) => {
+    sent.push(route.request().postDataJSON());
+    return route.fulfill({ json: { ok: true, message: "Event settings saved.", view: "settings", answer: settingsAnswer(saved) } });
+  });
+  await page.goto("/admin/settings");
+  const form = page.getByRole("form", { name: "Event settings" });
+  await form.getByLabel("Event name").fill("Kestrel Gives 2026 Fall");
+  await form.getByLabel("Bid increment").fill("10");
+  await form.getByRole("button", { name: "Save settings" }).click();
+  await expect(page.getByText("Event settings saved.")).toBeVisible();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  expect(sent).toEqual([{ action: "save-settings", settings: { ...settingsValues, name: "Kestrel Gives 2026 Fall", bidIncrementCents: 1_000 } }]);
+  await expect(page.getByRole("button", { name: "Save settings" })).toBeFocused();
+});
+
+test("Event settings: a close time already past asks first (danger), and Keep editing sends nothing", async ({ page }) => {
+  await viewAs(page, "1");
+  await stubSettings(page);
+  const sent: unknown[] = [];
+  await page.route(/\/api\/admin$/, (route) => {
+    sent.push(route.request().postDataJSON());
+    return route.fulfill({ json: { ok: true, message: "Event settings saved.", view: "settings", answer: settingsAnswer({ ...settingsValues, biddingCloses: "2026-11-02T21:00" }) } });
+  });
+  await page.goto("/admin/settings");
+  const form = page.getByRole("form", { name: "Event settings" });
+  await form.getByLabel("Bidding closes").fill("2026-11-02T21:00");
+  await form.getByRole("button", { name: "Save settings" }).click();
+  const dialog = page.getByRole("dialog", { name: "Save and end bidding now?" });
+  await expect(dialog).toContainText('This moves the event from "Bidding is open" to "Bidding has ended" as soon as you save.');
+  await expect(dialog).toContainText("winners are chosen");
+  await dialog.evaluate((d) => Promise.all((d as unknown as { getAnimations(o: object): { finished: Promise<unknown> }[] }).getAnimations({ subtree: true }).map((a) => a.finished)));
+  await axe(page);
+  await dialog.getByRole("button", { name: "Keep editing" }).click();
+  expect(sent).toEqual([]);
+  await form.getByRole("button", { name: "Save settings" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Save and end bidding" }).click();
+  await expect(page.getByText("Event settings saved.")).toBeVisible();
+  expect(sent).toHaveLength(1);
+  expect((sent[0] as { settings: { biddingCloses: string } }).settings.biddingCloses).toBe("2026-11-02T21:00");
+});
+
+test("Event settings: the server's problems show under their fields", async ({ page }) => {
+  await viewAs(page, "1");
+  await stubSettings(page);
+  await page.route(/\/api\/admin$/, (route) => route.fulfill({ status: 422, json: { ok: false, code: "invalid", error: "Check the highlighted fields.", problems: [{ field: "name", message: "Keep the name to 80 characters." }] } }));
+  await page.goto("/admin/settings");
+  await page.getByRole("button", { name: "Save settings" }).click();
+  await expect(page.locator(".error-summary")).toBeFocused();
+  await expect(page.getByLabel("Event name")).toHaveAccessibleDescription(/Keep the name to 80 characters\./);
+});
+
+const templateOf = (key: string, label: string, subject: string, body: string, variables: string[], isDefault = true) =>
+  ({ key, label, subject, body, variables, isDefault, updatedAt: "2026-11-01T12:00:00.000Z" });
+const outbid = templateOf("outbid", "Outbid", "You've been outbid on {{item_name}}", "Hi {{first_name}},\n\nSomeone bid {{amount}} on {{item_name}}.", ["first_name", "item_name", "amount"]);
+const winner = templateOf("winner", "Winner", "You won {{item_name}}", "Hi {{first_name}}, you won.", ["first_name", "item_name", "amount", "proof_deadline"], false);
+const templatesAnswer = (list = [outbid, winner]) => ({ ok: true, templates: list });
+
+async function stubTemplates(page: Page, list = [outbid, winner]): Promise<void> {
+  await page.route(/\/api\/admin\?view=templates$/, (route) => route.fulfill({ json: templatesAnswer(list) }));
+}
+
+test("Email templates: a card each, Default or Edited; Restore default only on edited ones", async ({ page }) => {
+  await viewAs(page, "1");
+  await stubTemplates(page);
+  await page.goto("/admin/templates");
+  await expect(page.locator(".admin-glance").first()).toHaveText("2 templates, 1 edited. This demo never sends email; the preview shows sample data in place of each variable.");
+  const outbidCard = page.getByRole("listitem").filter({ has: page.getByRole("heading", { name: "Outbid" }) });
+  await expect(outbidCard).toContainText("Default");
+  await expect(outbidCard).toContainText("When someone's bid is beaten.");
+  await expect(outbidCard).toContainText("Subject: You've been outbid on {{item_name}}");
+  await expect(outbidCard.getByRole("button", { name: /Restore default/ })).toHaveCount(0);
+  const winnerCard = page.getByRole("listitem").filter({ has: page.getByRole("heading", { name: "Winner" }) });
+  await expect(winnerCard).toContainText("Edited");
+  await expect(winnerCard.getByRole("button", { name: "Restore default (Winner)" })).toBeVisible();
+  await axe(page);
+});
+
+test("Template editor: live preview, variable errors as you type block saving, Insert variable at the cursor", async ({ page }) => {
+  await viewAs(page, "1");
+  await stubTemplates(page);
+  const sent: unknown[] = [];
+  await page.route(/\/api\/admin$/, (route) => {
+    const body = route.request().postDataJSON() as { subject: string; body: string };
+    sent.push(body);
+    return route.fulfill({ json: { ok: true, message: "Template saved.", view: "templates", answer: templatesAnswer([{ ...outbid, subject: body.subject, body: body.body, isDefault: false }, winner]) } });
+  });
+  await page.goto("/admin/templates");
+  await page.getByRole("button", { name: "Edit template (Outbid)" }).click();
+  const editor = page.getByRole("form", { name: "Edit the Outbid template" });
+  const subject = editor.getByLabel("Subject");
+  await expect(subject).toBeFocused();
+  const preview = editor.getByRole("region", { name: "Preview with sample data" });
+  await expect(preview).toContainText("You've been outbid on Lakeside Cabin Weekend");
+  await expect(preview).toContainText("Someone bid $245 on Lakeside Cabin Weekend.");
+
+  await subject.fill("Outbid on {{item_nme}}");
+  await expect(subject).toHaveAccessibleDescription("{{item_nme}} isn't a variable. Did you mean {{item_name}}?");
+  await expect(preview).toContainText("Outbid on {{item_nme}}");
+  await subject.fill("{{rejection_reason}}");
+  await expect(subject).toHaveAccessibleDescription("{{rejection_reason}} can't be used in this template.");
+  await editor.getByRole("button", { name: "Save template" }).click();
+  await expect(page.locator(".error-summary")).toBeFocused();
+  expect(sent).toEqual([]);
+  await axe(page);
+
+  // Insert variable: only this template's variables; goes in at the cursor and focus returns there.
+  await subject.fill("Outbid on ");
+  await subject.press("End");
+  await editor.getByRole("button", { name: "Insert variable" }).click();
+  const options = editor.locator(".admin-template__variables button");
+  await expect(options).toHaveText(["{{first_name}} first name", "{{item_name}} item name", "{{amount}} the bid or price"]);
+  await expect(options.first()).toBeFocused();
+  await editor.getByRole("button", { name: /\{\{item_name\}\}/ }).click();
+  await expect(subject).toHaveValue("Outbid on {{item_name}}");
+  await expect(subject).toBeFocused();
+  await expect(subject).not.toHaveAttribute("aria-invalid", /.*/);
+  await expect(editor.locator(".admin-template__variables")).toBeHidden();
+
+  await editor.getByRole("button", { name: "Save template" }).click();
+  await expect(page.getByText("Template saved.")).toBeVisible();
+  expect(sent).toEqual([{ action: "save-template", key: "outbid", subject: "Outbid on {{item_name}}", body: outbid.body }]);
+  await expect(page.locator("#template-outbid-title")).toBeFocused();
+  await expect(page.getByRole("listitem").filter({ has: page.getByRole("heading", { name: "Outbid" }) })).toContainText("Edited");
+});
+
+test("Template editor: Escape closes the variable menu; Discard changes puts focus back on Edit", async ({ page }) => {
+  await viewAs(page, "1");
+  await stubTemplates(page);
+  await page.goto("/admin/templates");
+  await page.getByRole("button", { name: "Edit template (Outbid)" }).click();
+  const editor = page.getByRole("form", { name: "Edit the Outbid template" });
+  await editor.getByLabel("Body").fill("Changed");
+  const toggle = editor.getByRole("button", { name: "Insert variable" });
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  await page.keyboard.press("Escape");
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await expect(toggle).toBeFocused();
+  await editor.getByRole("button", { name: "Discard changes (Outbid)" }).click();
+  await expect(editor).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Edit template (Outbid)" })).toBeFocused();
+});
+
+test("Restore default asks first, then posts and redraws", async ({ page }) => {
+  await viewAs(page, "1");
+  await stubTemplates(page);
+  const sent: unknown[] = [];
+  await page.route(/\/api\/admin$/, (route) => {
+    sent.push(route.request().postDataJSON());
+    return route.fulfill({ json: { ok: true, message: "Template restored to its default.", view: "templates", answer: templatesAnswer([outbid, { ...winner, isDefault: true }]) } });
+  });
+  await page.goto("/admin/templates");
+  await page.getByRole("button", { name: "Restore default (Winner)" }).click();
+  const dialog = page.getByRole("dialog", { name: "Restore the default Winner template?" });
+  await expect(dialog).toContainText("This can't be undone.");
+  await dialog.getByRole("button", { name: "Keep my version" }).click();
+  expect(sent).toEqual([]);
+  await page.getByRole("button", { name: "Restore default (Winner)" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Restore default" }).click();
+  await expect(page.getByText("Template restored to its default.")).toBeVisible();
+  expect(sent).toEqual([{ action: "restore-template", key: "winner" }]);
+  await expect(page.locator("#template-winner-title")).toBeFocused();
+  await expect(page.getByRole("button", { name: /Restore default/ })).toHaveCount(0);
+});

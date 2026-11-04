@@ -138,3 +138,41 @@
   .admin-purchases .admin-purchase__price { display: none; } /* the price joins the caption under the name */
   .admin-bids .avatar { display: none; } /* the Top bid pill names the leader; the avatar would push Remove off screen */
 }
+
+/* Event settings (DESIGN-SYSTEM.md › Settings form): one form in a card, the regular field
+   pattern. The three dates sit in a row that wraps; Save is the only primary button. */
+.admin-settings { display: grid; gap: var(--space-5); max-width: calc(var(--space-16) * 12); padding: var(--space-5); }
+.admin-settings__group { gap: var(--space-3); }
+.admin-settings__group > legend { margin-bottom: var(--space-2); }
+.admin-settings__group .field-row > .field { flex-basis: calc(var(--space-16) * 3.5); }
+.admin-settings__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.admin-settings .input-group .input--short { flex: 0 1 auto; }
+
+/* Email templates (DESIGN-SYSTEM.md › Template editor): a card per template; Edit opens the
+   editor in place, with the live preview beside the fields on wide screens, under them on phones. */
+.admin-template { display: grid; gap: var(--space-3); padding: var(--space-4); }
+.admin-template__subject { margin: 0; font: var(--type-body); color: var(--color-text); overflow-wrap: anywhere; }
+.admin-template__subject-label { font-weight: var(--weight-semibold); }
+.admin-template__editor { display: grid; gap: var(--space-4); padding-top: var(--space-4); border-top: var(--border-thin) solid var(--color-border); }
+@media (min-width: 64rem) {
+  .admin-template__editor { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+  .admin-template__actions { grid-column: 1 / -1; }
+}
+.admin-template__fields { display: grid; gap: var(--space-4); min-width: 0; }
+.admin-template__body { min-height: calc(var(--size-target) * 6); font-variant-ligatures: none; }
+.admin-template__insert { display: grid; justify-items: start; gap: var(--space-2); }
+.admin-template__variables {
+  display: grid; gap: var(--space-1); margin: 0; padding: var(--space-2); list-style: none;
+  border: var(--border-thin) solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface);
+}
+.admin-template__variable { justify-content: flex-start; width: 100%; text-align: left; }
+.admin-template__variable code { font: inherit; font-weight: var(--weight-semibold); }
+.admin-template__variable-text { font-weight: var(--weight-regular); color: var(--color-text-muted); }
+.admin-template__preview {
+  display: grid; gap: var(--space-2); min-width: 0; padding: var(--space-4);
+  border-radius: var(--radius-md); background: var(--color-surface-muted);
+}
+.admin-template__preview-title { margin: 0; font: var(--type-label); color: var(--color-text-muted); }
+.admin-template__preview-subject { margin: 0; font: var(--type-body); font-weight: var(--weight-semibold); color: var(--color-text); overflow-wrap: anywhere; }
+.admin-template__preview-body { margin: 0; font: var(--type-body); color: var(--color-text); white-space: pre-wrap; overflow-wrap: anywhere; }
+.admin-template__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
