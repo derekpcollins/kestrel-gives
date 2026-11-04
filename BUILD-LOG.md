@@ -846,7 +846,7 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   - After the Reset: the app state showed Kestrel Gives 2027, Not scheduled yet, `demoReset` true, no items. Restore brought back the seed.
   - Function logs: 4 info, 0 errors (`.review/m6-6f/preview-checks.txt`).
 
-### 2026-11-04 — Milestone 6 live (09:05 – 09:20 EST)
+### 2026-11-04 — Milestone 6 live (09:05 – 09:10 EST)
 - **Owner stepped in:** approved Milestone 6 and the push to main.
 - **Pushed:** `main` fast-forwarded `7947840..199d40e`: 16 commits, 6A–6F, their review changes, the M5-close entry (`e00312c`), BUILD-LOG and DECISIONS #106–#119. Deployment `kestrel-gives-dt7b45j0k`, production, Ready. No new migrations (schema 007).
 - **Build log:** unit tests 307 pass, 0 fail. `deploy-db: production build; DATABASE_URL_UNPOOLED confirmed as the main branch (direct connection).`, `Up to date.`, `deploy-db: an event exists; not seeding.`, `deploy-db: step m3-land-live-demo already ran; skipped.` No error lines; only Vercel's known `npm warn Unknown env config "cache-dir"`.
@@ -858,6 +858,6 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   - Each section's loading line was gone once it loaded. No page errors.
 - **Found for Milestone 7:** the site footer reads "Kestrel is a fictional organization, and this is a demo." SPEC §2 requires "Kestrel is a fictional organization. Demo only." It's in the Milestone 7 plan.
 
-**Milestone 6 ended:** 2026-11-04 09:20 EST · about 15 hours 25 minutes from the plan approval (2026-11-03 17:54 EST), overnight included.
+**Milestone 6 ended:** 2026-11-04 09:10 EST · about 15 hours 15 minutes from the plan approval (2026-11-03 17:54 EST), overnight included.
 
 ## Milestone 7: Polish and ship
