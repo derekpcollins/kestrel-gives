@@ -48,6 +48,8 @@ describe("quick check map", () => {
     assert.ok(re.test("admin-items reflows at 320px"));
     assert.ok(!re.test("admin has no accessibility violations"));
     assert.ok(!re.test("home page loads"));
+    assert.ok(re.test("a11y.spec.ts home has no accessibility violations"), "Playwright matches the title path, file first");
+    assert.ok(!re.test("a11y.spec.ts my-home has no accessibility violations"));
   });
 
   test("every test file and screen the map names exists", () => {

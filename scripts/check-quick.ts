@@ -4,6 +4,7 @@
 // main (committed, staged, unstaged and untracked), one after the other, never at once.
 // Prints what it will run and why first, and a summary at the end. Stops at the first failure.
 //   --base <ref>   compare with another ref (default origin/main, as last fetched; main if there's no remote)
+//   --files a,b    plan from these files instead of git (to see what a change would run)
 //   --dry-run      print the plan and stop
 import { execFileSync, spawnSync } from "node:child_process";
 import { quickPlan, screenGrep } from "./quick-map.ts";
@@ -14,11 +15,9 @@ const base = args.includes("--base") ? args[args.indexOf("--base") + 1]! : hasRe
 const dryRun = args.includes("--dry-run");
 
 const git = (...a: string[]) => execFileSync("git", a, { encoding: "utf8" }).split("\n").filter(Boolean);
-const changed = [
-  ...git("diff", "--name-only", `${base}...HEAD`),
-  ...git("diff", "--name-only", "HEAD"),
-  ...git("ls-files", "--others", "--exclude-standard"),
-];
+const changed = args.includes("--files")
+  ? args[args.indexOf("--files") + 1]!.split(",").filter(Boolean)
+  : [...git("diff", "--name-only", `${base}...HEAD`), ...git("diff", "--name-only", "HEAD"), ...git("ls-files", "--others", "--exclude-standard")];
 const plan = quickPlan(changed);
 
 interface Step { label: string; command: string[]; env?: Record<string, string> }
@@ -41,7 +40,7 @@ if (plan.everything) {
   }
 }
 
-console.log(`check:quick against ${base}: ${changed.length ? `${new Set(changed).size} changed file(s)` : "no changed files"}`);
+console.log(`check:quick ${args.includes("--files") ? "for the files given" : `against ${base}`}: ${changed.length ? `${new Set(changed).size} changed file(s)` : "no changed files"}`);
 // Grouped by reason, so a long list stays readable.
 const groups = new Map<string, string[]>();
 for (const line of plan.why) {

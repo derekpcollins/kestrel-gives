@@ -138,7 +138,11 @@ export function quickPlan(changed: readonly string[]): Plan {
   return { everything, db: [...db].sort(), specs: [...specs].sort(), screens: [...screens].sort(), why };
 }
 
-/** Playwright's --grep for the axe and reflow tests of these screens (their titles start with the name). */
+/**
+ * Playwright's --grep for the axe and reflow tests of these screens. Their titles start with the
+ * screen's name; Playwright matches against the whole title path (file name first), so the name
+ * follows a space or the start, never another letter or hyphen.
+ */
 export function screenGrep(screens: readonly string[]): string {
-  return `^(${screens.map((s) => s.replace(/[-]/g, "\\-")).join("|")}) (has no accessibility violations|reflows at 320px)$`;
+  return `(^| )(${screens.map((s) => s.replace(/[-]/g, "\\-")).join("|")}) (has no accessibility violations|reflows at 320px)$`;
 }
