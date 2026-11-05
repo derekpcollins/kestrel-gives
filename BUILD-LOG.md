@@ -948,3 +948,15 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 - **Build log:** unit tests 320 pass, 0 fail. `deploy-db: production build; DATABASE_URL_UNPOOLED confirmed as the main branch (direct connection).`, `Up to date.`, `deploy-db: an event exists; not seeding.`, `deploy-db: step m3-land-live-demo already ran; skipped.`, `deploy-db: step m7-charity-logos: pointed 3 of 3 charities at their own logos.` No error lines; only the known `cache-dir` warning.
 - **Health:** `{"ok":true,"db":"main","schema":"008","seedPhotos":true}` on both domains.
 - **Live pages:** view-only as Jules, Home and `/giving` at 390 and 1280, light and dark (8 views): all three logos loaded at 320px from `/brand/charities/`, `alt=""`, every logo response 200, no 4xx or 5xx, no non-GET requests (`.review/m7-7b-prod/`).
+
+## After Milestone 7: faster checks
+
+### 2026-11-05 — Check speed (11:55 – 13:25 EST)
+- **Owner stepped in:** approved the plan (2026-11-04): two levels, A (savepoints, keeping the concurrency suites reseeding), B (visual once per state), D measured only, C not now.
+- **Built:** `npm run check:quick` with a tested file-to-test map (`scripts/quick-map.ts`; shared or unmapped files run everything), SPEC v1.23 §12–§13, DECISIONS #132–#135. `tests/db/seeded-once.ts` for the four rolled-back suites. `visual.spec.ts` sets each state once and shoots the four views side by side, same 292 files.
+- **Caught or hard:**
+  - The first after-run failed once: `demo-jump.spec.ts` assumed its Restore was still inside the 10-second cooldown when it confirmed. With visual now in one project, it ran first against a cold dev server and the page took longer than 10 s. It restores again right before confirming now.
+  - Playwright's `--grep` matches the whole title path (file name first), so the quick check's screen filter found nothing until its `^` anchor became a space boundary.
+  - My first worker-measurement script put `npx` before an environment assignment and measured nothing; rerun.
+  - Rolled-back tests that take an advisory lock on their one connection stay on savepoints, so the lock lasts until the suite ends; recorded for the owner (DECISIONS #133).
+- **Tests:** full check before 38.1 min, after 20.6 min (DB 588 → 274 s, visual 21.7 → 9.5 min, a11y and reflow unchanged), exit 0: unit 327, DB 121, a11y and keyboard 299, reflow 22, visual 8. Workers 5 vs 8: 356–361 s vs 336–337 s, left at 5. An admin-area quick check: 217 s. `.review/check-speed/results.md`.
