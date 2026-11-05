@@ -931,3 +931,20 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 - **Health:** `{"ok":true,"db":"main","schema":"008","seedPhotos":true}` on both domains.
 - **Live pages:** a view-only look as Jules at 1280 and 390: `/guide` 200 with six scenarios and six Set me up buttons (not pressed); the strip link at 1280, not at 390; Home's "New here?" line and the footer link on both. No page or API errors; the browser aborted anything but GET, and nothing else was attempted (`.review/guide-prod/`).
 - **Found:** production was in Submissions open with no bids. A visitor had used the clearing jump, which is what it's for. Left alone: no writes on production from my side; the daily cron restores it.
+
+### 2026-11-04 — Stage 7B: the charity logos (16:35 – 17:40 EST)
+- **Owner stepped in:** defined "unmodified" for the logos (no redrawing, recoloring or tracing; resizing and compressing allowed), asked for the 1254px originals to stay in `design/source/charities/` with 2x copies served from `public/brand/charities/`, and for stacked cards (logo big on top, then name, then description; light tile in dark mode; decorative alt). Chose the one-off deploy step to fix production's logo paths, with its log line in the build output.
+- **Built:** 320px copies (2x the 160px shown) made with macOS `sips`, the tool the seed photos already use; PNG with transparency, 67–93 KB each. Each charity's `logo_path` is its own file, so the seed and Restore write them. The placeholder logo, `PLACEHOLDER_LOGO` and `logoAlt()` are gone. Deploy step `m7-charity-logos`: production builds only, runs once, updates the three logo paths by name and nothing else. SPEC v1.22, DECISIONS #130–#131 (#131: no Figma page for the Guide), DESIGN-SYSTEM Charity card.
+- **Caught or hard:**
+  - Production was seeded with the placeholder path and a deploy doesn't reseed, so without the step it would have shown broken images until the nightly Restore.
+  - In forced colors the tile's white would turn into the system background, and the logos' dark lettering would vanish on a dark one; the tile keeps its white there.
+  - The logos load lazily, so the Home test scrolls each into view before checking it loaded at 320px.
+- **Tests:** full check 16:50–17:28, exit 0: unit 320, DB 121, a11y and keyboard 299, reflow 22, visual 26. Then a Restore assertion (logo paths come back from a placeholder) and the demo DB file rerun alone, 10/10. `npm audit`: only the accepted advisory.
+- **Preview:** kestrel-gives-6fr21kj3i: `/api/app` gives the three `/brand/charities/` URLs, each file 200 image/png, the old placeholder 404, deploy-db "skipped, not a production build" (`.review/m7-7b/`).
+
+### 2026-11-05 — 7B live (11:37 – 11:55 EST)
+- **Owner stepped in:** approved 7B and the push; asked for the deploy-db lines (stop unless 3 of 3), health, a view-only look at Home and /giving, then the check-speed work.
+- **Pushed:** `main` fast-forwarded `dbc3acb..e9a081f` (includes the tour-live log entry). Deployment `kestrel-gives-kytdglvmm`, production, Ready.
+- **Build log:** unit tests 320 pass, 0 fail. `deploy-db: production build; DATABASE_URL_UNPOOLED confirmed as the main branch (direct connection).`, `Up to date.`, `deploy-db: an event exists; not seeding.`, `deploy-db: step m3-land-live-demo already ran; skipped.`, `deploy-db: step m7-charity-logos: pointed 3 of 3 charities at their own logos.` No error lines; only the known `cache-dir` warning.
+- **Health:** `{"ok":true,"db":"main","schema":"008","seedPhotos":true}` on both domains.
+- **Live pages:** view-only as Jules, Home and `/giving` at 390 and 1280, light and dark (8 views): all three logos loaded at 320px from `/brand/charities/`, `alt=""`, every logo response 200, no 4xx or 5xx, no non-GET requests (`.review/m7-7b-prod/`).
