@@ -1,6 +1,6 @@
 # Kestrel Gives — Build Spec & Conformance Rules
 
-**Status:** v1.22 · Owner: Derek Collins · Last updated: Nov 4, 2026
+**Status:** v1.23 · Owner: Derek Collins · Last updated: Nov 5, 2026
 
 This document describes what to build and the rules every contribution must follow, whether a person or an AI agent writes it. Read it in full before writing any code. If something here conflicts with a request, stop and ask.
 
@@ -304,7 +304,13 @@ The agent proposes the final schema in Milestone 2. Expected tables: `events`, `
 
 ## 12. Conformance checks
 
-These run before any change counts as done. Each is a script in `package.json`.
+These run before any change counts as done. Each is a script in `package.json`. They run at two levels (v1.23):
+
+- **Quick check** (`npm run check:quick`), required at every stage checkpoint: the dependency allowlist, no seed images, the token check, the type check and the unit tests, all of them; plus the database tests and browser tests for the areas the stage changed. A script maps the files changed against `main` to test files: for example, the admin pages, `lib/data/admin*` and `api/admin.ts` map to the admin database tests, the admin browser spec, and the axe and reflow checks for the admin screens. Shared code (the shell, shared components, tokens and base CSS, the core of the data layer, the seed, migrations, configs and shared test helpers) runs everything, and so does any file the map doesn't know. A changed test file runs itself. The quick check prints what it ran and why, and still runs database tests and browser tests one after the other.
+- **Full check** (`npm run check`): every check below, on every screen and state. Required before any push to `main`, at the end of every milestone, and at the checkpoint of any stage that changes the schema, the seed, or the demo controls.
+
+The checkpoint says which level ran.
+
 
 1. **Dependency allowlist:** `package.json` contains only the packages in section 4.
 2. **Token check:** a short Node script (no dependencies) finds raw color, size, or spacing values outside `public/styles/tokens.css`. The only exceptions are the named breakpoint values, and only inside `@media` or `@container` conditions. It also flags `--text-*` scale steps used outside `tokens.css` (use a `--type-*` role), and confirms every color token in that file has a light and a dark value, written `light-dark(<light>, <dark>)`.
@@ -317,7 +323,7 @@ These run before any change counts as done. Each is a script in `package.json`.
 
 ## 13. How the agent works
 
-- **Work in stages with checkpoints.** Each milestone is broken into small stages. Each stage ends at a checkpoint: stop, show something running (a URL or screenshots) with all conformance checks passing, and wait for the owner's go before continuing. No stage should be big enough to waste much work if it's off track.
+- **Work in stages with checkpoints.** Each milestone is broken into small stages. Each stage ends at a checkpoint: stop, show something running (a URL or screenshots) with the quick check passing (the full check where section 12 requires it), and wait for the owner's go before continuing. The full check runs before any push to `main`. No stage should be big enough to waste much work if it's off track.
 - Propose before building. For each milestone, share the plan (data model, screens, files) and wait for approval.
 - Ask when something is ambiguous. Don't guess.
 - Log every significant decision in `DECISIONS.md`: date, decision, options considered, why.

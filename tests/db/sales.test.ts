@@ -2,7 +2,7 @@
 // Most tests run in a transaction that is rolled back. The simultaneous-request tests must
 // commit, so they reseed dev afterwards, leaving it as `db:seed` would.
 import assert from "node:assert/strict";
-import { after, afterEach, before, beforeEach, describe, test } from "node:test";
+import { after, before, describe, test } from "node:test";
 import { Pool, type PoolClient } from "@neondatabase/serverless";
 import { databaseUrl } from "../../scripts/db-target.ts";
 import { directUrl } from "../../scripts/migrate-lib.ts";
@@ -11,6 +11,7 @@ import { withTransaction, type Tx } from "../../lib/data/db.ts";
 import { listItemsIn } from "../../lib/data/items.ts";
 import { buyIn, placeBidIn } from "../../lib/data/sales.ts";
 import { seedIn } from "../../lib/seed/seed.ts";
+import { seededOnce } from "./seeded-once.ts";
 
 let pool: Pool;
 let db: PoolClient;
@@ -30,15 +31,8 @@ const eventId = async (tx: Tx) => (await one<{ id: string }>(tx, `SELECT id FROM
 const refusal = (o: { ok: boolean; refusal?: { code: string } }) => (o.ok ? "ok" : o.refusal!.code);
 
 describe("bidding and buying (rolled back)", () => {
-  beforeEach(async () => {
-    db = await pool.connect();
-    await db.query("BEGIN");
-    await seedIn(db, new Date());
-  });
-  afterEach(async () => {
-    await db.query("ROLLBACK");
-    db.release();
-  });
+  // Seeded once; each test rolls back to a savepoint (DECISIONS entry 133).
+  seededOnce(() => pool, (c) => { db = c; });
 
   test("first bid at the starting bid, then high bid + increment; the high bidder can't bid again", async () => {
     const portrait = await item(db, "Custom pet portrait"); // starts at $40, no bids

@@ -7,7 +7,12 @@
 // cross-product. Each state test sets its own state (Restore, then Jump to or a real Reset as
 // Maya) and Restore runs after the last, so the tests share the one dev database and must run
 // one at a time: `npm run check:visual` passes --workers=1.
-import { test, type APIRequestContext, type Page } from "@playwright/test";
+//
+// Each state is set once and shot in all four views from it (owner, check-speed plan B;
+// DECISIONS entry 134): the tests run in one project, open a browser context per view (the
+// config's light and dark projects at 390 and 1280), and shoot a screen in the four at once.
+// The files are named after those projects, as before.
+import { test, type APIRequestContext, type Browser, type BrowserContext, type FullProject, type Page } from "@playwright/test";
 import { SCREENS, viewAs, type Screen } from "./screens.ts";
 
 type State = "live" | "submission" | "ending-soon" | "ended" | "after" | "reset";
@@ -57,6 +62,27 @@ async function setState(request: APIRequestContext, state: State): Promise<void>
   if (!reset.ok()) throw new Error(`Reset answered ${reset.status()}`);
 }
 
+/** The views: every light or dark project in the config (not the 320px reflow one). */
+const views = (projects: readonly FullProject[]) => projects.filter((p) => p.use.colorScheme && p.use.viewport);
+
+/** A context per view, with the HTTP cache off (see the route below), closed after `run`. */
+async function inEveryView(browser: Browser, projects: readonly FullProject[], baseURL: string | undefined, run: (page: Page, view: string) => Promise<void>): Promise<void> {
+  const opened: BrowserContext[] = [];
+  try {
+    await Promise.all(views(projects).map(async (p) => {
+      const { colorScheme, viewport, userAgent, deviceScaleFactor, isMobile, hasTouch } = p.use;
+      const context = await browser.newContext({ colorScheme, viewport, userAgent, deviceScaleFactor, isMobile, hasTouch, baseURL: baseURL ?? p.use.baseURL });
+      opened.push(context);
+      // vercel dev leaks an open file on every 304 answer; routing turns off the browser's cache
+      // so each file comes back 200 and nothing leaks (DECISIONS entry 122).
+      await context.route("**/*", (route) => route.continue());
+      await run(await context.newPage(), p.name);
+    }));
+  } finally {
+    await Promise.all(opened.map((c) => c.close()));
+  }
+}
+
 async function shoot(page: Page, s: Screen, file: string, baseURL: string | undefined): Promise<void> {
   await page.context().clearCookies();
   await viewAs(page, s, baseURL);
@@ -80,28 +106,29 @@ async function shoot(page: Page, s: Screen, file: string, baseURL: string | unde
 
 test.describe.configure({ mode: "serial" });
 
-// vercel dev leaks an open file on every 304 answer, and a browser revalidates each script,
-// stylesheet and image on every page load, so this run's ~170 loads reached its open-file limit
-// and every function call then failed ("spawn EBADF", 502). Routing the page's requests turns off
-// the browser's HTTP cache, so each file comes back 200 and nothing leaks (DECISIONS entry 122).
-test.beforeEach(async ({ page }) => {
-  await page.route("**/*", (route) => route.continue());
+// One project runs the states; it shoots every view itself.
+const RUNS_HERE = "light-1280";
+test.beforeEach(({}, info) => test.skip(info.project.name !== RUNS_HERE, "this project's run shoots all four views"));
+
+test.afterAll(async ({ request }, info) => {
+  if (info.project.name === RUNS_HERE) await restore(request);
 });
 
-test.afterAll(async ({ request }) => {
-  await restore(request);
-});
+/** Each screen in the four views at once; the next screen once all four are done. */
+async function shootAll(browser: Browser, projects: readonly FullProject[], screens: readonly Screen[], folder: string, baseURL: string | undefined): Promise<void> {
+  for (const s of screens) await inEveryView(browser, projects, baseURL, (page, view) => shoot(page, s, `${folder}${s.name}-${view}.png`, baseURL));
+}
 
-test("every screen, as seeded (live)", async ({ page, request, baseURL }, testInfo) => {
-  test.setTimeout(240_000);
+test("every screen, as seeded (live)", async ({ browser, request, baseURL }, testInfo) => {
+  test.setTimeout(300_000);
   await setState(request, "live");
-  for (const s of SCREENS) await shoot(page, s, `visual-review/${s.name}-${testInfo.project.name}.png`, baseURL);
+  await shootAll(browser, testInfo.config.projects, SCREENS, "visual-review/", baseURL);
 });
 
 for (const [state, screens] of Object.entries(STATES) as [Exclude<State, "live">, readonly Screen[]][]) {
-  test(`${state}: the screens it changes`, async ({ page, request, baseURL }, testInfo) => {
-    test.setTimeout(180_000);
+  test(`${state}: the screens it changes`, async ({ browser, request, baseURL }, testInfo) => {
+    test.setTimeout(240_000);
     await setState(request, state);
-    for (const s of screens) await shoot(page, s, `visual-review/${state}/${s.name}-${testInfo.project.name}.png`, baseURL);
+    await shootAll(browser, testInfo.config.projects, screens, `visual-review/${state}/`, baseURL);
   });
 }

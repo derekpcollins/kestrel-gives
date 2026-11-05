@@ -85,7 +85,7 @@ On the deployed site, uploads go to one public Vercel Blob store under a per-env
 
 ## Checks
 
-Every change must pass the eight conformance checks in SPEC.md section 12. `npm run check` runs them all, one after the other: the database and browser checks share the `dev` database, so they never run at the same time.
+Every change must pass the eight conformance checks in SPEC.md section 12. `npm run check` runs them all, one after the other: the database and browser checks share the `dev` database, so they never run at the same time. That full check is for pushes to `main`, milestone ends, and stages that change the schema, the seed or the demo controls. At other stage checkpoints, `npm run check:quick` runs the fast checks plus the database and browser tests mapped from the files changed against `main` (`scripts/quick-map.ts`), and prints what it ran and why; `--dry-run` prints the plan only (SPEC §12, v1.23).
 
 | Script | Check |
 |---|---|
@@ -94,10 +94,10 @@ Every change must pass the eight conformance checks in SPEC.md section 12. `npm 
 | `npm run check:tokens` | No raw colors or lengths in `public/` or `src/` outside `public/styles/tokens.css` (except the two named breakpoints, inside `@media`/`@container` conditions); type set with `--type-*` roles, not `--text-*` steps; every color token has a light and a dark value |
 | `npm run check:types` | `tsc --noEmit` for server and browser code |
 | `npm run test:rules` | `node:test` unit tests of the rules in SPEC §7 and the pure code around them |
-| `npm run test:db` | `node:test` against real Postgres on the `dev` branch: simultaneous bids and purchases, phases, proofs, admin actions, Restore and Reset. Most run in a transaction that's rolled back |
+| `npm run test:db` | `node:test` against real Postgres on the `dev` branch: simultaneous bids and purchases, phases, proofs, admin actions, Restore and Reset. Most suites seed once in a transaction and roll each test back to a savepoint; the simultaneous ones commit and reseed |
 | `npm run check:a11y` | axe (WCAG 2.2 AA) on every screen in `tests/e2e/screens.ts`, light and dark, at 390px and 1280px; zero violations allowed |
 | `npm run check:reflow` | Every screen at 320px wide: no sideways scrolling and nothing cut off (WCAG 2.2 reflow); scroll regions and ellipsis truncation allowed |
-| `npm run check:visual` | Full-page screenshots of every screen as seeded, then of each other phase and the "just reset" state on the screens it changes, light and dark, at 390px and 1280px, with `?demo=off`, saved to `visual-review/` for a person to review. Runs one test at a time, since each sets the shared dev database's phase. It also runs `demo-jump.spec.ts`, which clears the demo's activity through the demo bar |
+| `npm run check:visual` | Full-page screenshots of every screen as seeded, then of each other phase and the "just reset" state on the screens it changes, light and dark, at 390px and 1280px, with `?demo=off`, saved to `visual-review/` for a person to review. Runs one test at a time, since each sets the shared dev database's phase; each state is set once and shot in all four views side by side. It also runs `demo-jump.spec.ts`, which clears the demo's activity through the demo bar |
 
 The browser checks start `npm start` themselves (or reuse one that's running) and reseed the `dev` database first. One-time setup for them:
 

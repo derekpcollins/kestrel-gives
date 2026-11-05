@@ -2,7 +2,7 @@
 // DECISIONS #91–#95). Most tests run in a transaction that is rolled back. The simultaneous
 // tests must commit, so they reseed dev and empty the upload log afterwards.
 import assert from "node:assert/strict";
-import { after, afterEach, before, beforeEach, describe, test } from "node:test";
+import { after, before, describe, test } from "node:test";
 import { Pool, type PoolClient } from "@neondatabase/serverless";
 import { databaseUrl } from "../../scripts/db-target.ts";
 import { directUrl } from "../../scripts/migrate-lib.ts";
@@ -20,6 +20,7 @@ import { jumpIn } from "../../lib/demo/jump.ts";
 import { tryRestore, tryRestoreIn } from "../../lib/demo/restore.ts";
 import type { Storage } from "../../lib/storage/index.ts";
 import { seedIn } from "../../lib/seed/seed.ts";
+import { seededOnce } from "./seeded-once.ts";
 import { UPLOAD_CAPS, UPLOAD_MESSAGES } from "../../src/components/upload-rules.ts";
 
 let pool: Pool;
@@ -52,17 +53,9 @@ const why = (o: { ok: boolean; kind?: string; refusal?: { code: string }; proble
 const auction = (photos: ItemWrite["photos"]): ItemWrite => ({ type: "auction", title: "Pottery wheel lesson", description: "An hour at the wheel.", startingBidCents: 2_000, photos });
 
 describe("employee flows (rolled back)", () => {
-  beforeEach(async () => {
-    db = await pool.connect();
-    await db.query("BEGIN");
-    await seedIn(db, new Date());
-    // The log is shared by everything on dev; start each test from an empty day.
-    await db.query(`DELETE FROM upload_log`);
-  });
-  afterEach(async () => {
-    await db.query("ROLLBACK");
-    db.release();
-  });
+  // Seeded once; each test rolls back to a savepoint (DECISIONS entry 133). The upload log is
+  // shared by everything on dev, so each test starts from an empty day.
+  seededOnce(() => pool, (c) => { db = c; }, { each: async (c) => { await c.query(`DELETE FROM upload_log`); } });
 
   describe("uploads and the daily caps (#92)", () => {
     test("a reserved upload gets a row and a pathname under its prefix and folder", async () => {

@@ -2,7 +2,7 @@
 // tests run in a transaction that is rolled back. The concurrency tests must commit, so they
 // reseed dev afterwards, leaving it as `db:seed` would.
 import assert from "node:assert/strict";
-import { after, afterEach, before, beforeEach, describe, test } from "node:test";
+import { after, before, describe, test } from "node:test";
 import { Pool, type PoolClient } from "@neondatabase/serverless";
 import { databaseUrl } from "../../scripts/db-target.ts";
 import { directUrl } from "../../scripts/migrate-lib.ts";
@@ -14,6 +14,7 @@ import { JUMP_TARGETS, jumpIn, tryJumpIn } from "../../lib/demo/jump.ts";
 import { RESTORE_COOLDOWN_SECONDS, cooldownLeftIn, restoreIn, tryDemoLockIn, tryRestoreIn } from "../../lib/demo/restore.ts";
 import { CHARITIES } from "../../lib/seed/data.ts";
 import { seedIn } from "../../lib/seed/seed.ts";
+import { seededOnce } from "./seeded-once.ts";
 
 let pool: Pool;
 let db: PoolClient;
@@ -33,15 +34,8 @@ const eventRow = async () =>
   )).rows[0]!;
 
 describe("demo controls (rolled back)", () => {
-  beforeEach(async () => {
-    db = await pool.connect();
-    await db.query("BEGIN");
-    await seedIn(db, new Date());
-  });
-  afterEach(async () => {
-    await db.query("ROLLBACK");
-    db.release();
-  });
+  // Seeded once; each test rolls back to a savepoint (DECISIONS entry 133).
+  seededOnce(() => pool, (c) => { db = c; });
 
   test("each jump lands in its phase by the real clock", async () => {
     const expected = { submission: "submission", live: "live", "ending-soon": "live", ended: "ended", after: "ended" } as const;

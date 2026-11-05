@@ -1,8 +1,8 @@
 // The Admin Dashboard's data layer against real Postgres on dev (SPEC §7.1, §7.3–7.8, §8;
-// DECISIONS #107–#111). Each test reseeds inside a transaction that is rolled back. Totals are
+// DECISIONS #107–#111). Seeded once per suite; each test rolls back to a savepoint. Totals are
 // checked against independent SQL and against each person's donationTotalIn.
 import assert from "node:assert/strict";
-import { after, afterEach, before, beforeEach, describe, test } from "node:test";
+import { after, before, describe, test } from "node:test";
 import { Pool, type PoolClient } from "@neondatabase/serverless";
 import { databaseUrl } from "../../scripts/db-target.ts";
 import { directUrl } from "../../scripts/migrate-lib.ts";
@@ -20,6 +20,7 @@ import { reserveUploadIn } from "../../lib/data/uploads.ts";
 import { jumpIn } from "../../lib/demo/jump.ts";
 import { restoreIn } from "../../lib/demo/restore.ts";
 import { seedIn } from "../../lib/seed/seed.ts";
+import { seededOnce } from "./seeded-once.ts";
 import { withTransaction } from "../../lib/data/db.ts";
 import { phaseFor } from "../../src/pages/admin-settings-rules.ts";
 import { TEMPLATE_DEFAULTS } from "../../lib/email-templates.ts";
@@ -68,16 +69,12 @@ async function everyonesTotal(tx: Tx): Promise<number> {
 describe("admin (rolled back)", () => {
   let maya: string;
   let theo: string;
-  beforeEach(async () => {
-    db = await pool.connect();
-    await db.query("BEGIN");
-    await seedIn(db, new Date());
-    maya = await userId(db, "Maya");
-    theo = await userId(db, "Theo");
-  });
-  afterEach(async () => {
-    await db.query("ROLLBACK");
-    db.release();
+  // Seeded once; each test rolls back to a savepoint (DECISIONS entry 133).
+  seededOnce(() => pool, (c) => { db = c; }, {
+    ready: async (c) => {
+      maya = await userId(c, "Maya");
+      theo = await userId(c, "Theo");
+    },
   });
 
   describe("totals (DECISIONS #107)", () => {
