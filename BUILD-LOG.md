@@ -960,3 +960,10 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
   - My first worker-measurement script put `npx` before an environment assignment and measured nothing; rerun.
   - Rolled-back tests that take an advisory lock on their one connection stay on savepoints, so the lock lasts until the suite ends; recorded for the owner (DECISIONS #133).
 - **Tests:** full check before 38.1 min, after 20.6 min (DB 588 → 274 s, visual 21.7 → 9.5 min, a11y and reflow unchanged), exit 0: unit 327, DB 121, a11y and keyboard 299, reflow 22, visual 8. Workers 5 vs 8: 356–361 s vs 336–337 s, left at 5. An admin-area quick check: 217 s. `.review/check-speed/results.md`.
+
+### 2026-11-05 — Check speed live (13:25 – 13:50 EST)
+- **Owner stepped in:** approved check-speed, including savepoints for the single-connection lock tests, on condition that any test asserting a lock is released or using a second connection moves to the reseeding group. None did (all 69 savepoint tests and their helpers checked; DECISIONS #133 notes it). From now on: `check:quick` at stage checkpoints, the full check before any push to `main`.
+- **Pushed:** `main` fast-forwarded `e9a081f..661d1d7` (check speed plus the 7B log entries). The last full check passed on `45146fc`; after it only docs and the quick-check tool changed, and the fast checks and 327 unit tests were rerun on the final code.
+- **Caught or hard:** Vercel had an open incident ("Build delays and degraded Vercel Dashboard performance", from 13:25 EST), and the build started about 10 minutes late. Waited rather than re-triggering; production stayed on the 7B deploy meanwhile.
+- **Build log:** deployment `kestrel-gives-8o1qlyhqd`, Ready. Unit tests 327 pass, 0 fail. `deploy-db: production build; DATABASE_URL_UNPOOLED confirmed as the main branch (direct connection).`, `Up to date.`, `deploy-db: an event exists; not seeding.`, `deploy-db: step m3-land-live-demo already ran; skipped.`, `deploy-db: step m7-charity-logos already ran; skipped.` No error lines; only the known `cache-dir` warning.
+- **Health:** `{"ok":true,"db":"main","schema":"008","seedPhotos":true}` on both domains.
