@@ -50,7 +50,10 @@ test("Submissions open: the dialog says what goes, then bids, purchases and proo
   await bar.getByRole("button", { name: "Submissions open", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Open submissions and clear activity?" });
   const confirm = dialog.getByRole("button", { name: "Clear and open submissions" });
-  // Restore just ran, so the shared cooldown answers first; the dialog says why and stays open.
+  // Restore again right before confirming, so the shared cooldown answers first however long the
+  // page took to load (a cold dev server can take longer than the 10 seconds); the dialog says
+  // why and stays open.
+  await restore(request);
   await confirm.click();
   await expect(dialog.locator(".dialog__error")).toContainText("The demo data just changed.");
   await page.waitForTimeout(10_500);
