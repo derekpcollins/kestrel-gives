@@ -3,8 +3,8 @@
 // than LOAD_TIMEOUT_MS ends in an error with Try again, which works. The APIs are delayed,
 // failed or held in the browser (page.route), and the page clock is faked for the timeout, so
 // nothing here writes and nothing waits ten real seconds.
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page, type Route } from "@playwright/test";
+import { runAxe } from "./axe.ts";
 
 test.beforeEach(({}, info) => test.skip(info.project.name !== "light-1280", "behavior is the same in every project"));
 test.afterEach(async ({ page }) => { await page.unrouteAll({ behavior: "ignoreErrors" }); });
@@ -64,7 +64,7 @@ test("a failed read shows the page's error with Try again, which loads it", asyn
   const error = page.getByRole("region", { name: "We couldn't load the items" });
   await expect(error).toBeVisible();
   await expect(loading(page)).toHaveCount(0);
-  const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
+  const { violations } = await runAxe(page);
   expect(violations.map((v) => v.id)).toEqual([]);
   fail = false;
   await error.getByRole("button", { name: "Try again" }).click();

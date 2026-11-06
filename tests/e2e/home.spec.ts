@@ -2,6 +2,7 @@
 // to participate in order, and the three charities from the database, with no item lists.
 // Read-only, so it can run beside the other specs.
 import { expect, test } from "@playwright/test";
+import { runAxe } from "./axe.ts";
 
 test.beforeEach(({}, info) => test.skip(info.project.name !== "light-1280", "content is the same in every project"));
 
@@ -52,7 +53,6 @@ test("Home on a phone: the description is left-aligned; only the overline is cen
 // SPEC v1.17 §7.8: after a Reset on the shared demo, Home offers Restore right away. The app
 // state is the real one with demoReset set, and Restore is stubbed, so nothing writes.
 test("after a Reset, Home offers Restore demo data above the hero; once restored it's gone and focus is on the h1", async ({ page }) => {
-  const { default: AxeBuilder } = await import("@axe-core/playwright");
   let restored = false;
   await page.route(/\/api\/app$/, async (route) => {
     const app = await (await route.fetch()).json();
@@ -69,7 +69,7 @@ test("after a Reset, Home offers Restore demo data above the hero; once restored
   await expect(offer).toContainText("Kestrel Gives 2027 has no items or dates yet");
   await expect(offer).not.toContainText("Event settings");
   expect(await page.locator("main > *").first().getAttribute("data-reset-offer")).toBe("");
-  const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
+  const { violations } = await runAxe(page);
   expect(violations.map((v) => v.id)).toEqual([]);
   // The demo bar is hidden (?demo=off), and the offer still restores through the same dialog.
   await offer.getByRole("button", { name: "Restore demo data" }).click();

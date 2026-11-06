@@ -2,13 +2,12 @@
 // meanwhile, so these never write: the browser sees the phase each test needs, and states the
 // seed doesn't have (a changed total, nothing at all, a failed load) come from a stubbed
 // /api/me. tests/db/employee-flows.test.ts covers the real answer.
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+import { runAxe } from "./axe.ts";
 
 test.beforeEach(({}, info) => test.skip(info.project.name !== "light-1280" && info.project.name !== "light-390", "content is the same in every project; 390 checks the phone"));
 test.afterEach(async ({ page }) => { await page.unrouteAll({ behavior: "ignoreErrors" }); });
 
-const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 type Json = Record<string, any>;
 
 async function as(page: Page, viewerId: string, phase: "submission" | "live" | "ended"): Promise<void> {
@@ -58,7 +57,7 @@ test("Jules during live: four sections from the real answer, the proof summary, 
   await expect(section(page, "My donated items").getByRole("link", { name: `Edit ${first.title}` })).toHaveAttribute("href", `/items/${first.itemId}/edit`);
   await expect(page.locator('.site-header a[href="/your-items"]')).toHaveAttribute("aria-current", "page"); // behind Menu at 390
 
-  const results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
+  const results = await runAxe(page);
   expect(results.violations).toEqual([]);
 });
 
@@ -123,7 +122,7 @@ test("someone with nothing yet sees each list's empty message and no upload link
   const summary = page.getByRole("group", { name: "Your donation total" });
   await expect(summary).toContainText("$0");
   await expect(summary.getByRole("link")).toHaveCount(0);
-  const results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
+  const results = await runAxe(page);
   expect(results.violations).toEqual([]);
 });
 

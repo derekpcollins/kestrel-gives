@@ -2,15 +2,14 @@
 // jump phases and read the seeded bids meanwhile, so these never write to dev. The browser sees
 // a live event, and each test answers the bid or purchase itself, the way the API does.
 // tests/db/sales.test.ts covers the real saves, the rules and the races.
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page, type Route } from "@playwright/test";
+import { runAxe } from "./axe.ts";
 
 test.beforeEach(({}, info) => test.skip(info.project.name !== "light-1280" && info.project.name !== "light-390", "content is the same in every project; 390 checks the phone"));
 
 // A refresh can still be in flight when a test ends; let its rewrite go quietly.
 test.afterEach(async ({ page }) => { await page.unrouteAll({ behavior: "ignoreErrors" }); });
 
-const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 const status = (page: Page) => page.locator("[data-item-status]");
 const panel = (page: Page) => page.locator("[data-item-panel]");
 const field = (page: Page) => page.getByRole("textbox", { name: "Your bid" });
@@ -61,7 +60,7 @@ test("The bid field starts at the minimum, opens the number pad, and carries the
   await expect(field(page)).toHaveAttribute("inputmode", "numeric");
   await expect(field(page)).toHaveAccessibleDescription("At least $245. Bids go up by $5.");
   await expect(panel(page).locator(".item-panel__note")).toHaveCount(0); // the help says it; no repeat
-  const { violations } = await new AxeBuilder({ page }).include("[data-item-panel]").withTags(WCAG_22_AA).analyze();
+  const { violations } = await runAxe(page, "[data-item-panel]");
   expect(violations.map((v) => v.id)).toEqual([]);
 });
 
@@ -90,7 +89,7 @@ test("A bid: confirm dialog with the amount and item, then the result is announc
   await expect(dialog.getByRole("button", { name: "Place bid" })).toBeFocused();
   // Check contrast once the dialog has finished fading in.
   await expect(dialog).toHaveCSS("opacity", "1");
-  const { violations } = await new AxeBuilder({ page }).include("dialog").withTags(WCAG_22_AA).analyze();
+  const { violations } = await runAxe(page, "dialog");
   expect(violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ") + " " + n.failureSummary).join("; ")}`)).toEqual([]);
 
   await dialog.getByRole("button", { name: "Place bid" }).click();

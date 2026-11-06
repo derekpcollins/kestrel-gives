@@ -1,13 +1,11 @@
 // The Admin Dashboard: section nav, Totals and People, and the not-admin state (SPEC §8;
 // DECISIONS #107, #112; Stage 6B). Other specs jump phases on dev meanwhile, so Totals use a
 // fixed answer (tests/db/admin.test.ts checks the real figures) and nothing here writes.
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+import { runAxe } from "./axe.ts";
 
 test.beforeEach(({}, info) => test.skip(info.project.name !== "light-1280" && info.project.name !== "light-390", "content is the same in every project; 390 checks the phone"));
 test.afterEach(async ({ page }) => { await page.unrouteAll({ behavior: "ignoreErrors" }); });
-
-const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
 async function viewAs(page: Page, id: string): Promise<void> {
   await page.context().addCookies([{ name: "kg_viewer", value: id, url: "http://localhost:3000" }]);
@@ -33,7 +31,7 @@ async function stubSummary(page: Page, phase: "live" | "ended"): Promise<void> {
 }
 
 async function axe(page: Page): Promise<void> {
-  const { violations } = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
+  const { violations } = await runAxe(page);
   expect(violations.map((v) => `${v.id}: ${v.help} @ ${v.nodes.slice(0, 3).map((n) => n.target.join(" ")).join(", ")}`)).toEqual([]);
 }
 
@@ -418,7 +416,6 @@ test("Remove bid: Keep bid sends nothing; Remove bid posts, redraws with the his
   await expect(dialog).toContainText("The top bid goes back to $220 from Owen Achterberg.");
   await expect(dialog).toContainText("This can't be undone.");
   await expect(dialog.getByRole("button", { name: "Keep bid" })).toBeFocused();
-  await dialog.evaluate((d) => Promise.all((d as unknown as { getAnimations(o: object): { finished: Promise<unknown> }[] }).getAnimations({ subtree: true }).map((a) => a.finished))); // contrast is checked once it has faded in
   await axe(page);
   await dialog.getByRole("button", { name: "Keep bid" }).click();
   await expect(dialog).toBeHidden();
@@ -527,7 +524,6 @@ test("Cancel purchase: the dialog says whose total, the proof and the stock; the
   await expect(dialog).toContainText("Their approved proof goes back to review");
   await expect(dialog).toContainText("The unit goes back into stock (8 left).");
   await expect(dialog.getByRole("button", { name: "Keep purchase" })).toBeFocused();
-  await dialog.evaluate((d) => Promise.all((d as unknown as { getAnimations(o: object): { finished: Promise<unknown> }[] }).getAnimations({ subtree: true }).map((a) => a.finished)));
   await axe(page);
   await dialog.getByRole("button", { name: "Cancel purchase" }).click();
   await expect(page.getByText("Purchase cancelled. The unit is back in stock. 1 approved proof went back to review.")).toBeVisible();
@@ -650,7 +646,6 @@ test("Event settings: a close time already past asks first (danger), and Keep ed
   const dialog = page.getByRole("dialog", { name: "Save and end bidding now?" });
   await expect(dialog).toContainText('This moves the event from "Bidding is open" to "Bidding has ended" as soon as you save.');
   await expect(dialog).toContainText("winners are chosen");
-  await dialog.evaluate((d) => Promise.all((d as unknown as { getAnimations(o: object): { finished: Promise<unknown> }[] }).getAnimations({ subtree: true }).map((a) => a.finished)));
   await axe(page);
   await dialog.getByRole("button", { name: "Keep editing" }).click();
   expect(sent).toEqual([]);
@@ -869,7 +864,6 @@ test("Reset for next year, ready: the name must be typed; then the section shows
   expect(sent).toEqual([]);
   await dialog.getByLabel("Type Kestrel Gives 2026 to confirm").fill("Kestrel Gives 2026");
   await expect(confirm).not.toHaveAttribute("aria-disabled", /.*/);
-  await dialog.evaluate((d) => Promise.all((d as unknown as { getAnimations(o: object): { finished: Promise<unknown> }[] }).getAnimations({ subtree: true }).map((a) => a.finished))); // contrast once faded in
   await axe(page);
   await confirm.click();
   await expect(dialog).toHaveCount(0);

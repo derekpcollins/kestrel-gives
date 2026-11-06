@@ -2,14 +2,13 @@
 // phases and read the seed meanwhile, so these never write to dev: the browser sees the phase
 // and item each test needs, and each test answers uploads and saves itself, the way the API
 // does. tests/db/employee-flows.test.ts covers the real saves and rules.
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page, type Route } from "@playwright/test";
+import { runAxe } from "./axe.ts";
 import { startingBidHelp, startingBidTooLow } from "../../src/components/item-form-rules.ts";
 
 test.beforeEach(({}, info) => test.skip(info.project.name !== "light-1280" && info.project.name !== "light-390", "content is the same in every project; 390 checks the phone"));
 test.afterEach(async ({ page }) => { await page.unrouteAll({ behavior: "ignoreErrors" }); });
 
-const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 type Json = Record<string, any>;
 
 /** The event in `phase`, viewed as the seed person with this id (3 is Jules, an employee; 1 is Maya, an admin). */
@@ -87,7 +86,7 @@ test("employees submit during the submission window; the form starts from the ev
   await expect(page.getByLabel("Title")).toBeEnabled();
   await expect(page.getByRole("textbox", { name: "Starting bid" })).toHaveValue("10");
   await expect(page.locator("#item-start-help")).toHaveText("At least $10, the event minimum. Whole dollars.");
-  const results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
+  const results = await runAxe(page);
   expect(results.violations).toEqual([]);
 });
 
@@ -219,7 +218,7 @@ test("editing an item with bids: sale type and money are locked; no delete", asy
   await expect(page.getByLabel("Title")).toBeEnabled();
   await expect(page.locator("[data-delete-section]")).toBeHidden();
   await expect(page.locator(".uploader__thumb").first()).toHaveAttribute("alt", /^Photo 1 of \d \(cover\): current photo$/);
-  const results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
+  const results = await runAxe(page);
   expect(results.violations).toEqual([]);
 
   await page.getByLabel("Title").fill("Pottery class for two, Saturdays");

@@ -2,13 +2,12 @@
 // Other specs jump phases on dev meanwhile, so these never write: the phase is set in the
 // browser, the proof part of /api/me is stubbed, and uploads and proofs are answered here.
 // tests/db/employee-flows.test.ts covers the real POST /api/proofs.
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+import { runAxe } from "./axe.ts";
 
 test.beforeEach(({}, info) => test.skip(info.project.name !== "light-1280" && info.project.name !== "light-390", "content is the same in every project; 390 checks the phone"));
 test.afterEach(async ({ page }) => { await page.unrouteAll({ behavior: "ignoreErrors" }); });
 
-const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 type Json = Record<string, any>;
 
 async function as(page: Page, viewerId: string, phase: "submission" | "live" | "ended"): Promise<void> {
@@ -93,7 +92,7 @@ test("the form starts at the total, warns below it, needs a screenshot, then sen
   await expect(page.locator(".error-summary")).toContainText("Add a screenshot.");
   expect(seen.uploads).toHaveLength(0);
 
-  const results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
+  const results = await runAxe(page);
   expect(results.violations).toEqual([]);
 
   await page.locator("#proof-shot").setInputFiles({ name: "receipt.png", mimeType: "image/png", buffer: await receipt(page) });
@@ -143,7 +142,7 @@ test("someone with nothing to prove sees why instead of the form", async ({ page
   await expect(page.locator("[data-proof-form]")).toBeHidden();
   // The info icon (a circle), not a check mark: nothing is done yet.
   await expect(blocked.locator(".empty__icon circle")).toHaveCount(1);
-  const results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
+  const results = await runAxe(page);
   expect(results.violations).toEqual([]);
 });
 
@@ -181,7 +180,7 @@ test("the giving stub explains the one donation page split three ways and links 
   await expect(page.getByRole("main").getByRole("link", { name: "Upload proof" })).toHaveAttribute("href", "/your-items/proof");
   await expect(page.locator(".site-header [aria-current=page]")).toHaveCount(0);
   expect(await page.locator("main").innerText()).not.toMatch(/\b(pay|paid|payment|checkout)\b/i);
-  const results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
+  const results = await runAxe(page);
   expect(results.violations).toEqual([]);
 });
 
@@ -208,6 +207,6 @@ test("the giving stub follows the demo bar: nothing owed hides Upload proof and 
   await expect(page.locator("[data-giving-total]")).toHaveText("Your total: $0");
   await expect(main).toContainText("You don't owe anything yet. Bid or buy to have a total.");
   await expect(main.getByRole("link", { name: "Upload proof" })).toHaveCount(0);
-  const results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
+  const results = await runAxe(page);
   expect(results.violations).toEqual([]);
 });
