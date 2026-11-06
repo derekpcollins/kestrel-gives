@@ -3,6 +3,7 @@
 // a live event, and each test answers the bid or purchase itself, the way the API does.
 // tests/db/sales.test.ts covers the real saves, the rules and the races.
 import { expect, test, type Page, type Route } from "@playwright/test";
+import { pageLoaded } from "./page-load.ts";
 import { runAxe } from "./axe.ts";
 
 test.beforeEach(({}, info) => test.skip(info.project.name !== "light-1280" && info.project.name !== "light-390", "content is the same in every project; 390 checks the phone"));
@@ -50,7 +51,7 @@ async function openCabin(page: Page): Promise<{ set(next: (body: Json) => void):
   await liveEvent(page);
   const answers = await itemAnswers(page, outbid);
   await page.goto("/items/1");
-  await expect(page.locator("[data-item-content]")).not.toHaveAttribute("aria-busy");
+  await pageLoaded(page);
   return answers;
 }
 
@@ -152,14 +153,18 @@ test("While live, Instant Sale pages talk about the sale; the silent auction abo
   await liveEvent(page);
   const banner = page.locator(".banner--phase .banner__title");
   await page.goto("/instant-sale");
+  await pageLoaded(page);
   await expect(banner).toHaveText("The instant sale is open");
   await expect(page.locator(".banner--phase .banner__text")).toHaveText(/^It ends in /);
   await itemAnswers(page, () => {});
   await page.goto("/items/12");
+  await pageLoaded(page);
   await expect(banner).toHaveText("The instant sale is open");
   await page.goto("/items/1");
+  await pageLoaded(page);
   await expect(banner).toHaveText("Bidding is open");
   await page.goto("/silent-auction");
+  await pageLoaded(page);
   await expect(banner).toHaveText("Bidding is open");
 });
 
@@ -167,6 +172,7 @@ test("The dialog title balances its lines on a phone", async ({ page }) => {
   await liveEvent(page);
   await itemAnswers(page, (b) => { b.item.remaining = 6; });
   await page.goto("/items/12");
+  await pageLoaded(page);
   await page.getByRole("button", { name: "Buy one" }).click();
   const title = page.getByRole("dialog").locator(".dialog__title");
   await expect(title).toHaveCSS("text-wrap", /balance/);
@@ -226,6 +232,7 @@ test("Buying: one unit behind a dialog; the button stays for another, and the re
     await route.fulfill({ status: 201, json: body });
   });
   await page.goto("/items/12"); // the scarf, not Jules's own
+  await pageLoaded(page);
   await page.getByRole("button", { name: "Buy one" }).click();
   const dialog = page.getByRole("dialog", { name: "Buy the Hand-knit scarf for $45?" });
   await expect(dialog).toContainText("Price: $45");
@@ -247,6 +254,7 @@ test("Sold out while deciding: the dialog closes, the panel says so, and it's an
     await route.fulfill({ status: 409, json: { ok: false, code: "sold-out", error: "Sold out." } });
   });
   await page.goto("/items/12");
+  await pageLoaded(page);
   await page.getByRole("button", { name: "Buy one" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Buy", exact: true }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
@@ -260,6 +268,7 @@ test("Your own item: no form, just \"This is your item.\"", async ({ page }) => 
   await liveEvent(page);
   await itemAnswers(page, (b) => { b.blocked = { code: "own-item", message: "This is your item." }; });
   await page.goto("/items/1");
+  await pageLoaded(page);
   await expect(panel(page).locator(".item-panel__note")).toHaveText("This is your item.");
   await expect(field(page)).toHaveCount(0);
   await expect(page.getByRole("button", { name: /Place bid|Buy one/ })).toHaveCount(0);

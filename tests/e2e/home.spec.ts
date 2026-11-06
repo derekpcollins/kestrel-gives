@@ -2,12 +2,14 @@
 // to participate in order, and the three charities from the database, with no item lists.
 // Read-only, so it can run beside the other specs.
 import { expect, test } from "@playwright/test";
+import { pageLoaded } from "./page-load.ts";
 import { runAxe } from "./axe.ts";
 
 test.beforeEach(({}, info) => test.skip(info.project.name !== "light-1280", "content is the same in every project"));
 
 test("Home: hero, how to participate, and the charities from the data", async ({ page }) => {
   await page.goto("/");
+  await pageLoaded(page);
   await expect(page.getByRole("heading", { level: 1, name: "Kestrel Gives" })).toBeVisible();
   await expect(page.locator("[data-event-name]")).toHaveText("Kestrel Gives 2026");
 
@@ -42,6 +44,7 @@ test("Home: hero, how to participate, and the charities from the data", async ({
 test("Home on a phone: the description is left-aligned; only the overline is centered", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
+  await pageLoaded(page);
   await expect(page.locator("[data-event-name]")).toBeVisible();
   const align = (sel: string) => page.evaluate(`getComputedStyle(document.querySelector("${sel}")).textAlign`);
   expect(await align(".hero__lead")).toMatch(/^(start|left)$/);
@@ -64,6 +67,7 @@ test("after a Reset, Home offers Restore demo data above the hero; once restored
     return route.fulfill({ json: { ...app, demoReset: false } });
   });
   await page.goto("/?demo=off");
+  await pageLoaded(page);
   const offer = page.getByRole("region", { name: "The demo was reset for next year" });
   await expect(offer.getByRole("heading", { level: 2 })).toBeVisible();
   await expect(offer).toContainText("Kestrel Gives 2027 has no items or dates yet");

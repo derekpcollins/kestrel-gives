@@ -2,6 +2,7 @@
 // Other specs may jump phases meanwhile, so these check what holds in every phase, and the
 // refresh tests rewrite the API's answer in the browser instead of writing bids to dev.
 import { expect, test, type Page } from "@playwright/test";
+import { pageLoaded } from "./page-load.ts";
 
 test.beforeEach(({}, info) => test.skip(info.project.name !== "light-1280", "content is the same in every project"));
 
@@ -9,11 +10,10 @@ test.beforeEach(({}, info) => test.skip(info.project.name !== "light-1280", "con
 test.afterEach(async ({ page }) => { await page.unrouteAll({ behavior: "ignoreErrors" }); });
 
 const content = (page: Page) => page.locator("[data-item-content]");
-const loaded = (page: Page) => expect(content(page)).not.toHaveAttribute("aria-busy");
 
 test("Lakeside Cabin Weekend: title, donor, back link, five photos, and the public bid history with one crown", async ({ page }) => {
   await page.goto("/items/1");
-  await loaded(page);
+  await pageLoaded(page);
   await expect(page).toHaveTitle("Lakeside Cabin Weekend · Kestrel Gives");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Lakeside Cabin Weekend");
   await expect(content(page)).toContainText("Donated by Theo Lindqvist");
@@ -38,7 +38,7 @@ test("Lakeside Cabin Weekend: title, donor, back link, five photos, and the publ
 
 test("A cancelled item keeps its page with a banner, and offers nothing", async ({ page }) => {
   await page.goto("/items/10");
-  await loaded(page);
+  await pageLoaded(page);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Board game night, hosted");
   await expect(content(page).locator(".banner--danger")).toContainText("This item has been cancelled");
   await expect(content(page).locator(".item-panel__status")).toHaveText("Cancelled");
@@ -52,7 +52,7 @@ test("A cancelled item keeps its page with a banner, and offers nothing", async 
 test("On a phone: five thumbnails on one row, and the bid history in two columns with the time under the name", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/items/1");
-  await loaded(page);
+  await pageLoaded(page);
   const thumbs = page.locator(".carousel__thumb");
   await expect(thumbs).toHaveCount(5);
   const boxes = await thumbs.evaluateAll((els) => els.map((e) => e.getBoundingClientRect()).map((r) => ({ top: r.top, width: r.width, height: r.height })));
@@ -73,13 +73,14 @@ test("On a phone: five thumbnails on one row, and the bid history in two columns
 
 test("Instant sale: price, stock, no bid history; an unknown item says so", async ({ page }) => {
   await page.goto("/items/13"); // lemon squares, sold out in every phase
-  await loaded(page);
+  await pageLoaded(page);
   await expect(content(page).locator(".item-panel__amount")).toHaveText("$15");
   await expect(content(page).locator(".item-panel__detail")).toHaveText("None left");
   await expect(page.getByRole("region", { name: /Bid history/ })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Instant Sale" }).first()).toHaveAttribute("href", "/instant-sale");
 
   await page.goto("/items/99999");
+  await pageLoaded(page);
   await expect(page.getByRole("heading", { level: 1, name: "We couldn't find that item" })).toBeVisible();
   await expect(page).toHaveTitle("Item not found · Kestrel Gives");
 });
@@ -107,7 +108,7 @@ test("The 30-second refresh announces being outbid and keeps the photo the visit
   const answers = await controlAnswers(page);
   answers.set("viewer-top");
   await page.goto("/items/1");
-  await loaded(page);
+  await pageLoaded(page);
   const carousel = page.getByRole("region", { name: "Photos of Lakeside Cabin Weekend" });
   await carousel.getByRole("button", { name: "Photo 3 of 5" }).click();
   await expect(page.locator("[data-item-status]")).toHaveText("");
@@ -124,7 +125,7 @@ test("The refresh says nothing when someone else's bid changes and the viewer ha
   const answers = await controlAnswers(page);
   answers.set("watching");
   await page.goto("/items/1");
-  await loaded(page);
+  await pageLoaded(page);
   let requests = 0;
   page.on("request", (r) => { if (/\/api\/items\?id=1$/.test(r.url())) requests++; });
   answers.set("watching-new-bid");

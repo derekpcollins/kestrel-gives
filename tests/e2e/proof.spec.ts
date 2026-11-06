@@ -3,6 +3,7 @@
 // browser, the proof part of /api/me is stubbed, and uploads and proofs are answered here.
 // tests/db/employee-flows.test.ts covers the real POST /api/proofs.
 import { expect, test, type Page } from "@playwright/test";
+import { pageLoaded } from "./page-load.ts";
 import { runAxe } from "./axe.ts";
 
 test.beforeEach(({}, info) => test.skip(info.project.name !== "light-1280" && info.project.name !== "light-390", "content is the same in every project; 390 checks the phone"));
@@ -73,6 +74,7 @@ test("the form starts at the total, warns below it, needs a screenshot, then sen
   await proof(page, (now) => owes(now));
   const seen = await sends(page);
   await page.goto("/your-items/proof");
+  await pageLoaded(page);
   await expect(form(page)).toBeVisible();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Upload donation proof");
   await expect(page.locator("[data-proof-total]")).toHaveText("Your donation total is $35. 6 days left to upload proof.");
@@ -115,6 +117,7 @@ test("a rejected proof shows its reason; an amount the server refuses shows unde
     ? { status: 422, json: { ok: false, code: "bad-amount", field: "amount", error: "Enter $100,000 or less." } }
     : { status: 201, json: { ok: true, message: "Thanks. Your proof is in, and an admin will review it." } });
   await page.goto("/your-items/proof");
+  await pageLoaded(page);
   const note = page.locator("[data-proof-notes] .banner--danger");
   await expect(note).toContainText("Your last proof was rejected");
   await expect(note).toContainText("Reason: The screenshot doesn't show the amount.");
@@ -136,6 +139,7 @@ test("someone with nothing to prove sees why instead of the form", async ({ page
   await as(page, "3", "live");
   await proof(page, () => ({ totalCents: 0, latest: null, deadline: null, totalChanged: false, blocked: { code: "nothing-owed", message: "You don't have a donation total yet." } }));
   await page.goto("/your-items/proof");
+  await pageLoaded(page);
   const blocked = page.locator("[data-proof-blocked]");
   await expect(blocked).toBeVisible();
   await expect(blocked.getByRole("heading")).toHaveText("You don't have a donation total yet.");
@@ -150,6 +154,7 @@ test("an approved proof for the current total gets the check mark", async ({ pag
   await as(page, "4", "ended");
   await proof(page, (now) => ({ totalCents: 3_500, latest: { status: "approved", amountCents: 3_500, owedCents: 3_500, rejectionReason: null, createdAt: now, imageUrl: "/seed/proofs/placeholder-proof.png" }, deadline: null, totalChanged: false, blocked: { code: "approved", message: "Your proof is approved. Thank you!" } }));
   await page.goto("/your-items/proof");
+  await pageLoaded(page);
   const blocked = page.locator("[data-proof-blocked]");
   await expect(blocked.getByRole("heading")).toHaveText("Your proof is approved. Thank you!");
   await expect(blocked.locator(".empty__icon path")).toHaveCount(1);
@@ -161,6 +166,7 @@ test("a failed load says so and Try again recovers", async ({ page }) => {
   let fail = true;
   await page.route(/\/api\/me$/, (route) => (fail ? route.fulfill({ status: 500, json: { ok: false, error: "Something went wrong." } }) : route.fallback()));
   await page.goto("/your-items/proof");
+  await pageLoaded(page);
   const failed = page.locator("[data-proof-error]");
   await expect(failed).toBeVisible();
   fail = false;
@@ -172,6 +178,7 @@ test("the giving stub explains the one donation page split three ways and links 
   await as(page, "7", "ended");
   await proof(page, (now) => owes(now));
   await page.goto("/giving");
+  await pageLoaded(page);
   await expect(page.locator("[data-giving-total]")).toHaveText("Your total: $35");
   await expect(page.locator("main")).toContainText("Give that total once on the donation page. There's no charity to choose.");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Giving page");
@@ -195,6 +202,7 @@ test("the giving stub follows the demo bar: nothing owed hides Upload proof and 
     await route.fulfill({ response, json: body });
   });
   await page.goto("/giving");
+  await pageLoaded(page);
   const main = page.getByRole("main");
   await expect(page.locator("[data-giving-total]")).toHaveText("Your total: $35");
   await expect(main.getByRole("link", { name: "Upload proof" })).toBeVisible();

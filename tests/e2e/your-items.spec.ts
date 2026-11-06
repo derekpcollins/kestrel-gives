@@ -3,6 +3,7 @@
 // seed doesn't have (a changed total, nothing at all, a failed load) come from a stubbed
 // /api/me. tests/db/employee-flows.test.ts covers the real answer.
 import { expect, test, type Page } from "@playwright/test";
+import { pageLoaded } from "./page-load.ts";
 import { runAxe } from "./axe.ts";
 
 test.beforeEach(({}, info) => test.skip(info.project.name !== "light-1280" && info.project.name !== "light-390", "content is the same in every project; 390 checks the phone"));
@@ -36,6 +37,7 @@ test("Jules during live: four sections from the real answer, the proof summary, 
   await as(page, "3", "live");
   const answer = page.waitForResponse(/\/api\/me$/);
   await page.goto("/your-items");
+  await pageLoaded(page);
   const real = (await (await answer).json()) as Json;
   await expect(loaded(page)).toBeVisible();
 
@@ -71,6 +73,7 @@ test("after the close: won or Didn't win, lost ones fade, and donated items have
     ];
   });
   await page.goto("/your-items");
+  await pageLoaded(page);
   const bids = section(page, "My bids");
   await expect(bids.getByRole("link", { name: "Guitar lessons, four weeks, You won", exact: true })).toBeVisible();
   await expect(bids.locator(".item-tile").nth(1)).toHaveClass(/item-tile--muted/);
@@ -88,6 +91,7 @@ test("a changed total shows the banner; nothing cancelled means no Cancelled sec
       latest: { status: "pending", amountCents: 12_500, owedCents: 12_500, rejectionReason: null, createdAt: a.now, imageUrl: "/seed/proofs/placeholder-proof.png" } };
   });
   await page.goto("/your-items");
+  await pageLoaded(page);
   const banner = page.locator("[data-your-items] .banner--warning");
   await expect(banner).toContainText("Your donation total changed");
   await expect(banner).toContainText("It was $125 when you uploaded proof and is now $90. Please check that your proof still covers it.");
@@ -102,6 +106,7 @@ test("a rejected proof shows its reason and offers a new upload", async ({ page 
       latest: { status: "rejected", amountCents: 3_500, owedCents: 3_500, rejectionReason: "The screenshot doesn't show the amount.", createdAt: a.now, imageUrl: "/seed/proofs/placeholder-proof.png" } };
   });
   await page.goto("/your-items");
+  await pageLoaded(page);
   const summary = page.getByRole("group", { name: "Your donation total" });
   await expect(summary).toContainText("Rejected");
   await expect(summary).toContainText("Reason: The screenshot doesn't show the amount.");
@@ -116,6 +121,7 @@ test("someone with nothing yet sees each list's empty message and no upload link
     a.proof = { totalCents: 0, latest: null, deadline: null, totalChanged: false, blocked: { code: "nothing-owed", message: "…" } };
   });
   await page.goto("/your-items");
+  await pageLoaded(page);
   await expect(section(page, "My bids")).toContainText("You haven't bid on anything yet.");
   await expect(section(page, "Won & purchased")).toContainText("Nothing won or bought yet.");
   await expect(section(page, "My donated items")).toContainText("You haven't donated an item yet.");
@@ -131,6 +137,7 @@ test("a failed load says so and Try again recovers", async ({ page }) => {
   let fail = true;
   await page.route(/\/api\/me$/, (route) => (fail ? route.fulfill({ status: 500, json: { ok: false, error: "Something went wrong." } }) : route.fallback()));
   await page.goto("/your-items");
+  await pageLoaded(page);
   const failed = page.locator("[data-your-items-error]");
   await expect(failed).toBeVisible();
   await expect(failed).toContainText("We couldn't load your items");
@@ -147,6 +154,7 @@ test("repeat purchases of one item are one tile with the count and combined amou
     a.wins = [unit("2026-11-03T15:00:00Z"), unit("2026-11-01T15:00:00Z")];
   });
   await page.goto("/your-items");
+  await pageLoaded(page);
   const wins = section(page, "Won & purchased");
   await expect(wins.locator(".item-tile")).toHaveCount(1);
   await expect(wins.locator(".item-tile")).toContainText("$20");

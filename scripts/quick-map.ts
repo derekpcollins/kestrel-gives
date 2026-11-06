@@ -36,7 +36,7 @@ const SHARED: readonly RegExp[] = [
   /^lib\/(seed|storage)\//, /^public\/seed\//, /^lib\/(db-endpoint|email-templates)\.ts$/, /^migrations\//,
   /^api\/(app|health)\.ts$/, /^scripts\/(dev|seed|seed-photos|build-css|build-css-lib|check-seed-base|check-vercel-ts|db-check)\.ts$/,
   /^package(-lock)?\.json$/, /^tsconfig(\.[a-z]+)?\.json$/, /^vercel\.json$/, /^playwright\.config\.ts$/, /^\.node-version$/, /^\.githooks\//,
-  /^tests\/e2e\/(screens|global-setup|reflow|axe)\.ts$/, /^tests\/db\/seeded-once\.ts$/,
+  /^tests\/e2e\/(screens|global-setup|reflow|axe|page-load)\.ts$/, /^tests\/db\/seeded-once\.ts$/,
   /^public\/(favicon|apple-touch-icon)/, /^public\/fonts\//, /^public\/brand\/(?!charities\/)/,
 ];
 
