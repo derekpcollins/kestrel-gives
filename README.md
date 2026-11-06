@@ -71,6 +71,31 @@ Never committed; a pre-commit hook blocks `.env` files and database URLs. It hol
 
 Vercel CLI commands may rewrite .env.local; run npm run db:check afterward.
 
+#### Refreshing `VERCEL_OIDC_TOKEN`
+
+The token lasts about 12 hours. Don't run `vercel env pull .env.local`: the Development environment has no Neon variables, so it would replace the file and drop `DATABASE_URL` and both `NEON_*` keys. Instead, pull into a separate gitignored file, copy only the token across, and delete the pull:
+
+```sh
+vercel env pull .env.vercel-pull --environment=development --yes
+node -e '
+const fs = require("fs");
+const token = fs.readFileSync(".env.vercel-pull", "utf8").split("\n").find((l) => l.startsWith("VERCEL_OIDC_TOKEN="));
+if (!token) { console.error("No VERCEL_OIDC_TOKEN in the pull; nothing changed."); process.exit(1); }
+const lines = fs.readFileSync(".env.local", "utf8").split("\n");
+const i = lines.findIndex((l) => l.startsWith("VERCEL_OIDC_TOKEN="));
+if (i === -1) lines.push(token); else lines[i] = token;
+fs.writeFileSync(".env.local", lines.join("\n"));
+console.log("VERCEL_OIDC_TOKEN replaced; nothing else in .env.local changed.");'
+rm .env.vercel-pull
+npm run db:check
+```
+
+None of this prints the token. If the pull fails with `challenge_required`, run `vercel login` in your own terminal and try again.
+
+#### One machine at a time on `dev`
+
+Only one machine runs anything against the Neon `dev` branch at a time: checks, `npm start`, measurements. Tests reseed `dev`, so two machines at once interfere with each other's results and timings.
+
 ### Database
 
 ```sh
