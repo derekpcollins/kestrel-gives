@@ -35,3 +35,6 @@ public/seed/*.jpg
 
 # Checkpoint screenshots for the owner to open directly (Milestone 4 on)
 .review/
+
+# Handoff notes between the owner's reviewer chat and the agent; never committed
+.handoff/
