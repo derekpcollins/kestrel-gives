@@ -2,6 +2,7 @@
 // #124), through the demo bar as a visitor would; and the tour's Set me up for real (DECISIONS #128). It empties the shared dev data, so it runs in
 // `npm run check:visual`, one test at a time, never beside the parallel specs; Restore runs after.
 import { expect, test, type APIRequestContext } from "@playwright/test";
+import { pageLoaded } from "./page-load.ts";
 
 test.describe.configure({ mode: "serial" });
 const RUNS_HERE = "light-1280";
@@ -45,6 +46,7 @@ test("Submissions open: the dialog says what goes, then bids, purchases and proo
   test.setTimeout(90_000);
   await restore(request);
   await page.goto("/items/1");
+  await pageLoaded(page);
   await expect(page.getByText("Bid history")).toBeVisible();
   await expect(page.locator(".table__empty")).toHaveCount(0); // the seed's six bids
 
@@ -69,6 +71,7 @@ test("Submissions open: the dialog says what goes, then bids, purchases and proo
 
   // The item is still there, with no bids; Jules owes nothing; the sold-out item has stock again.
   await page.reload();
+  await pageLoaded(page);
   await expect(page.getByRole("heading", { level: 1, name: "Lakeside Cabin Weekend" })).toBeVisible();
   await expect(page.locator(".table__empty")).toHaveText("No bids yet.");
   const me = (await (await request.get("/api/me")).json()) as { proof: { totalCents: number } | null };

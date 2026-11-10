@@ -4,6 +4,7 @@
 // does. tests/db/employee-flows.test.ts covers the real saves and rules.
 import { expect, test, type Page, type Route } from "@playwright/test";
 import { runAxe } from "./axe.ts";
+import { pageLoaded } from "./page-load.ts";
 import { startingBidHelp, startingBidTooLow } from "../../src/components/item-form-rules.ts";
 
 test.beforeEach(({}, info) => test.skip(info.project.name !== "light-1280" && info.project.name !== "light-390", "content is the same in every project; 390 checks the phone"));
@@ -257,6 +258,7 @@ test("someone else's item can't be edited; its page has no Edit link", async ({ 
   await page.goto("/items/5/edit");
   await expect(page.locator("[data-submit-blocked]")).toContainText("Only the person who donated this item, or an admin, can change it.");
   await page.goto("/items/5");
+  await pageLoaded(page);
   await expect(page.locator(".page-header__title")).toBeVisible();
   await expect(page.getByRole("link", { name: "Edit item" })).toHaveCount(0);
 });
@@ -265,6 +267,7 @@ test("the submitter sees Edit item on the item page", async ({ page }) => {
   await as(page, "3", "live");
   await item(page, (it) => { it.submitter.id = "3"; it.cancelled = false; });
   await page.goto("/items/5");
+  await pageLoaded(page);
   await expect(page.getByRole("link", { name: "Edit item" })).toHaveAttribute("href", "/items/5/edit");
 });
 
@@ -272,6 +275,7 @@ test("once bidding ends, nobody edits: no Edit link, and the edit page says why 
   await as(page, "1", "ended"); // Maya, an admin: no exception
   await item(page, (it) => { it.submitter.id = "1"; it.cancelled = false; it.hasActivity = false; });
   await page.goto("/items/5");
+  await pageLoaded(page);
   await expect(page.locator(".page-header__title")).toBeVisible();
   await expect(page.getByRole("link", { name: "Edit item" })).toHaveCount(0);
   await page.goto("/items/5/edit");

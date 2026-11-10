@@ -3,6 +3,7 @@
 // fixed answer (tests/db/admin.test.ts checks the real figures) and nothing here writes.
 import { expect, test, type Page } from "@playwright/test";
 import { runAxe } from "./axe.ts";
+import { pageLoaded } from "./page-load.ts";
 
 test.beforeEach(({}, info) => test.skip(info.project.name !== "light-1280" && info.project.name !== "light-390", "content is the same in every project; 390 checks the phone"));
 test.afterEach(async ({ page }) => { await page.unrouteAll({ behavior: "ignoreErrors" }); });
@@ -39,6 +40,7 @@ test("Totals while live: three cards, the gap line, and leading bids kept apart 
   await viewAs(page, "1");
   await stubSummary(page, "live");
   await page.goto("/admin");
+  await pageLoaded(page);
   const nav = page.getByRole("navigation", { name: "Admin sections" });
   await expect(nav.getByRole("link", { name: "Totals" })).toHaveAttribute("aria-current", "page");
   await expect(nav.getByRole("link", { name: "People" })).not.toHaveAttribute("aria-current", /.*/);
@@ -62,6 +64,7 @@ test("Totals after the close: winning bids pledged, no leading bids", async ({ p
   await viewAs(page, "1");
   await stubSummary(page, "ended");
   await page.goto("/admin");
+  await pageLoaded(page);
   await expect(page.locator(".total-card").nth(0)).toContainText("Pledged$575");
   await expect(page.locator(".total-card").nth(2)).toContainText("Pledged$1,090");
   await expect(page.locator(".leading-note")).toHaveCount(0);
@@ -70,6 +73,7 @@ test("Totals after the close: winning bids pledged, no leading bids", async ({ p
 test("People: everyone in a table, admins marked, proof status with the amount against the total", async ({ page }) => {
   await viewAs(page, "1");
   await page.goto("/admin/people");
+  await pageLoaded(page);
   await expect(page).toHaveTitle("People · Admin Dashboard · Kestrel Gives");
   await expect(page.getByRole("navigation", { name: "Admin sections" }).getByRole("link", { name: "People" })).toHaveAttribute("aria-current", "page");
   const table = page.getByRole("region", { name: "People" }).getByRole("table");
@@ -98,6 +102,7 @@ test("the demo bar switches between the dashboard and For admins only", async ({
   await viewAs(page, "1");
   await stubSummary(page, "live");
   await page.goto("/admin");
+  await pageLoaded(page);
   await expect(page.locator(".total-card")).toHaveCount(3);
   if (info.project.name === "light-390") await page.locator("[data-shell-demo] details summary").click();
   await page.getByLabel("Viewing as").selectOption({ label: "Jules Ferreira (employee)" });
@@ -120,6 +125,7 @@ test("a failed load says so and Try again recovers", async ({ page }) => {
   let fail = true;
   await page.route(/\/api\/admin\?view=summary$/, (route) => (fail ? route.fulfill({ status: 500, json: { ok: false } }) : route.fulfill({ json: summary("live") })));
   await page.goto("/admin");
+  await pageLoaded(page);
   await expect(page.getByRole("heading", { name: "We couldn't load this section" })).toBeVisible();
   fail = false;
   await page.getByRole("button", { name: "Try again" }).click();
@@ -155,6 +161,7 @@ test("Proof review: waiting first with the short warning, then reviewed with who
   await viewAs(page, "1");
   await stubProofs(page, [proof({}), dev, owen]);
   await page.goto("/admin/proofs");
+  await pageLoaded(page);
   await expect(page).toHaveTitle("Proof review · Admin Dashboard · Kestrel Gives");
   await expect(page.getByRole("navigation", { name: "Admin sections" }).getByRole("link", { name: "Proof review" })).toHaveAttribute("aria-current", "page");
   await expect(page.locator(".proof-queue__title")).toHaveText(["Waiting for review (1)", "Reviewed (2)"]);
@@ -173,6 +180,7 @@ test("View larger opens the screenshot in place and says so", async ({ page }) =
   await viewAs(page, "1");
   await stubProofs(page, [proof({}), dev]);
   await page.goto("/admin/proofs");
+  await pageLoaded(page);
   const rosa = page.getByRole("listitem", { name: "Rosa Delgado" });
   const toggle = rosa.getByRole("button", { name: "View larger screenshot from Rosa Delgado" });
   await expect(toggle).toHaveAttribute("aria-expanded", "false");
@@ -194,6 +202,7 @@ test("Approve sends the total seen, then redraws with a toast; the short note dr
     return route.fulfill({ json: { ok: true, message: "Proof approved.", view: "proofs", answer: proofsAnswer([rosaApproved, dev]) } });
   });
   await page.goto("/admin/proofs");
+  await pageLoaded(page);
   await page.getByRole("button", { name: "Approve Rosa Delgado's proof" }).click();
   await expect(page.getByText("Proof approved.")).toBeVisible();
   expect(sent).toEqual({ action: "approve-proof", proofId: "1", totalCents: 6_500, fromStatus: "pending" });
@@ -213,6 +222,7 @@ test("Reject needs a reason: an inline error first, then it sends the reason", a
     return route.fulfill({ json: { ok: true, message: "Proof rejected. Rosa can upload a new one.", view: "proofs", answer: proofsAnswer([rosaRejected, dev]) } });
   });
   await page.goto("/admin/proofs");
+  await pageLoaded(page);
   await page.getByRole("button", { name: "Reject Rosa Delgado's proof" }).click();
   const dialog = page.getByRole("dialog", { name: "Reject Rosa Delgado's proof?" });
   const reason = dialog.getByLabel("Reason (shown to Rosa)");
@@ -238,6 +248,7 @@ test("a refused approve (the total moved) reloads the queue and says why", async
   await page.route(/\/api\/admin\?view=proofs$/, (route) => { loads++; return route.fulfill({ json: proofsAnswer([proof({}), dev]) }); });
   await page.route(/\/api\/admin$/, (route) => route.fulfill({ status: 409, json: { ok: false, code: "total-changed", error: "Their donation total is now $40. Check the proof again." } }));
   await page.goto("/admin/proofs");
+  await pageLoaded(page);
   await page.getByRole("button", { name: "Approve Rosa Delgado's proof" }).click();
   await expect(page.getByRole("alert").filter({ hasText: "Their donation total is now $40" })).toHaveText("Their donation total is now $40. Check the proof again. The queue has been updated.");
   expect(loads).toBe(2);
@@ -247,6 +258,7 @@ test("reviewed cards offer the other decision; buttons are the regular 44px size
   await viewAs(page, "1");
   await stubProofs(page, [proof({}), dev, owen]);
   await page.goto("/admin/proofs");
+  await pageLoaded(page);
   const rosa = page.getByRole("listitem", { name: "Rosa Delgado" });
   await expect(rosa.getByRole("button", { name: /instead/ })).toHaveCount(0);
   const reverse = [
@@ -271,6 +283,7 @@ test("Reject instead: the same dialog with a required reason, saying it leaves t
     return route.fulfill({ json: { ok: true, message: "Proof rejected instead. It's no longer confirmed, and they'll see your reason.", view: "proofs", answer: proofsAnswer([proof({}), devRejected, owen]) } });
   });
   await page.goto("/admin/proofs");
+  await pageLoaded(page);
   await page.getByRole("button", { name: "Reject instead (Dev Kapoor's proof)" }).click();
   const dialog = page.getByRole("dialog", { name: "Reject Dev Kapoor's approved proof?" });
   await expect(dialog).toContainText("takes its $105 out of the confirmed totals");
@@ -298,6 +311,7 @@ test("Approve instead: one click, with the total seen and the status it reverses
     return route.fulfill({ json: { ok: true, message: "Proof approved instead. The rejection is cleared.", view: "proofs", answer: proofsAnswer([proof({}), dev, owenApproved]) } });
   });
   await page.goto("/admin/proofs");
+  await pageLoaded(page);
   await page.getByRole("button", { name: "Approve instead (Owen Achterberg's proof)" }).click();
   await expect(page.getByText("Proof approved instead. The rejection is cleared.")).toBeVisible();
   expect(sent).toEqual({ action: "approve-proof", proofId: "3", totalCents: 3_500, fromStatus: "rejected" });
@@ -311,6 +325,7 @@ test("no proofs yet: both groups say so", async ({ page }) => {
   await viewAs(page, "1");
   await stubProofs(page, []);
   await page.goto("/admin/proofs");
+  await pageLoaded(page);
   await expect(page.getByText("Nothing is waiting for review.")).toBeVisible();
   await expect(page.getByText("No one has uploaded proof yet.")).toBeVisible();
 });
@@ -319,6 +334,7 @@ test("6B fixes: zero totals are muted, and People's Not uploaded is neutral whil
   await viewAs(page, "1");
   await stubSummary(page, "live");
   await page.goto("/admin");
+  await pageLoaded(page);
   await expect(page.locator(".total-card").nth(0).locator(".total-card__amount--zero")).toHaveCount(2);
   await expect(page.locator(".total-card").nth(1).locator(".total-card__amount--zero")).toHaveCount(0);
   await page.route(/\/api\/admin\?view=people$/, (route) => route.fulfill({ json: {
@@ -326,6 +342,7 @@ test("6B fixes: zero totals are muted, and People's Not uploaded is neutral whil
     people: [{ ...person("3", "Jules", "Ferreira"), role: "employee", bidCount: 2, wins: 0, purchases: 1, totalCents: 4_000, proof: null }],
   } }));
   await page.goto("/admin/people");
+  await pageLoaded(page);
   await expect(page.getByRole("row", { name: /Jules Ferreira/ }).locator(".pill")).toHaveText("Not uploaded");
   await expect(page.getByRole("row", { name: /Jules Ferreira/ }).locator(".pill")).toHaveAttribute("class", "pill");
 });
@@ -370,6 +387,7 @@ test("Items: grouped by sale type, bid history opens in place, Remove only on st
   await viewAs(page, "1");
   await stubItems(page, [cabin, boardGame, lemon]);
   await page.goto("/admin/items");
+  await pageLoaded(page);
   await expect(page).toHaveTitle("Items · Admin Dashboard · Kestrel Gives");
   await expect(page.getByRole("navigation", { name: "Admin sections" }).getByRole("link", { name: "Items" })).toHaveAttribute("aria-current", "page");
   await expect(page.locator(".admin-glance")).toContainText("3 items · 1 cancelled");
@@ -409,6 +427,7 @@ test("Remove bid: Keep bid sends nothing; Remove bid posts, redraws with the his
     return route.fulfill({ json: { ok: true, message: "Bid removed. The top bid has been updated.", view: "items", answer: itemsAnswer([after, lemon]) } });
   });
   await page.goto("/admin/items");
+  await pageLoaded(page);
   const c = cardFor(page, "Lakeside Cabin Weekend");
   await c.getByRole("button", { name: /bid history/ }).click();
   await c.getByRole("button", { name: "Remove Priya Natarajan's $240 bid" }).click();
@@ -440,6 +459,7 @@ test("Cancel item: the dialog says whose totals change; the card then shows Canc
     return route.fulfill({ json: { ok: true, message: "Item cancelled. Its bids and purchases no longer count.", view: "items", answer: itemsAnswer([cabin, { ...lemon, cancelled: true, cancelledAt: "2026-11-03T22:59:00.000Z", purchases: 0 }]) } });
   });
   await page.goto("/admin/items");
+  await pageLoaded(page);
   await cardFor(page, "Lemon squares, a dozen").getByRole("button", { name: "Cancel item (Lemon squares, a dozen)" }).click();
   const dialog = page.getByRole("dialog", { name: "Cancel Lemon squares, a dozen?" });
   await expect(dialog).toContainText("Its 3 purchases are cancelled and come off those donation totals.");
@@ -459,6 +479,7 @@ test("a refused removal reloads the list and says why", async ({ page }) => {
   await page.route(/\/api\/admin\?view=items$/, (route) => { loads++; return route.fulfill({ json: itemsAnswer([cabin]) }); });
   await page.route(/\/api\/admin$/, (route) => route.fulfill({ status: 409, json: { ok: false, code: "already-removed", error: "That bid was already removed." } }));
   await page.goto("/admin/items");
+  await pageLoaded(page);
   const c = cardFor(page, "Lakeside Cabin Weekend");
   await c.getByRole("button", { name: /bid history/ }).click();
   await c.getByRole("button", { name: "Remove Owen Achterberg's $220 bid" }).click();
@@ -473,6 +494,7 @@ test("after the close: winning bids, and removing the winner says who wins inste
   await viewAs(page, "1");
   await page.route(/\/api\/admin\?view=items$/, (route) => route.fulfill({ json: itemsAnswer([cabin], "ended") }));
   await page.goto("/admin/items");
+  await pageLoaded(page);
   const c = cardFor(page, "Lakeside Cabin Weekend");
   await expect(c).toContainText("Winning bid $240 · 2 bids");
   await c.getByRole("button", { name: /bid history/ }).click();
@@ -489,6 +511,7 @@ test("Purchases: open in place with buyer and date; Cancel purchase only on stan
   await viewAs(page, "1");
   await stubItems(page, [cabin, lemon]);
   await page.goto("/admin/items");
+  await pageLoaded(page);
   const c = cardFor(page, "Lemon squares, a dozen");
   await c.getByRole("button", { name: /^Show purchases \(4\)/ }).click();
   await expect(c.getByRole("button", { name: /^Hide purchases/ })).toHaveAttribute("aria-expanded", "true");
@@ -516,6 +539,7 @@ test("Cancel purchase: the dialog says whose total, the proof and the stock; the
     return route.fulfill({ json: { ok: true, message: "Purchase cancelled. The unit is back in stock. 1 approved proof went back to review.", view: "items", answer: itemsAnswer([cabin, after]) } });
   });
   await page.goto("/admin/items");
+  await pageLoaded(page);
   const c = cardFor(page, "Lemon squares, a dozen");
   await c.getByRole("button", { name: /^Show purchases/ }).click();
   await c.getByRole("button", { name: /^Cancel purchase \(Dev Kapoor's/ }).click();
@@ -541,6 +565,7 @@ test("after the close the dialog says the unit doesn't return to stock; a second
   await page.route(/\/api\/admin\?view=items$/, (route) => { loads++; return route.fulfill({ json: itemsAnswer([lemon], "ended") }); });
   await page.route(/\/api\/admin$/, (route) => route.fulfill({ status: 409, json: { ok: false, code: "already-cancelled", error: "That purchase was already cancelled." } }));
   await page.goto("/admin/items");
+  await pageLoaded(page);
   const c = cardFor(page, "Lemon squares, a dozen");
   await c.getByRole("button", { name: /^Show purchases/ }).click();
   await c.getByRole("button", { name: /^Cancel purchase \(Jules Ferreira's/ }).click();
@@ -571,6 +596,7 @@ test("Event settings: the form shows the saved values, the phase now and the zon
   await viewAs(page, "1");
   await stubSettings(page);
   await page.goto("/admin/settings");
+  await pageLoaded(page);
   await expect(page).toHaveTitle("Event settings · Admin Dashboard · Kestrel Gives");
   const form = page.getByRole("form", { name: "Event settings" });
   await expect(form).toContainText("Phase now: Bidding is open.");
@@ -593,6 +619,7 @@ test("Event settings: problems show under their fields with a summary, and nothi
   const sent: unknown[] = [];
   await page.route(/\/api\/admin$/, (route) => { sent.push(route.request().postDataJSON()); return route.fulfill({ status: 500, json: {} }); });
   await page.goto("/admin/settings");
+  await pageLoaded(page);
   const form = page.getByRole("form", { name: "Event settings" });
   await form.getByLabel("Event name").fill("");
   await form.getByLabel("Bid increment").fill("2.50");
@@ -621,6 +648,7 @@ test("Event settings: a save that keeps the phase posts at once; the toast says 
     return route.fulfill({ json: { ok: true, message: "Event settings saved.", view: "settings", answer: settingsAnswer(saved) } });
   });
   await page.goto("/admin/settings");
+  await pageLoaded(page);
   const form = page.getByRole("form", { name: "Event settings" });
   await form.getByLabel("Event name").fill("Kestrel Gives 2026 Fall");
   await form.getByLabel("Bid increment").fill("10");
@@ -640,6 +668,7 @@ test("Event settings: a close time already past asks first (danger), and Keep ed
     return route.fulfill({ json: { ok: true, message: "Event settings saved.", view: "settings", answer: settingsAnswer({ ...settingsValues, biddingCloses: "2026-11-02T21:00" }) } });
   });
   await page.goto("/admin/settings");
+  await pageLoaded(page);
   const form = page.getByRole("form", { name: "Event settings" });
   await form.getByLabel("Bidding closes").fill("2026-11-02T21:00");
   await form.getByRole("button", { name: "Save settings" }).click();
@@ -661,6 +690,7 @@ test("Event settings: the server's problems show under their fields", async ({ p
   await stubSettings(page);
   await page.route(/\/api\/admin$/, (route) => route.fulfill({ status: 422, json: { ok: false, code: "invalid", error: "Check the highlighted fields.", problems: [{ field: "name", message: "Keep the name to 80 characters." }] } }));
   await page.goto("/admin/settings");
+  await pageLoaded(page);
   await page.getByRole("button", { name: "Save settings" }).click();
   await expect(page.locator(".error-summary")).toBeFocused();
   await expect(page.getByLabel("Event name")).toHaveAccessibleDescription(/Keep the name to 80 characters\./);
@@ -680,6 +710,7 @@ test("Email templates: a card each, Default or Edited; Restore default only on e
   await viewAs(page, "1");
   await stubTemplates(page);
   await page.goto("/admin/templates");
+  await pageLoaded(page);
   await expect(page.locator(".admin-glance").first()).toHaveText("2 templates, 1 edited. This demo never sends email; the preview shows sample data in place of each variable.");
   const outbidCard = page.getByRole("listitem").filter({ has: page.getByRole("heading", { name: "Outbid" }) });
   await expect(outbidCard).toContainText("Default");
@@ -702,6 +733,7 @@ test("Template editor: live preview, variable errors as you type block saving, I
     return route.fulfill({ json: { ok: true, message: "Template saved.", view: "templates", answer: templatesAnswer([{ ...outbid, subject: body.subject, body: body.body, isDefault: false }, winner]) } });
   });
   await page.goto("/admin/templates");
+  await pageLoaded(page);
   await page.getByRole("button", { name: "Edit template (Outbid)" }).click();
   const editor = page.getByRole("form", { name: "Edit the Outbid template" });
   const subject = editor.getByLabel("Subject");
@@ -744,6 +776,7 @@ test("Template editor: Escape closes the variable menu; Discard changes puts foc
   await viewAs(page, "1");
   await stubTemplates(page);
   await page.goto("/admin/templates");
+  await pageLoaded(page);
   await page.getByRole("button", { name: "Edit template (Outbid)" }).click();
   const editor = page.getByRole("form", { name: "Edit the Outbid template" });
   await editor.getByLabel("Body").fill("Changed");
@@ -767,6 +800,7 @@ test("Restore default asks first, then posts and redraws", async ({ page }) => {
     return route.fulfill({ json: { ok: true, message: "Template restored to its default.", view: "templates", answer: templatesAnswer([outbid, { ...winner, isDefault: true }]) } });
   });
   await page.goto("/admin/templates");
+  await pageLoaded(page);
   await page.getByRole("button", { name: "Restore default (Winner)" }).click();
   const dialog = page.getByRole("dialog", { name: "Restore the default Winner template?" });
   await expect(dialog).toContainText("This can't be undone.");
@@ -789,6 +823,7 @@ test("Event settings: zones by friendly name (IANA id stored); a changed zone sa
   await viewAs(page, "1");
   await stubSettings(page);
   await page.goto("/admin/settings");
+  await pageLoaded(page);
   const form = page.getByRole("form", { name: "Event settings" });
   const zone = form.getByLabel("Time zone");
   await expect(zone.locator("option:checked")).toHaveText("Eastern Time (New York)");
@@ -828,6 +863,7 @@ test("Reset for next year, locked: when it unlocks, what goes and what stays, an
   await viewAs(page, "1");
   await page.route(/\/api\/admin\?view=summary$/, (route) => route.fulfill({ json: resetSummary() }));
   await page.goto("/admin/reset");
+  await pageLoaded(page);
   await expect(page).toHaveTitle("Reset for next year · Admin Dashboard · Kestrel Gives");
   await expect(page.getByRole("navigation", { name: "Admin sections" }).getByRole("link", { name: "Reset for next year" })).toHaveAttribute("aria-current", "page");
   await expect(page.locator(".admin-reset .pill")).toHaveText("Locked");
@@ -851,6 +887,7 @@ test("Reset for next year, ready: the name must be typed; then the section shows
     return route.fulfill({ json: { ok: true, message: "Reset done. Kestrel Gives 2027 is ready for its dates.", view: "summary", answer: resetSummary({ demoReset: true, empty: true, name: "Kestrel Gives 2027", unlocksAt: null }) } });
   });
   await page.goto("/admin/reset");
+  await pageLoaded(page);
   await expect(page.locator(".admin-reset .pill")).toHaveText("Ready");
   await page.getByRole("button", { name: "Reset for next year" }).click();
   const dialog = page.getByRole("dialog", { name: "Reset for next year?" });
@@ -887,6 +924,7 @@ test("Reset refused: a wrong name stays in the dialog; locked meanwhile closes i
   ];
   await page.route(/\/api\/admin$/, (route) => route.fulfill(answers.shift()!));
   await page.goto("/admin/reset");
+  await pageLoaded(page);
   await page.getByRole("button", { name: "Reset for next year" }).click();
   const dialog = page.getByRole("dialog", { name: "Reset for next year?" });
   await dialog.getByLabel("Type Kestrel Gives 2026 to confirm").fill("Kestrel Gives 2026");
@@ -910,6 +948,7 @@ test("after a Reset, Totals offers Restore demo data: the demo bar's own dialog,
     return route.fulfill({ json: app });
   });
   await page.goto("/admin");
+  await pageLoaded(page);
   const offer = page.getByRole("region", { name: "The demo was reset for next year" });
   await expect(offer).toBeVisible();
   await axe(page);
