@@ -31,7 +31,9 @@ test("the tour's Set me up, for real: Win and donate moves the shared demo to Bi
   await expect(card.locator("[data-guide-effect]")).toHaveText("Just you: viewing as Jules. Everyone: moves the demo to Bidding ended.");
   await card.getByRole("button", { name: "Set me up for Win and donate" }).click();
   const status = card.getByRole("status");
-  await expect(status).toContainText("Viewing as Jules Ferreira, Bidding ended.");
+  // Set me up makes four requests in a row; under vercel dev that's about 7 s, so the first
+  // answer gets the 15 s page loads get (DECISIONS #137, #143). The rest wait on a finished setup.
+  await expect(status).toContainText("Viewing as Jules Ferreira, Bidding ended.", { timeout: 15_000 });
   await expect(status).toContainText("Jules won");
   await expect(page.locator('[data-demo-bar="page"] .demo-bar__who')).toHaveText("Viewing as Jules Ferreira (employee)");
   await expect(page.locator("[data-shell-banner] .banner")).toContainText("Winners, please donate and upload proof by");

@@ -999,3 +999,12 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 
 ### 2026-11-10 — Restore cooldown fix (found by the Stage 1 check)
 - **Caught or hard:** `shell.spec.ts:112` (a second Restore within the cooldown is refused) failed in 2 of 2 full checks on Forbin and passed alone (19.1 s). The cooldown was stamped with the request's time, and a reseed takes 6–11 s here, so it had nearly run out by the time the restore finished. It now counts from when a Restore or clearing jump finishes (DECISIONS #142, SPEC v1.24 §3.1), with new database tests for both.
+
+### 2026-11-10 — Set me up's browser check gets 15 s (found by the Stage 1 check)
+- **Caught or hard:** `demo-jump.spec.ts:25` (the tour's Set me up for Win and donate) timed out at 5 s waiting for its first status: failed alone 3 of 3 with the welcome and cooldown changes and 2 of 2 on the committed code without them. Set me up makes four requests in a row, timed with curl on an idle `vercel dev` (two rounds):
+
+  | Jump to ended | View as Jules | `/api/me` | View back to Maya | Total |
+  |---|---|---|---|---|
+  | 2.20 / 2.10 s | 1.53 / 1.44 s | 1.63 / 1.61 s | 1.51 / 1.43 s | ≈ 6.6–6.9 s |
+
+  That first assertion now waits 15 s, like page loads (DECISIONS #143, following #137); the later ones keep 5 s. Fewer requests for Set me up is on the backlog; production answers all four in well under a second.
