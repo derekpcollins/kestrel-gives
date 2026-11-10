@@ -3,6 +3,7 @@
 // check at 320px (WCAG 2.2), against
 // `npm start` (vercel dev on the dev database).
 import { defineConfig, devices } from "@playwright/test";
+import { BASE_URL, WELCOME_SEEN } from "./tests/e2e/welcome-seen.ts";
 
 // SPEC §8: one responsive site, mobile first, from 360px up.
 const WIDTHS = [
@@ -16,7 +17,8 @@ export default defineConfig({
   globalSetup: "./tests/e2e/global-setup.ts",
   fullyParallel: true,
   reporter: "list",
-  use: { baseURL: "http://localhost:3000" },
+  // The welcome dialog starts seen, so it never covers the page under test (DECISIONS entry 140).
+  use: { baseURL: BASE_URL, storageState: WELCOME_SEEN },
   projects: [
     ...(["light", "dark"] as const).flatMap((colorScheme) =>
       WIDTHS.map(({ width, height }) => ({

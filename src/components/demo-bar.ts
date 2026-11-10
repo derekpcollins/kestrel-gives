@@ -8,6 +8,7 @@ import type { AppState } from "../app-state.ts";
 import { JUMPS, SHARED_NOTE, SUBMISSION_JUMP_TEXT, TOUR_LINK, currentJump, type JumpValue } from "./shell-rules.ts";
 import { confirmDialog } from "./dialog.ts";
 import { el } from "./dom.ts";
+import { readItem, writeItem } from "./local-store.ts";
 import { icon } from "./icons.ts";
 import { showToast } from "./toast.ts";
 
@@ -96,12 +97,13 @@ export function enhanceDemoBar(bar: HTMLElement, actions?: DemoBarActions): void
   if (details && bar.dataset.demoBar === "page") {
     // A remembered choice wins. Without one, the bar starts open on wide screens and
     // collapsed below 40rem, where it would push the page down (owner, pre-push review).
-    const remembered = localStorage.getItem(COLLAPSED_KEY);
+    const remembered = readItem(COLLAPSED_KEY);
     details.open = remembered === null ? isWide() : remembered !== "true";
     // Only the visitor's own toggles are remembered, not the default set above. The click on
     // the summary runs before <details> flips, so the new state is the opposite of now.
+    // With storage blocked it's simply not remembered (DECISIONS entry 141).
     details.querySelector("summary")?.addEventListener("click", () => {
-      localStorage.setItem(COLLAPSED_KEY, String(details.open));
+      writeItem(COLLAPSED_KEY, String(details.open));
     });
   }
 

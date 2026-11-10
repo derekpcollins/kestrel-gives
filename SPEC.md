@@ -1,6 +1,6 @@
 # Kestrel Gives — Build Spec & Conformance Rules
 
-**Status:** v1.23 · Owner: Derek Collins · Last updated: Nov 5, 2026
+**Status:** v1.24 · Owner: Derek Collins · Last updated: Nov 6, 2026
 
 This document describes what to build and the rules every contribution must follow, whether a person or an AI agent writes it. Read it in full before writing any code. If something here conflicts with a request, stop and ask.
 
@@ -44,7 +44,9 @@ A slim bar pinned to the top of every page, in the normal page flow (it never ov
 - **Restore demo data:** resets everything to the seeded state (including email templates), behind a confirmation dialog. It also deletes the files visitors uploaded in this environment (v1.13; section 4).
 - **Shared and self-repairing** (v1.11): anyone can use Jump to and Restore demo data, and everyone sees the same data. A short global cooldown (about 10 seconds) stops repeated Restores. A daily scheduled job (Vercel cron) runs the same Restore, so the demo returns to the live phase every day; the bar says the demo is shared and resets daily. This is the only scheduled job (section 7.1).
 - Collapsible to a thin strip using `<details>`; collapsed state is remembered.
-- **Tour link** (v1.21): "New here? Take the 5-minute tour" links to the Guide (section 8). It's in the open bar, and in the collapsed strip where it fits (from the small breakpoint); phones start collapsed, so Home has its own line too.
+- **Tour link** (v1.21): "New here? Take the 5-minute tour" links to the Guide (section 8). It's in the open bar, and in the collapsed strip where it fits (from the small breakpoint).
+- **About this demo** (v1.24): a button in the open bar that reopens the welcome dialog.
+- **Welcome dialog** (v1.24): a first visit to any page opens "Welcome to the Kestrel Gives demo": what the demo is, four things to try with the bar, and that Restore demo data puts everything back. Two actions: **Start exploring** closes it; **Take the 5-minute tour** goes to the Guide. It opens once the page's data has loaded, never on top of another dialog (then it waits for a later page load), never on the Guide (which counts as seeing it), and never with `?demo=off`. It's remembered in `localStorage` from the moment it opens; if storage is unavailable, it opens on Home only, at most once per page load. It reuses the dialog component, and fits a 390px-wide phone without scrolling; on a shorter screen (a phone held sideways) its content scrolls inside the dialog with both actions always in view.
 - Exposed to assistive tech as a region labeled "Demo controls."
 - Hidden when the URL includes `?demo=off` (used for clean case-study screenshots).
 - This mock login is NOT security. A real deployment would use company login and pass a security review, and would not include demo controls.
@@ -265,7 +267,7 @@ A banner just below the header shows the current phase message, for example "Sub
   2. A description of the event
   3. **How to participate** (submit, bid or buy, donate once, upload proof)
   4. Cards for the three charities, noting that donations are split equally among them
-  No item lists on Home. Above the hero, a one-line "New here? Take the 5-minute tour" link to the Guide (v1.21), hidden with `?demo=off` like the demo bar.
+  No item lists on Home. On a first visit, the welcome dialog (section 3.1) introduces the demo (v1.24; it replaced v1.21's "New here?" line above the hero).
 - **Silent Auction** and **Instant Sale:** separate browse pages, each a grid of item tiles. Sort by newest, price, or (silent auction) most bids. No search.
 - **Item page** (section 7.3).
 - **Submit an Item** and **Edit item** (section 7.3).

@@ -14,6 +14,7 @@
 // The files are named after those projects, as before.
 import { test, type APIRequestContext, type Browser, type BrowserContext, type FullProject, type Page } from "@playwright/test";
 import { SCREENS, viewAs, type Screen } from "./screens.ts";
+import { WELCOME_SEEN } from "./welcome-seen.ts";
 
 type State = "live" | "submission" | "ending-soon" | "ended" | "after" | "reset";
 
@@ -71,7 +72,7 @@ async function inEveryView(browser: Browser, projects: readonly FullProject[], b
   try {
     await Promise.all(views(projects).map(async (p) => {
       const { colorScheme, viewport, userAgent, deviceScaleFactor, isMobile, hasTouch } = p.use;
-      const context = await browser.newContext({ colorScheme, viewport, userAgent, deviceScaleFactor, isMobile, hasTouch, baseURL: baseURL ?? p.use.baseURL });
+      const context = await browser.newContext({ colorScheme, viewport, userAgent, deviceScaleFactor, isMobile, hasTouch, baseURL: baseURL ?? p.use.baseURL, storageState: WELCOME_SEEN });
       opened.push(context);
       // vercel dev leaks an open file on every 304 answer; routing turns off the browser's cache
       // so each file comes back 200 and nothing leaks (DECISIONS entry 122).
