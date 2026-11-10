@@ -109,7 +109,8 @@ describe("demo controls (rolled back)", () => {
     await db.query(`UPDATE items SET title = 'Changed by a visitor' WHERE id = 1`);
     await db.query(`UPDATE charities SET logo_path = '/seed/charities/placeholder-logo.png'`); // main before 7B
     const now = new Date();
-    assert.deepEqual(await tryRestoreIn(db, "manual", now), { status: "restored", hadUploads: false });
+    // A fixed finish time, so the cooldown below is exact; the real clock is the default (#142).
+    assert.deepEqual(await tryRestoreIn(db, "manual", now, () => now), { status: "restored", hadUploads: false });
     assert.equal((await appStateIn(db, null, {}, noCopies)).event?.phase, "live");
     assert.notEqual((await db.query<{ title: string }>(`SELECT title FROM items WHERE id = 1`)).rows[0]!.title, "Changed by a visitor");
     assert.deepEqual((await db.query<{ source: string }>(`SELECT source FROM demo_restores`)).rows, [{ source: "manual" }]);
@@ -119,7 +120,8 @@ describe("demo controls (rolled back)", () => {
     const soon = new Date(now.getTime() + 3_000);
     assert.deepEqual(await tryRestoreIn(db, "manual", soon), { status: "cooldown", retryAfterSeconds: RESTORE_COOLDOWN_SECONDS - 3 });
     assert.equal(await cooldownLeftIn(db, new Date(now.getTime() + RESTORE_COOLDOWN_SECONDS * 1000)), 0);
-    assert.deepEqual(await tryRestoreIn(db, "manual", new Date(now.getTime() + RESTORE_COOLDOWN_SECONDS * 1000)), { status: "restored", hadUploads: false });
+    const clear = new Date(now.getTime() + RESTORE_COOLDOWN_SECONDS * 1000);
+    assert.deepEqual(await tryRestoreIn(db, "manual", clear, () => clear), { status: "restored", hadUploads: false });
   });
 
   test("Jump to Submissions open clears bids, purchases and proofs with their uploaded files; items, photos and cancellations stay (#124)", async () => {
@@ -156,23 +158,43 @@ describe("demo controls (rolled back)", () => {
   test("the clearing jump follows Restore's cooldown both ways; other jumps don't (#124)", async () => {
     await db.query(`DELETE FROM demo_restores`);
     const now = new Date();
-    assert.deepEqual(await tryRestoreIn(db, "manual", now), { status: "restored", hadUploads: false });
+    assert.deepEqual(await tryRestoreIn(db, "manual", now, () => now), { status: "restored", hadUploads: false });
     const soon = new Date(now.getTime() + 4_000);
     assert.deepEqual(await tryJumpIn(db, "submission", soon), { status: "cooldown", retryAfterSeconds: RESTORE_COOLDOWN_SECONDS - 4 });
     assert.ok((await ids(`SELECT id FROM bids`)).length > 0, "nothing was cleared");
     assert.deepEqual(await tryJumpIn(db, "ended", soon), { status: "jumped", cleared: false, files: [] });
 
     const later = new Date(now.getTime() + RESTORE_COOLDOWN_SECONDS * 1000);
-    assert.equal((await tryJumpIn(db, "submission", later)).status, "jumped");
+    assert.equal((await tryJumpIn(db, "submission", later, () => later)).status, "jumped");
     assert.deepEqual(await tryRestoreIn(db, "manual", new Date(later.getTime() + 2_000)), { status: "cooldown", retryAfterSeconds: RESTORE_COOLDOWN_SECONDS - 2 });
+  });
+
+  test("the cooldown counts from when a Restore or clearing jump finished, not when it was asked for (#142)", async () => {
+    await db.query(`DELETE FROM demo_restores`);
+    const at = (t: Date, seconds: number) => new Date(t.getTime() + seconds * 1000);
+    // A Restore asked for at `now` that took 12 seconds: stamped at its finish, with the full cooldown after it.
+    const now = new Date();
+    assert.deepEqual(await tryRestoreIn(db, "manual", now, () => at(now, 12)), { status: "restored", hadUploads: false });
+    assert.equal(await cooldownLeftIn(db, at(now, 12)), RESTORE_COOLDOWN_SECONDS);
+    assert.deepEqual(await tryRestoreIn(db, "manual", at(now, 15)), { status: "cooldown", retryAfterSeconds: RESTORE_COOLDOWN_SECONDS - 3 });
+    assert.deepEqual(await tryJumpIn(db, "submission", at(now, 15)), { status: "cooldown", retryAfterSeconds: RESTORE_COOLDOWN_SECONDS - 3 });
+    // The seed's dates still use the request's time, so the phase is where the request left it.
+    assert.equal(phaseOf((await currentEventIn(db))!, now), "live");
+
+    // The clearing jump the same way: asked for once the Restore's cooldown is over, 12 seconds to finish.
+    const asked = at(now, 12 + RESTORE_COOLDOWN_SECONDS);
+    assert.equal((await tryJumpIn(db, "submission", asked, () => at(asked, 12))).status, "jumped");
+    assert.deepEqual(await tryRestoreIn(db, "manual", at(asked, 15)), { status: "cooldown", retryAfterSeconds: RESTORE_COOLDOWN_SECONDS - 3 });
+    assert.equal(await cooldownLeftIn(db, at(asked, 12 + RESTORE_COOLDOWN_SECONDS)), 0);
   });
 
   test("the cron restores once an hour at most; the deploy source is allowed", async () => {
     await db.query(`DELETE FROM demo_restores`);
     const now = new Date();
-    assert.deepEqual(await tryRestoreIn(db, "cron", now), { status: "restored", hadUploads: false });
+    assert.deepEqual(await tryRestoreIn(db, "cron", now, () => now), { status: "restored", hadUploads: false });
     assert.deepEqual(await tryRestoreIn(db, "cron", new Date(now.getTime() + 30 * 60_000)), { status: "duplicate" });
-    assert.deepEqual(await tryRestoreIn(db, "cron", new Date(now.getTime() + 61 * 60_000)), { status: "restored", hadUploads: false });
+    const nextHour = new Date(now.getTime() + 61 * 60_000);
+    assert.deepEqual(await tryRestoreIn(db, "cron", nextHour, () => nextHour), { status: "restored", hadUploads: false });
     await restoreIn(db, "deploy", new Date());
     await assert.rejects(db.query(`INSERT INTO demo_restores (source) VALUES ('visitor')`));
   });

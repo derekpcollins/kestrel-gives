@@ -3,7 +3,7 @@
 import type { Id, Tx } from "../data/db.ts";
 import { setEventDatesIn, type DatesResult } from "../data/event-dates.ts";
 import { ENDING_SOON_HOURS } from "../../src/components/thresholds.ts";
-import { cooldownLeftIn, tryDemoLockIn } from "./restore.ts";
+import { cooldownLeftIn, tryDemoLockIn, type FinishedAt } from "./restore.ts";
 
 export const JUMP_TARGETS = ["submission", "live", "ending-soon", "ended", "after"] as const;
 export type JumpTarget = (typeof JUMP_TARGETS)[number];
@@ -88,9 +88,9 @@ export type JumpOutcome =
 /**
  * One Jump to, as the demo bar asks for it, under the demo lock. "Submissions open" also clears
  * activity, so it follows Restore's rules too: refused within the global cooldown, and logged so
- * it starts one. Other jumps only move the dates, as before (#81).
+ * it starts one, counted from when it finished (#142). Other jumps only move the dates, as before (#81).
  */
-export async function tryJumpIn(tx: Tx, target: JumpTarget, now: Date): Promise<JumpOutcome> {
+export async function tryJumpIn(tx: Tx, target: JumpTarget, now: Date, finishedAt: FinishedAt = () => new Date()): Promise<JumpOutcome> {
   if (!(await tryDemoLockIn(tx))) return { status: "busy" };
   if (target !== "submission") {
     await jumpIn(tx, target, now);
@@ -102,6 +102,6 @@ export async function tryJumpIn(tx: Tx, target: JumpTarget, now: Date): Promise<
   if (!rows[0]) throw new Error("There is no current event to move.");
   const files = await clearActivityIn(tx, rows[0].id);
   await jumpIn(tx, target, now);
-  await tx.query(`INSERT INTO demo_restores (source, restored_at) VALUES ('jump', $1)`, [now]);
+  await tx.query(`INSERT INTO demo_restores (source, restored_at) VALUES ('jump', $1)`, [finishedAt()]);
   return { status: "jumped", cleared: true, files };
 }

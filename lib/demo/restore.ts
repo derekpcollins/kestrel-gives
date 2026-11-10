@@ -16,10 +16,18 @@ export const RESTORE_COOLDOWN_SECONDS = 10;
 /** The cron skips if a cron restore ran within this long (Vercel may deliver twice). */
 export const CRON_DEDUPE_MINUTES = 60;
 
-/** Reseeds and logs it. No lock or cooldown here: callers own those (the deploy step holds a session lock). */
-export async function restoreIn(tx: Tx, source: RestoreSource, now: Date): Promise<void> {
+/** When a restore or clearing jump finished. The real clock, except in tests that fix time. */
+export type FinishedAt = () => Date;
+const realClock: FinishedAt = () => new Date();
+
+/**
+ * Reseeds and logs it. No lock or cooldown here: callers own those (the deploy step holds a session lock).
+ * The seed's dates use `now`, the time of the request; the log takes `finishedAt()`, after the reseed,
+ * so the cooldown counts from when the restore finished, however long it took (DECISIONS #142).
+ */
+export async function restoreIn(tx: Tx, source: RestoreSource, now: Date, finishedAt: FinishedAt = realClock): Promise<void> {
   await seedIn(tx, now);
-  await tx.query(`INSERT INTO demo_restores (source, restored_at) VALUES ($1, $2)`, [source, now]);
+  await tx.query(`INSERT INTO demo_restores (source, restored_at) VALUES ($1, $2)`, [source, finishedAt()]);
 }
 
 export type RestoreOutcome =
@@ -67,7 +75,7 @@ export async function clearUploads(storage: Storage, source: "manual" | "cron", 
 type RestoreInOutcome = Exclude<RestoreOutcome, { status: "restored" }> | { status: "restored"; hadUploads: boolean };
 
 /** tryRestore's database work inside a transaction the caller owns (tests roll it back). */
-export async function tryRestoreIn(tx: Tx, source: "manual" | "cron", now: Date): Promise<RestoreInOutcome> {
+export async function tryRestoreIn(tx: Tx, source: "manual" | "cron", now: Date, finishedAt: FinishedAt = realClock): Promise<RestoreInOutcome> {
   if (!(await tryDemoLockIn(tx))) return { status: "busy" };
   if (source === "cron") {
     const { rows } = await tx.query<{ recent: boolean }>(
@@ -80,7 +88,7 @@ export async function tryRestoreIn(tx: Tx, source: "manual" | "cron", now: Date)
     if (wait > 0) return { status: "cooldown", retryAfterSeconds: wait };
   }
   const hadUploads = await hasUploadsIn(tx);
-  await restoreIn(tx, source, now);
+  await restoreIn(tx, source, now, finishedAt);
   return { status: "restored", hadUploads };
 }
 
