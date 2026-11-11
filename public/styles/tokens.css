@@ -66,8 +66,14 @@
   --color-banner-calm:        light-dark(#FFE08A, #3A3320);
   --color-banner-calm-border: light-dark(#FFE08A, #FFE08A);
   --color-on-banner-calm:     light-dark(#12302F, #FDF3D0);
-  --color-inverse:         light-dark(#12302F, #EAF4F2); /* toast, demo bar */
+  --color-inverse:         light-dark(#12302F, #EAF4F2); /* toast */
   --color-on-inverse:      light-dark(#F6FAF9, #0F1F1F);
+  /* The demo bar: dark in both modes (darker than the dark page), with butter hazard stripes,
+     so it's the most distinct thing on the page either way (owner, visible changes A). */
+  --color-demo-bar:        light-dark(#12302F, #081414);
+  --color-on-demo:         light-dark(#F6FAF9, #F6FAF9); /* 13.4:1 and 17.8:1 */
+  --color-demo-stripe:     light-dark(#FFE08A, #FFE08A);
+  --color-danger-on-demo:  light-dark(#FFB3B0, #FFB3B0); /* Restore's outline and text: 8.3:1 and 11:1 */
   --color-crown:           light-dark(#FFD86B, #FFD86B); /* top-bidder crown fill */
   --color-crown-stroke:    light-dark(#6E4B00, #6E4B00);
 

@@ -1,12 +1,17 @@
 /* Demo bar (DESIGN-SYSTEM.md; SPEC §3.1): the demo's own controls, first on every page and
-   in the normal flow (it never covers content). Inverse colors and a striped edge set it
-   apart from the app. A <details>, so it collapses to a strip; src/components/demo-bar.ts
+   in the normal flow (it never covers content). Dark in both modes, darker than the dark page,
+   with butter hazard stripes, so it's the most distinct thing on the page either way (owner,
+   visible changes A1). A <details>, so it collapses to a one-line strip; src/components/demo-bar.ts
    remembers that, announces who you're viewing as, and hides it for ?demo=off. */
-.demo-bar { position: relative; background: var(--color-inverse); color: var(--color-on-inverse); }
-.demo-bar::before { content: ""; display: block; height: var(--space-1); background: repeating-linear-gradient(135deg, var(--color-banner) 0 var(--space-2), var(--color-inverse) var(--space-2) var(--space-4)); }
+.demo-bar { position: relative; container: demo-bar / inline-size; background: var(--color-demo-bar); color: var(--color-on-demo); }
+.demo-bar::before { content: ""; display: block; height: var(--space-2); background: repeating-linear-gradient(135deg, var(--color-demo-stripe) 0 var(--space-2), var(--color-demo-bar) var(--space-2) var(--space-4)); }
 .demo-bar__details { max-width: var(--size-content); margin: 0 auto; padding-inline: var(--space-4); }
+
+/* The strip: one line at every width (tag, who you're viewing as, the tour link where it fits,
+   the chevron). The name gives way with an ellipsis; nothing wraps. */
 .demo-bar__summary {
   display: flex;
+  flex-wrap: nowrap;
   align-items: center;
   gap: var(--space-2);
   min-height: var(--size-target);
@@ -15,53 +20,54 @@
   list-style: none;
 }
 .demo-bar__summary::-webkit-details-marker { display: none; }
-.demo-bar__summary:focus-visible { outline-color: var(--color-on-inverse); }
-.demo-bar__summary > .icon { margin-left: auto; transition: rotate var(--duration-fast) var(--ease-standard); }
+.demo-bar__summary > .icon { flex: none; margin-left: auto; transition: rotate var(--duration-fast) var(--ease-standard); }
 .demo-bar__details[open] > .demo-bar__summary > .icon { rotate: 180deg; }
-.demo-bar__tag { padding: 0 var(--space-2); border-radius: var(--radius-pill); background: var(--color-banner); color: var(--color-on-banner); font: var(--type-badge); text-transform: uppercase; letter-spacing: var(--tracking-label); }
-.demo-bar__who { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.demo-bar__tag { flex: none; padding: 0 var(--space-2); border-radius: var(--radius-pill); background: var(--color-banner); color: var(--color-on-banner); font: var(--type-badge); text-transform: uppercase; letter-spacing: var(--tracking-label); }
+.demo-bar__who { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.demo-bar :focus-visible { outline-color: var(--color-on-demo); }
 
-/* Top-aligned, so the Viewing as and Jump to labels share a line (owner, pre-push review). */
-.demo-bar__controls { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--space-3) var(--space-6); padding-block: var(--space-2) var(--space-4); }
-.demo-bar .field__label, .demo-bar__group-label { color: var(--color-on-inverse); }
-.demo-bar__viewing { flex: 1 1 calc(var(--space-16) * 3.5); max-width: calc(var(--space-16) * 5); }
-.demo-bar__jump { display: grid; gap: var(--space-2); min-width: 0; margin: 0; padding: 0; border: 0; }
+/* The open bar: compact (owner, visible changes A1). Small controls at --size-target-sm (SPEC
+   §6 v1.25), never under WCAG 2.2's minimum. Top-aligned, so the Viewing as and Event phase labels
+   share a line, and so do their controls (owner, pre-push review). */
+.demo-bar__controls { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--space-2) var(--space-4); padding-block: 0 var(--space-3); }
+.demo-bar .field { gap: var(--space-1); }
+.demo-bar .field__label, .demo-bar__group-label { color: var(--color-on-demo); font: var(--type-label); }
+.demo-bar__viewing { flex: 0 1 calc(var(--space-16) * 4); min-width: calc(var(--space-16) * 3); }
+.demo-bar .select > .input { min-height: var(--size-target-sm); padding-block: var(--space-1); font: var(--type-label); }
+.demo-bar__jump { display: grid; min-width: 0; margin: 0; padding: 0; border: 0; }
 /* A legend isn't a grid item, so the fieldset's gap doesn't reach it; the margin matches
    the field's label-to-control gap, so the buttons line up with the select. */
-.demo-bar__group-label { padding: 0; margin-bottom: var(--space-2); font: var(--type-label); }
+.demo-bar__group-label { padding: 0; margin-bottom: var(--space-1); }
 .demo-bar__jump-buttons { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 /* The current phase: filled, plus aria-pressed for screen readers. */
-.demo-bar__jump-buttons .btn[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-on-inverse); color: var(--color-on-accent); }
-.demo-bar :focus-visible { outline-color: var(--color-on-inverse); }
-/* "Shared demo · resets daily" (SPEC §3.1, v1.11): visible open or collapsed. Until the bar is
-   wide (--breakpoint-lg) it wraps to its own line under the name instead of squeezing it, which
-   also leaves the first line room for the tour link from --breakpoint-sm (guide plan). */
-.demo-bar__summary { flex-wrap: wrap; padding-block: var(--space-1); }
-.demo-bar__who { flex: 1 1 auto; }
-.demo-bar__note { order: 1; flex-basis: 100%; font: var(--type-caption); }
-@container demo-bar (min-width: 64rem) {
-  .demo-bar__note { order: 0; flex-basis: auto; }
-}
-.demo-bar { container: demo-bar / inline-size; }
+.demo-bar__jump-buttons .btn[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-on-demo); color: var(--color-on-accent); }
 
-/* The tour link (SPEC v1.21 §3.1; owner, guide plan). On a narrow bar (under --breakpoint-sm) it is the last thing in the
-   open bar (phones start collapsed, so the welcome dialog points the way). On a wider bar it sits in the strip,
+/* Restore demo data, and the line beside it: on the controls' bottom edge. Restore is the danger
+   outline, in the bar's own red, so it matches its red confirmation without shouting. */
+.demo-bar__end { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); align-self: flex-end; }
+.demo-bar .btn--danger-outline { color: var(--color-danger-on-demo); }
+.demo-bar .btn--danger-outline:hover, .demo-bar .btn--danger-outline:active { background: var(--color-danger-on-demo); color: var(--color-demo-bar); box-shadow: none; }
+/* "Shared demo · resets daily" (SPEC §3.1, v1.11): in the open bar only (v1.25). */
+.demo-bar__note { margin: 0; font: var(--type-caption); }
+
+/* The tour link and About this demo (SPEC v1.21, v1.24 §3.1): text-styled, at least --space-6 tall
+   (WCAG 2.2 target size). About reopens the welcome dialog, so it's a button. */
+.demo-bar__tour, .demo-bar__about { color: var(--color-on-demo); font: var(--type-label); text-decoration: underline; text-decoration-thickness: var(--border-thin); text-underline-offset: var(--space-1); border-radius: var(--radius-sm); }
+.demo-bar__tour:hover, .demo-bar__about:hover { text-decoration-thickness: var(--border-thick); }
+.demo-bar__about { min-height: var(--space-6); padding: 0; border: 0; background: none; cursor: pointer; }
+
+/* On a narrow bar (under --breakpoint-sm) the tour link is the last thing in the open bar; phones
+   start collapsed, so the welcome dialog points the way. On a wider bar it sits in the strip,
    open or collapsed, in room the summary keeps for it before the chevron. It's outside the
    <summary> (a link inside the toggle would be nested controls), so it's placed over that room. */
-.demo-bar__tour, .demo-bar__about { color: var(--color-on-inverse); font: var(--type-label); text-decoration: underline; text-decoration-thickness: var(--border-thin); text-underline-offset: var(--space-1); border-radius: var(--radius-sm); }
-.demo-bar__tour:hover, .demo-bar__about:hover { text-decoration-thickness: var(--border-thick); }
-/* About this demo (SPEC v1.24 §3.1): reopens the welcome dialog, so it's a button, styled like the
-   tour link beside it. Open bar only, on a line with Restore demo data; its height meets WCAG
-   2.2's minimum target size. */
-.demo-bar__about { align-self: center; min-height: var(--space-6); padding: 0; border: 0; background: none; cursor: pointer; }
-.demo-bar__tour--open { align-self: center; flex-basis: 100%; }
+.demo-bar__tour--open { display: inline-flex; align-items: center; min-height: var(--space-6); flex-basis: 100%; }
 .demo-bar__tour-room, .demo-bar__strip-tour { display: none; }
 @container demo-bar (min-width: 40rem) {
   .demo-bar__tour--open { display: none; }
-  .demo-bar__tour-room { display: block; flex: none; width: calc(var(--space-16) * 3); }
+  .demo-bar__tour-room { display: block; flex: none; width: calc(var(--space-16) * 2); }
   .demo-bar__strip-tour {
     position: absolute;
-    top: var(--space-1);
+    top: var(--space-2);
     left: 0;
     right: 0;
     display: flex;
@@ -73,12 +79,7 @@
     padding-inline: var(--space-4) calc(var(--space-4) + var(--size-icon-sm) + var(--space-2));
     pointer-events: none;
   }
-  /* At least a 24px target (WCAG 2.2 target size), centered on its line. */
   .demo-bar__strip-tour > a { display: inline-flex; align-items: center; min-height: var(--space-6); pointer-events: auto; }
-}
-/* With the note on its own line, the link lines up with the first line, not the whole strip. */
-@container demo-bar (40rem <= width < 64rem) {
-  .demo-bar__strip-tour { top: var(--space-1); height: auto; align-items: flex-start; }
 }
 
 /* Windows high contrast replaces the fill, so the current phase takes the system highlight. */

@@ -1,5 +1,5 @@
-// The app shell against the real API on dev (Milestone 3B; SPEC §3.1, §8): Viewing as, Jump
-// to and Restore change what the header, profile menu and phase banner show. These tests
+// The app shell against the real API on dev (Milestone 3B; SPEC §3.1, §8): Viewing as, Event
+// phase and Restore change what the header, profile menu and phase banner show. These tests
 // change the shared dev data, so they run one at a time in one project and put the event
 // back to live at the end.
 import { expect, test, type Page } from "@playwright/test";
@@ -65,7 +65,7 @@ test("the Admin Dashboard tells employees it's for admins", async ({ page }) => 
   await bar(page).getByLabel("Viewing as").selectOption({ label: "Jules Ferreira (employee)" });
 });
 
-test("Jump to moves the phase: banner and pressed button; Submissions open asks first, and Cancel changes nothing", async ({ page }) => {
+test("Event phase moves the phase: banner and pressed button; Submissions open asks first, and Cancel changes nothing", async ({ page }) => {
   await open(page);
   const jump = (name: string) => bar(page).getByRole("button", { name, exact: true });
   await expect(nav(page).getByRole("link", { name: "Submit an Item" })).toHaveCount(0);
@@ -162,7 +162,7 @@ test("an employee's avatar is an image with their name, not a control", async ({
   expect(stops.some((c) => c.includes("site-header__link"))).toBe(true); // the walk did reach the header
 });
 
-test("demo bar at 1280: the Viewing as and Jump to labels share a top edge, and so do their controls", async ({ page }) => {
+test("demo bar at 1280: the Viewing as and Event phase labels share a top edge, and so do their controls", async ({ page }) => {
   await open(page);
   const viewing = await bar(page).locator(".demo-bar__viewing .field__label").boundingBox();
   const jump = await bar(page).locator(".demo-bar__group-label").boundingBox();
@@ -181,8 +181,8 @@ test("demo bar below 40rem starts collapsed, keeps its strip, and a visitor's ch
   const strip = bar(page).locator("summary");
   await expect(strip.locator(".demo-bar__tag")).toHaveText("Demo");
   await expect(strip.locator(".demo-bar__who")).toHaveText("Viewing as Jules Ferreira (employee)");
-  await expect(strip.locator(".demo-bar__note")).toHaveText("Shared demo · resets daily");
-  for (const part of [".demo-bar__tag", ".demo-bar__who", ".demo-bar__note"]) await expect(strip.locator(part)).toBeVisible();
+  for (const part of [".demo-bar__tag", ".demo-bar__who"]) await expect(strip.locator(part)).toBeVisible();
+  await expect(bar(page).locator(".demo-bar__note")).toBeHidden(); // open bar only (v1.25)
 
   await strip.click(); // the visitor opens it
   await expect(details).toHaveAttribute("open");
@@ -232,4 +232,34 @@ test("forced colors: the pressed phase, the current admin section and the curren
   await page.goto("/your-items");
   const line = await page.evaluate(`getComputedStyle(document.querySelector(".site-header__link[aria-current='page']")).textDecorationLine`);
   expect(line).toBe("underline");
+});
+
+// Visible changes A1 (SPEC v1.25 §3.1, §6): the strip is one line at every width, the note lives in
+// the open bar, the controls are compact but never under 36px, and Restore is the danger outline.
+test("demo bar: the strip is one line at 320, 390 and 1280; the open bar is compact", async ({ page }) => {
+  for (const width of [320, 390, 1280]) {
+    await page.setViewportSize({ width, height: 800 });
+    await open(page);
+    const summary = bar(page).locator("summary");
+    if (await bar(page).locator("details").evaluate((d) => (d as unknown as { open: boolean }).open)) await summary.click();
+    const tag = await summary.locator(".demo-bar__tag").boundingBox();
+    const who = await summary.locator(".demo-bar__who").boundingBox();
+    const chevron = await summary.locator(".icon").boundingBox();
+    const box = await summary.boundingBox();
+    // One line: everything shares a vertical centre, and the strip is no taller than its 44px target.
+    for (const part of [who!, chevron!]) expect(Math.abs(part.y + part.height / 2 - (tag!.y + tag!.height / 2)), `${width}px`).toBeLessThanOrEqual(2);
+    expect(box!.height, `${width}px`).toBeLessThanOrEqual(45);
+    await expect(bar(page).locator(".demo-bar__note")).toBeHidden();
+
+    await summary.click();
+    await expect(bar(page).locator(".demo-bar__note")).toHaveText("Shared demo · resets daily");
+    await expect(bar(page).locator(".demo-bar__group-label")).toHaveText("Event phase");
+    const heights = await bar(page).locator(".demo-bar__jump-buttons .btn, .demo-bar__viewing select, [data-demo-restore]")
+      .evaluateAll((els) => els.map((e) => e.getBoundingClientRect().height));
+    for (const h of heights) {
+      expect(h, `${width}px`).toBeGreaterThanOrEqual(36);
+      expect(h, `${width}px`).toBeLessThan(44);
+    }
+    await expect(bar(page).locator("[data-demo-restore]")).toHaveClass(/btn--danger-outline/);
+  }
 });

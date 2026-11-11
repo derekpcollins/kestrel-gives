@@ -1,5 +1,5 @@
-// The shell's rules (SPEC §3.1, §8): which nav links show in each phase and which Jump to
-// button is pressed. Pure, with no DOM, so node:test covers them.
+// The shell's rules (SPEC §3.1, §8): which nav links show in each phase and which Event
+// phase button is pressed. Pure, with no DOM, so node:test covers them.
 import type { EventView } from "../app-state.ts";
 
 /** "item" is an item page: no nav link is the current page there, nor on the giving stub or the tour. */
@@ -52,16 +52,18 @@ export const JUMPS: ReadonlyArray<{ value: JumpValue; label: string }> = [
   { value: "ended", label: "Bidding ended" },
   { value: "after", label: "30+ days after" },
 ];
-/** The tour's link in the demo bar (SPEC v1.21 §3.1): the open bar, and the strip where it fits. */
-export const TOUR_LINK = { href: "/guide", open: "New here? Take the 5-minute tour", strip: "Take the 5-minute tour" } as const;
+/** The demo bar's phase buttons' group label (SPEC v1.25 §3.1; "Jump to" before). */
+export const PHASE_LABEL = "Event phase";
+/** The guide's link in the demo bar (SPEC v1.21, v1.25 §3.1): the open bar, and the strip where it fits. */
+export const TOUR_LINK = { href: "/guide", open: "Things to try", strip: "Things to try" } as const;
 /** The demo bar's note (SPEC §3.1, v1.11). */
 export const SHARED_NOTE = "Shared demo · resets daily";
 
-/** What Jump to "Submissions open" does, said before it happens (owner, 7A review; DECISIONS entry 124). */
+/** What Event phase "Submissions open" does, said before it happens (owner, 7A review; DECISIONS entry 124). */
 export const SUBMISSION_JUMP_TEXT =
   "Submissions open clears bids, purchases and proofs, with their uploaded files. Items stay. Restore demo data brings them back. The demo is shared, so this changes it for everyone.";
 
-/** Which Jump to button shows as pressed for the event as it is now. */
+/** Which Event phase button shows as pressed for the event as it is now. */
 export function currentJump(event: Pick<EventView, "phase" | "endingSoon" | "proofDeadline"> | null, now: Date): JumpValue | null {
   if (!event) return null;
   if (event.phase === "unscheduled" || event.phase === "upcoming") return null;

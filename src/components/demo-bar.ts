@@ -5,7 +5,7 @@
 // call the API; each control shows the button loading state while its request runs, and
 // updateDemoBar() refreshes it in place so focus stays where it was.
 import type { AppState } from "../app-state.ts";
-import { JUMPS, SHARED_NOTE, SUBMISSION_JUMP_TEXT, TOUR_LINK, currentJump, type JumpValue } from "./shell-rules.ts";
+import { JUMPS, PHASE_LABEL, SHARED_NOTE, SUBMISSION_JUMP_TEXT, TOUR_LINK, currentJump, type JumpValue } from "./shell-rules.ts";
 import { confirmDialog } from "./dialog.ts";
 import { el } from "./dom.ts";
 import { readItem, writeItem } from "./local-store.ts";
@@ -37,7 +37,6 @@ export function renderDemoBar(state: AppState, actions: DemoBarActions): HTMLEle
       el("summary", { className: "demo-bar__summary" },
         el("span", { className: "demo-bar__tag", text: "Demo" }),
         el("span", { className: "demo-bar__who" }),
-        el("span", { className: "demo-bar__note", text: SHARED_NOTE }),
         el("span", { className: "demo-bar__tour-room", attrs: { "aria-hidden": "true" } }),
         icon("chevron-down", { size: "sm" }),
       ),
@@ -47,14 +46,19 @@ export function renderDemoBar(state: AppState, actions: DemoBarActions): HTMLEle
           el("div", { className: "select" }, select, icon("chevron-down")),
         ),
         el("fieldset", { className: "demo-bar__jump" },
-          el("legend", { className: "demo-bar__group-label", text: "Jump to" }),
+          el("legend", { className: "demo-bar__group-label", text: PHASE_LABEL }),
           el("div", { className: "demo-bar__jump-buttons" },
-            ...JUMPS.map((j) => el("button", { className: "btn btn--secondary", text: j.label, attrs: { type: "button", value: j.value, "aria-pressed": "false" } })),
+            ...JUMPS.map((j) => el("button", { className: "btn btn--secondary btn--sm", text: j.label, attrs: { type: "button", value: j.value, "aria-pressed": "false" } })),
           ),
         ),
-        el("button", { className: "btn btn--secondary", attrs: { type: "button", "data-demo-restore": "" } }, icon("trash", { size: "sm" }), "Restore demo data"),
-        // Reopens the welcome (SPEC v1.24 §3.1). A button, since it opens a dialog.
-        el("button", { className: "demo-bar__about", text: ABOUT_LABEL, attrs: { type: "button", "data-demo-about": "" } }),
+        el("div", { className: "demo-bar__end" },
+          // The danger outline: it opens a red confirmation (SPEC v1.25 §3.1).
+          el("button", { className: "btn btn--danger-outline btn--sm", attrs: { type: "button", "data-demo-restore": "" } }, icon("trash", { size: "sm" }), "Restore demo data"),
+          // Reopens the welcome (SPEC v1.24 §3.1). A button, since it opens a dialog.
+          el("button", { className: "demo-bar__about", text: ABOUT_LABEL, attrs: { type: "button", "data-demo-about": "" } }),
+          // Open bar only (SPEC v1.25 §3.1), so the strip stays one line.
+          el("p", { className: "demo-bar__note", text: SHARED_NOTE }),
+        ),
         tourLink("demo-bar__tour demo-bar__tour--open", TOUR_LINK.open),
       ),
     ),
@@ -181,7 +185,7 @@ export async function confirmRestore(restore: () => Promise<void>): Promise<bool
 }
 
 /**
- * Jump to "Submissions open" clears every bid, purchase and proof (owner, 7A review; DECISIONS
+ * Event phase "Submissions open" clears every bid, purchase and proof (owner, 7A review; DECISIONS
  * entry 124), so it says so first. A refusal (busy, or the shared cooldown) shows in the dialog.
  */
 export async function confirmSubmissionJump(jump: () => Promise<void>): Promise<boolean> {

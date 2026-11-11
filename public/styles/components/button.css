@@ -1,4 +1,4 @@
-/* Button (DESIGN-SYSTEM.md): one per action. Variants primary, secondary, quiet, danger;
+/* Button (DESIGN-SYSTEM.md): one per action. Variants primary, secondary, quiet, danger, danger-outline;
    sizes default and sm; icon-only and block layouts. The .is-* classes force a state for
    the gallery and Figma only; the app relies on the real pseudo-classes. */
 .btn {
@@ -33,6 +33,12 @@
 .btn--danger { background: var(--color-danger); color: var(--color-on-danger); }
 .btn--danger:hover, .btn--danger.is-hover { background: var(--color-danger-hover); }
 .btn--danger:active, .btn--danger.is-active { background: var(--color-danger-active); }
+
+/* Danger outline: a destructive action that opens its own red confirmation (Restore demo data in
+   the demo bar). Cautious without shouting; the dialog carries the filled red. */
+.btn--danger-outline { background: transparent; color: var(--color-danger); border-color: currentColor; }
+.btn--danger-outline:hover, .btn--danger-outline.is-hover { background: var(--color-danger-soft); }
+.btn--danger-outline:active, .btn--danger-outline.is-active { background: var(--color-danger-soft); box-shadow: inset 0 0 0 var(--border-thin) currentColor; }
 
 .btn--sm { min-height: var(--size-target-sm); padding: var(--space-1) var(--space-4); font: var(--type-label); }
 .btn--icon { padding: 0; width: var(--size-target); }

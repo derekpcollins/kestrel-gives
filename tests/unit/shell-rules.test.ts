@@ -1,8 +1,8 @@
-// The shell's rules (SPEC §3.1, §8): nav links per phase and the pressed Jump to button.
+// The shell's rules (SPEC §3.1, §8): nav links per phase and the pressed Event phase button.
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import { JUMP_TARGETS } from "../../lib/demo/jump.ts";
-import { JUMPS, SHARED_NOTE, currentJump, navLinks, pageKeyFor } from "../../src/components/shell-rules.ts";
+import { JUMPS, PHASE_LABEL, SHARED_NOTE, TOUR_LINK, currentJump, navLinks, pageKeyFor } from "../../src/components/shell-rules.ts";
 
 const NOW = new Date("2026-11-02T18:30:00Z");
 
@@ -15,8 +15,13 @@ describe("shell rules", () => {
     assert.deepEqual(labels("submission"), [...labels("live"), "Submit an Item"]);
     assert.ok(navLinks("submission").every((l) => !/admin/i.test(l.label + l.href)), "admin links live only in the profile menu");
   });
-  test("the bar's jump buttons are the API's targets, in order", () => {
+  test("the bar's phase buttons are the API's targets, in the event's own order (v1.25)", () => {
     assert.deepEqual(JUMPS.map((j) => j.value), [...JUMP_TARGETS]);
+    assert.deepEqual(JUMPS.map((j) => j.label), ["Submissions open", "Bidding live", "Ending soon", "Bidding ended", "30+ days after"]);
+    assert.equal(PHASE_LABEL, "Event phase");
+  });
+  test("the guide's link says Things to try, open and in the strip (v1.25)", () => {
+    assert.deepEqual(TOUR_LINK, { href: "/guide", open: "Things to try", strip: "Things to try" });
   });
   test("the pressed button follows the data", () => {
     const later = new Date(NOW.getTime() + 3_600_000).toISOString();
