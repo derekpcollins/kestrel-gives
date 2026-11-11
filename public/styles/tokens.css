@@ -74,6 +74,16 @@
   --color-on-demo:         light-dark(#F6FAF9, #F6FAF9); /* 13.4:1 and 17.8:1 */
   --color-demo-stripe:     light-dark(#FFE08A, #FFE08A);
   --color-danger-on-demo:  light-dark(#FFB3B0, #FFB3B0); /* Restore's outline and text: 8.3:1 and 11:1 */
+  /* Controls on the bar: the dark-mode control colors in both modes, since the bar is dark in
+     both (owner, A1 review). Tinted fill and outline, teal text; the current phase filled teal. */
+  --color-demo-control:         light-dark(#16292A, #16292A);
+  --color-demo-control-hover:   light-dark(#173A39, #173A39);
+  --color-demo-control-border:  light-dark(#6E8C89, #6E8C89); /* 3.9:1 and 5.2:1 on the bar */
+  --color-demo-control-text:    light-dark(#5CC8C0, #5CC8C0); /* 7.6:1 on the control */
+  --color-demo-control-value:   light-dark(#EAF4F2, #EAF4F2); /* the select's value: 13.5:1 */
+  --color-demo-control-icon:    light-dark(#A3BDBA, #A3BDBA);
+  --color-demo-current:         light-dark(#5CC8C0, #5CC8C0);
+  --color-on-demo-current:      light-dark(#0F1F1F, #0F1F1F); /* 8.5:1 */
   --color-crown:           light-dark(#FFD86B, #FFD86B); /* top-bidder crown fill */
   --color-crown-stroke:    light-dark(#6E4B00, #6E4B00);
 
@@ -163,6 +173,7 @@
   --size-tile-min:    16rem;   /* item grid: tiles wrap at this width, no breakpoints */
   --size-charity-logo: 10rem;  /* 160: charity logos on Home and giving (files are 2x) */
   --size-step-number: 2.5rem; /* 40: the numbered circles in How to participate */
+  --size-step-number-sm: 1.75rem; /* 28: the same circles in the welcome dialog's steps */
   --size-content:     72rem;   /* page max width */
   --size-content-narrow: 40rem; /* forms, reading text */
 

@@ -18,6 +18,7 @@ const welcome = (page: Page) => page.getByRole("dialog", { name: WELCOME.title }
 const stored = (page: Page) => page.evaluate(`localStorage.getItem(${JSON.stringify(WELCOME_KEY)})`);
 const start = (page: Page) => welcome(page).getByRole("button", { name: WELCOME.dismiss });
 const tour = (page: Page) => welcome(page).getByRole("link", { name: WELCOME.tour.label });
+const close = (page: Page) => welcome(page).getByRole("button", { name: "Close", exact: true });
 const demoBar = (page: Page) => page.locator('[data-demo-bar="page"]');
 const about = (page: Page) => demoBar(page).getByRole("button", { name: "About this demo" });
 
@@ -135,7 +136,30 @@ test("Start exploring and Escape both just close it, and it isn't back on reload
   await expectNoWelcome(page);
 });
 
-test("Take the 5-minute tour goes to the Guide, which never shows it; a first visit to the Guide counts as seen", async ({ page }, info) => {
+test("the × (named Close) and a click on the backdrop both close it, and it stays closed (v1.25)", async ({ page }, info) => {
+  once(info);
+  await page.goto("/");
+  await expect(welcome(page)).toBeVisible({ timeout: 15_000 });
+  await expect(close(page)).toBeVisible();
+  // Top right: its right edge near the dialog's, above the title's bottom.
+  const [dialogBox, closeBox, titleBox] = await Promise.all([welcome(page).boundingBox(), close(page).boundingBox(), welcome(page).locator(".dialog__title").boundingBox()]);
+  expect(dialogBox!.x + dialogBox!.width - (closeBox!.x + closeBox!.width)).toBeLessThanOrEqual(24);
+  expect(closeBox!.y).toBeLessThan(titleBox!.y + titleBox!.height);
+  await close(page).click();
+  await expect(welcome(page)).toHaveCount(0);
+
+  await page.evaluate(`localStorage.clear()`);
+  await page.reload();
+  await expect(welcome(page)).toBeVisible({ timeout: 15_000 });
+  await page.waitForFunction("document.getAnimations().every((a) => a.playState !== 'running' || a.effect?.getComputedTiming().iterations === Infinity)");
+  await page.mouse.click(8, 8);
+  await expect(welcome(page)).toHaveCount(0);
+  await page.reload();
+  await pageLoaded(page);
+  await expectNoWelcome(page);
+});
+
+test("See more things to try goes to the Guide, which never shows it; a first visit to the Guide counts as seen", async ({ page }, info) => {
   once(info);
   await page.goto("/");
   await expect(welcome(page)).toBeVisible({ timeout: 15_000 });
@@ -161,7 +185,9 @@ test("keyboard: focus stays inside, Tab reaches both actions, and the page behin
   await expect(welcome(page)).toBeVisible({ timeout: 15_000 });
   await expect(start(page)).toBeFocused();
   await page.keyboard.press("Shift+Tab");
-  await expect(tour(page)).toBeFocused(); // the tour comes before Start exploring
+  await expect(tour(page)).toBeFocused(); // the guide link comes before Start exploring
+  await page.keyboard.press("Shift+Tab");
+  await expect(close(page)).toBeFocused(); // and the × before both: Tab order is the visual order
   // However far you Tab or Shift+Tab, focus is in the dialog (or the browser's own controls).
   for (const key of ["Tab", "Tab", "Tab", "Shift+Tab", "Shift+Tab", "Shift+Tab", "Shift+Tab"]) {
     await page.keyboard.press(key);
@@ -192,7 +218,7 @@ test("fits a 390×844 phone without scrolling", async ({ page }, info) => {
   await expect(welcome(page).locator(".dialog__actions > *")).toHaveText([WELCOME.tour.label, WELCOME.dismiss]);
 });
 
-test("at 320 wide nothing scrolls sideways and every line and both actions are on screen", async ({ page }, info) => {
+test("at 320 wide nothing scrolls sideways, both actions are on screen, and every line can be reached", async ({ page }, info) => {
   once(info);
   await page.setViewportSize({ width: 320, height: 800 });
   await page.goto("/");
@@ -207,6 +233,14 @@ test("at 320 wide nothing scrolls sideways and every line and both actions are o
   await inView(page, welcome(page));
   await inView(page, start(page));
   await inView(page, tour(page));
+  // The v1.25 first line is longer, so at 320 the body may scroll (SPEC §3.1's shorter-screen rule):
+  // the last line is then a scroll away, with the divider showing and the body a named region.
+  const body = welcome(page).locator(".dialog__body");
+  if (await body.evaluate((b) => b.scrollHeight > b.clientHeight)) {
+    expect(await divider(body)).toBe("1px");
+    await expect(body).toHaveAttribute("tabindex", "0");
+    await body.evaluate((b) => { b.scrollTop = b.scrollHeight; });
+  }
   await inView(page, welcome(page).getByText(WELCOME.closing));
   await expectStacked(welcome(page));
 });

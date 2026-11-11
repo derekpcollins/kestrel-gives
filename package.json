@@ -23,7 +23,7 @@
     "start": "node scripts/dev.ts",
     "check:deps": "node scripts/check-deps.ts",
     "check:tokens": "node scripts/check-tokens.ts",
-    "check:a11y": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test tests/e2e/a11y.spec.ts tests/e2e/keyboard.spec.ts tests/e2e/shell.spec.ts tests/e2e/home.spec.ts tests/e2e/browse.spec.ts tests/e2e/item.spec.ts tests/e2e/item-actions.spec.ts tests/e2e/submit.spec.ts tests/e2e/your-items.spec.ts tests/e2e/proof.spec.ts tests/e2e/admin.spec.ts tests/e2e/loading.spec.ts tests/e2e/guide.spec.ts tests/e2e/welcome.spec.ts",
+    "check:a11y": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test tests/e2e/a11y.spec.ts tests/e2e/keyboard.spec.ts tests/e2e/shell.spec.ts tests/e2e/home.spec.ts tests/e2e/browse.spec.ts tests/e2e/item.spec.ts tests/e2e/item-actions.spec.ts tests/e2e/submit.spec.ts tests/e2e/your-items.spec.ts tests/e2e/proof.spec.ts tests/e2e/admin.spec.ts tests/e2e/loading.spec.ts tests/e2e/guide.spec.ts tests/e2e/welcome.spec.ts tests/e2e/dialog.spec.ts",
     "check:visual": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test tests/e2e/demo-jump.spec.ts tests/e2e/visual.spec.ts --workers=1",
     "check:reflow": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test tests/e2e/reflow.spec.ts --project=reflow-320",
     "check:quick": "node scripts/check-quick.ts",

@@ -18,6 +18,7 @@ export function openWelcome(): Promise<void> {
     title: WELCOME.title,
     lead: WELCOME.body,
     more: [
+      el("p", { text: WELCOME.shared }),
       el("p", { text: WELCOME.stepsIntro }),
       el("ol", { className: "dialog__steps" }, ...WELCOME.steps.map((step) => el("li", { text: step }))),
       el("p", { text: WELCOME.closing }),

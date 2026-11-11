@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import { USERS } from "../../lib/seed/data.ts";
-import { JUMPS, SHARED_NOTE } from "../../src/components/shell-rules.ts";
+import { JUMPS, PHASE_LABEL, SHARED_NOTE } from "../../src/components/shell-rules.ts";
 import { WELCOME, welcomeDecision, type WelcomeContext } from "../../src/components/welcome-rules.ts";
 
 const FIRST_VISIT: WelcomeContext = { page: "home", demoOff: false, seen: false, storageWorks: true, shownThisLoad: false, dialogOpen: false };
@@ -48,13 +48,18 @@ describe("welcome dialog: its words", () => {
   });
   test("it names the demo bar's real controls", () => {
     assert.match(WELCOME.steps[0], /Viewing as/);
-    assert.match(WELCOME.steps[1], /Jump to/);
+    assert.ok(WELCOME.steps[1].includes(PHASE_LABEL), "step 2 names Event phase (v1.25)");
     const ended = JUMPS.find((j) => j.value === "ended")?.label;
     assert.ok(ended && WELCOME.steps[3].includes(ended));
     assert.match(WELCOME.closing, /^Restore demo data /);
   });
-  test("it says what the bar says about sharing and resets", () => {
+  test("it says what the bar says about sharing and resets, on its own line (v1.25)", () => {
     assert.match(SHARED_NOTE, /resets daily/);
-    assert.match(WELCOME.body, /resets daily/);
+    assert.equal(WELCOME.shared, "Everyone shares this demo, and it resets daily.");
+    assert.doesNotMatch(WELCOME.body, /resets daily/);
+  });
+  test("the first line says what the demo is, and the guide link says Things to try (v1.25)", () => {
+    assert.match(WELCOME.body, /^A demo of an auction and instant sale tool I designed and built at a previous job, rebuilt from memory with fictional people and data\. /);
+    assert.deepEqual(WELCOME.tour, { label: "See more things to try", href: "/guide" });
   });
 });

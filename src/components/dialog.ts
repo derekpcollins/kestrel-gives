@@ -4,6 +4,8 @@
 // yearly reset, SPEC §7.8). Any of them may ask for a required reason (rejecting a proof,
 // §7.6). The info variant (the welcome, DECISIONS entry 139) offers a way on instead. Escape
 // closes any of them, except while a request runs; focus returns to the control that opened it.
+// A click on the backdrop (SPEC v1.25 §3.1) closes the info variant and counts as Cancel on the
+// others, except those with typed input (a reason, or type-to-confirm), which it never closes.
 import { icon } from "./icons.ts";
 
 export interface ConfirmOptions {
@@ -29,11 +31,14 @@ export interface ConfirmOptions {
 
 let count = 0;
 
+/** What a click on the backdrop does: close (Cancel, for the confirming variants) or nothing. */
+type Backdrop = "close" | "ignore";
+
 /**
  * Every variant's life: shows the dialog as a modal with focus on `first`, refuses Escape while
  * `busy()`, and on close removes it and returns focus to what had it before. Resolves on close.
  */
-function openModal(dialog: HTMLDialogElement, first: HTMLElement, busy: () => boolean = () => false): Promise<void> {
+function openModal(dialog: HTMLDialogElement, first: HTMLElement, busy: () => boolean = () => false, backdrop: Backdrop = "ignore"): Promise<void> {
   const trigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   return new Promise<void>((resolve) => {
     dialog.addEventListener("close", () => {
@@ -44,6 +49,22 @@ function openModal(dialog: HTMLDialogElement, first: HTMLElement, busy: () => bo
     // Escape: the browser fires cancel; refuse it while the request runs.
     dialog.addEventListener("cancel", (event) => { if (busy()) event.preventDefault(); });
     dialog.addEventListener("keydown", (event) => { if (busy() && event.key === "Escape") event.preventDefault(); });
+    if (backdrop === "close") {
+      // Only a press that both starts and ends on the backdrop, so dragging a text selection out
+      // of the dialog doesn't close it; and never while a request runs. Clicks on the backdrop
+      // reach the <dialog> itself, so the target and the point outside its box both have to agree.
+      const outside = (event: MouseEvent) => {
+        const box = dialog.getBoundingClientRect();
+        return event.target === dialog && (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom);
+      };
+      let pressedOutside = false;
+      dialog.addEventListener("pointerdown", (event) => { pressedOutside = outside(event); });
+      dialog.addEventListener("click", (event) => {
+        const both = pressedOutside && outside(event);
+        pressedOutside = false;
+        if (both && !busy()) dialog.close();
+      });
+    }
     document.body.append(dialog);
     dialog.showModal();
     first.focus();
@@ -198,7 +219,9 @@ export function confirmDialog(options: ConfirmOptions): Promise<boolean> {
 
   // First focus: the input to type into; Cancel for destructive actions; otherwise the
   // confirm button (the person just chose to act).
-  return openModal(dialog, input ?? textarea ?? (danger ? cancel : confirm), () => busy).then(() => confirmed);
+  // The backdrop counts as Cancel, unless the person is typing something (DECISIONS entry 146).
+  const backdrop: Backdrop = input || textarea ? "ignore" : "close";
+  return openModal(dialog, input ?? textarea ?? (danger ? cancel : confirm), () => busy, backdrop).then(() => confirmed);
 }
 
 export interface InfoOptions {
@@ -254,7 +277,14 @@ export function infoDialog(options: InfoOptions): Promise<void> {
   actions.append(link, dismiss);
 
   content.append(title, body, actions);
-  dialog.append(content);
+  // The × (SPEC v1.25 §3.1): first in the DOM, so Tab order matches its place at the top right;
+  // first focus still goes to the dismiss.
+  const close = button("", "btn btn--quiet btn--icon btn--sm dialog__close");
+  close.type = "button";
+  close.setAttribute("aria-label", "Close");
+  close.append(icon("close"));
+  close.addEventListener("click", () => dialog.close());
+  dialog.append(close, content);
 
   // A scrolling region needs to take focus to be scrolled from the keyboard (WCAG 2.1.1), but
   // when nothing scrolls that would be a stop with nothing to do, so it's only there when needed.
@@ -273,7 +303,7 @@ export function infoDialog(options: InfoOptions): Promise<void> {
     }
   });
   scrollable.observe(body);
-  return openModal(dialog, dismiss).then(() => scrollable.disconnect());
+  return openModal(dialog, dismiss, undefined, "close").then(() => scrollable.disconnect());
 }
 
 /**

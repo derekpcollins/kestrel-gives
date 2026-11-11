@@ -7,17 +7,18 @@ export const WELCOME_KEY = "kestrel-welcome-seen";
 
 export const WELCOME = {
   title: "Welcome to the Kestrel Gives demo",
-  body: "A charity auction for a fictional organization. Everyone shares this demo, and it resets daily.",
+  body: "A demo of an auction and instant sale tool I designed and built at a previous job, rebuilt from memory with fictional people and data. Switch who you're viewing as and where the event is, and try it out.",
+  shared: "Everyone shares this demo, and it resets daily.",
   stepsIntro: "Try this:",
   steps: [
     "Switch between the seven people with Viewing as, including two admins.",
-    "Move the event between phases with Jump to.",
+    "Move the event between phases with Event phase.",
     "Bid on a Silent Auction item, then switch to someone else and outbid it.",
     "As an admin, jump to Bidding ended, then check Totals in the Admin Dashboard.",
   ],
   closing: "Restore demo data puts everything back.",
   dismiss: "Start exploring",
-  tour: { label: "Take the 5-minute tour", href: "/guide" },
+  tour: { label: "See more things to try", href: "/guide" },
 } as const;
 
 export interface WelcomeContext {
