@@ -1,8 +1,6 @@
 /* The 5-minute tour (/guide; DESIGN-SYSTEM.md › Guide; SPEC v1.21 §8): a reading column of
    scenario cards, each with who and which phase, Set me up and what it changes, its result,
-   numbered steps, and why it works this way. Home's "New here?" line is here too. */
-.home-tour { font: var(--type-label); }
-.home-tour .icon { width: var(--size-icon-sm); height: var(--size-icon-sm); vertical-align: middle; }
+   numbered steps, and why it works this way. */
 
 .guide { max-width: calc(var(--size-content-narrow) + var(--space-16) * 2); }
 .guide-contents ol { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); margin: 0; padding: 0; list-style: none; counter-reset: scenario; }

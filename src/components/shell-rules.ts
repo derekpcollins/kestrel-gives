@@ -19,6 +19,13 @@ export function pageKeyFor(dataPage: string | undefined, path: string): PageKey 
   return page === "proof" ? "your-items" : page;
 }
 
+/**
+ * The data regions pages ship with aria-busy="true" and clear once their API has answered,
+ * success or failure (DECISIONS entry 137): item, browse grid, charities, Your Items, proof, admin.
+ * The welcome dialog waits on them (entry 138), and so do the browser checks (pageLoaded).
+ */
+export const PAGE_DATA_REGIONS = ["[data-item-content]", "[data-browse-grid]", "[data-charities]", "[data-your-items]", "[data-proof-body]", "[data-admin-content]"].join(", ");
+
 export interface NavLink {
   key: PageKey;
   label: string;

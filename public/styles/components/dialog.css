@@ -1,5 +1,5 @@
 /* Dialog (DESIGN-SYSTEM.md): a native modal <dialog> built by src/components/dialog.ts.
-   Variants: confirm, danger, type-to-confirm. .dialog--static shows one in place for the
+   Variants: confirm, danger, type-to-confirm, info. .dialog--static shows one in place for the
    gallery and Figma. */
 .dialog {
   width: min(var(--size-dialog), calc(100% - var(--space-8)));
@@ -31,5 +31,13 @@
 img.dialog__item-thumb { display: block; object-fit: cover; } /* the item's cover photo */
 .dialog__item-title { font: var(--type-label); }
 .dialog__amount { font: var(--type-amount); color: var(--color-price); font-variant-numeric: var(--figures-amount); }
+
+/* Info (the welcome; DECISIONS entry 139): something to read, then a way on. When it's taller
+   than the screen (a phone held sideways), only the body scrolls, between the title and the
+   actions, which stay in view; the dialog's own max-height caps it. */
+.dialog--info[open] { display: flex; flex-direction: column; }
+.dialog--info .dialog__form { flex: 0 1 auto; min-height: 0; grid-template-rows: auto minmax(0, 1fr) auto; }
+.dialog--info .dialog__body { overflow-y: auto; overscroll-behavior: contain; }
+.dialog__steps { display: grid; gap: var(--space-2); margin: 0; padding-left: var(--space-6); }
 
 .dialog--static { position: static; display: block; margin: 0; width: 100%; animation: none; }

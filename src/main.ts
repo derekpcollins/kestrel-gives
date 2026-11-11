@@ -15,8 +15,6 @@ import { startSubmitPage } from "./pages/submit.ts";
 import { startYourItemsPage } from "./pages/your-items.ts";
 
 hydrateIcons();
-// Demo-only links (Home's "New here?" line) go with the demo bar for clean screenshots (SPEC §3.1).
-if (new URLSearchParams(location.search).get("demo") === "off") for (const node of document.querySelectorAll("[data-demo-only]")) node.remove();
 
 if (document.body.dataset.page === "home") {
   document.addEventListener("kg:state", (event) => showHome((event as CustomEvent<AppState>).detail));

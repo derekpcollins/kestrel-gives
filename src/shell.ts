@@ -9,6 +9,7 @@ import { updatePhaseBanner } from "./components/phase-banner.ts";
 import { renderSiteHeader } from "./components/site-header.ts";
 import { fetchWithTimeout, LoadTimeout, pageLoading } from "./components/loading.ts";
 import { pageKeyFor } from "./components/shell-rules.ts";
+import { maybeShowWelcome } from "./components/welcome.ts";
 
 
 export class RequestError extends Error {}
@@ -97,6 +98,8 @@ export async function startShell(): Promise<Shell> {
       if (bar) demoSlot?.replaceChildren(bar);
       bannerSlot?.replaceChildren();
       show(state);
+      // A first visit: the welcome, once the page has its data (DECISIONS entry 138).
+      void maybeShowWelcome(page);
       // Try again worked: its button is gone, so focus goes to the page's main region.
       if (retry) document.querySelector<HTMLElement>("main")?.focus();
     } catch (error) {

@@ -124,10 +124,11 @@ test("when the needed state is gone, it says what happened and offers Restore (w
   expect(f.sent.map((s) => JSON.parse(s).action)).not.toContain("restore");
 });
 
-test("the tour is linked from the footer, Home and the demo bar: the strip when wide, the open bar when narrow", async ({ page }) => {
+test("the tour is linked from the footer and the demo bar: the strip when wide, the open bar when narrow", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator(".site-footer").getByRole("link", { name: "Take the 5-minute tour" })).toHaveAttribute("href", "/guide");
-  await expect(page.getByRole("link", { name: "New here? Take the 5-minute tour" }).first()).toBeVisible();
+  // Home's own "New here?" line gave way to the welcome dialog (DECISIONS #138).
+  await expect(page.getByRole("main").getByRole("link", { name: /New here\?/ })).toHaveCount(0);
   const bar = page.locator('[data-demo-bar="page"]');
   // Wide: in the strip, open or collapsed; the open bar's own copy is hidden.
   await expect(bar.locator(".demo-bar__tour--strip")).toBeVisible();
@@ -144,11 +145,9 @@ test("the tour is linked from the footer, Home and the demo bar: the strip when 
   await expect(page.locator(".site-footer").getByRole("link", { name: "Take the 5-minute tour" })).toHaveAttribute("aria-current", "page");
 });
 
-test("with ?demo=off the tour still reads, without Set me up or Home's demo line", async ({ page }) => {
+test("with ?demo=off the tour still reads, without Set me up", async ({ page }) => {
   await page.goto("/guide?demo=off");
   await expect(page.getByRole("heading", { level: 1, name: "Try it: a 5-minute tour" })).toBeVisible();
   await expect(page.getByRole("button", { name: /Set me up/ })).toHaveCount(0);
   await expect(page.getByRole("region", { name: "1. Get outbid" }).getByRole("listitem")).toHaveCount(4);
-  await page.goto("/?demo=off");
-  await expect(page.getByRole("link", { name: "New here? Take the 5-minute tour" })).toHaveCount(0);
 });

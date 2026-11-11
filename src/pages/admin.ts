@@ -130,6 +130,7 @@ export function startAdminPage(): void {
   const description = $<HTMLElement>("[data-admin-description]");
   const showDenied = () => {
     latest++; // drop any answer still on its way
+    content.removeAttribute("aria-busy"); // nothing more to load here (DECISIONS entries 137 and 138)
     pageLoading(false);
     document.title = "Admin Dashboard · Kestrel Gives";
     description.textContent = GENERAL_DESCRIPTION;
