@@ -2,7 +2,7 @@
 
 **Live demo: [kestrel-gives.vercel.app](https://kestrel-gives.vercel.app)**
 
-**New here? [Take the 5-minute tour](https://kestrel-gives.vercel.app/guide):** six short scenarios, each set up with one button, with a line on why each flow works the way it does.
+**New here? [Things to try](https://kestrel-gives.vercel.app/guide):** six short scenarios, each set up with one button, with a line on why each flow works the way it does.
 
 A web app for running a yearly charity auction: silent auction and instant-sale items, bidding, inventory, donation proof, and an admin dashboard. Built as a portfolio case study in designing and building with AI.
 
@@ -19,15 +19,15 @@ The photos in the screenshots are the demo's seed photos, from Pixabay, credited
 
 ## Take the tour
 
-The demo is shared: everyone sees the same data, and it restores itself every day. The bar across the top is for trying it out, and a welcome dialog on your first visit points the way (**About this demo** in the bar opens it again). The [5-minute tour](https://kestrel-gives.vercel.app/guide) (`/guide`) walks through the main flows; its **Set me up** buttons use these same controls and say first what they change.
+The demo is shared: everyone sees the same data, and it restores itself every day. The bar across the top is for trying it out, and a welcome dialog on your first visit points the way (**About this demo** in the bar opens it again). [Things to try](https://kestrel-gives.vercel.app/guide) (`/guide`) walks through the main flows; its **Set me up** buttons use these same controls and say first what they change.
 
 - **Viewing as:** be any of the seven seeded people. Jules is an employee; Maya and Theo are admins and see the **Admin Dashboard** in the avatar menu.
-- **Jump to:** move the event to another phase: submissions open, bidding live, ending soon, bidding ended, or 30+ days after. It moves the event's dates, never the clock, so the real rules apply. **Submissions open** also clears every bid, purchase and proof, since that phase can't have any, and asks first.
+- **Event phase:** move the event to another phase: submissions open, bidding live, ending soon, bidding ended, or 30+ days after. It moves the event's dates, never the clock, so the real rules apply. **Submissions open** also clears every bid, purchase and proof, since that phase can't have any, and asks first.
 - **Restore demo data:** put everything back as seeded, with bidding live.
 - **Reset for next year** (admins, under Admin Dashboard): unlocks 30 days after bidding closes, so jump to "30+ days after" first. It empties the event for next year, and Home then offers Restore demo data.
 - Add `?demo=off` to any address to hide the bar.
 
-Things to try: as Jules, bid on the Lakeside Cabin Weekend, buy something from Instant Sale, and look at Your Items. Jump to "Bidding ended" to see what winners owe, then upload proof. As Maya, review that proof, remove a bid, cancel an item, or edit an email template. The [design system gallery](https://kestrel-gives.vercel.app/design-system/) shows every component in every state.
+Things to try: as Jules, bid on the Lakeside Cabin Weekend, buy something from Instant Sale, and look at Your Items. Move the event to "Bidding ended" to see what winners owe, then upload proof. As Maya, review that proof, remove a bid, cancel an item, or edit an email template. The [design system gallery](https://kestrel-gives.vercel.app/design-system/) shows every component in every state.
 
 ## How this was built
 

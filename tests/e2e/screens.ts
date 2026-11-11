@@ -35,7 +35,7 @@ export const SCREENS: readonly Screen[] = [
   { name: "admin-templates", path: "/admin/templates", viewer: "1" },
   // Milestone 6F: Reset for next year (locked on the seeded live event).
   { name: "admin-reset", path: "/admin/reset", viewer: "1" },
-  // The 5-minute tour (SPEC v1.21).
+  // The guide, Things to try (SPEC v1.21, v1.25).
   { name: "guide", path: "/guide" },
   { name: "design-system", path: "/design-system/" }, // every component, every state
 ];

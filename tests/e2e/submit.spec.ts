@@ -135,6 +135,8 @@ test("submitting uploads the photo, then saves the item in cents, then opens it 
   await page.getByRole("textbox", { name: "Starting bid" }).fill("25");
   await page.getByRole("button", { name: "Submit item" }).click();
   await expect(page).toHaveURL(/\/items\/3$/);
+  // The toast shows once the item has loaded, which is a real read: wait for it the way every page load does (#137).
+  await pageLoaded(page);
   await expect(page.locator(".toast")).toContainText("Thanks. Your item is in.");
   expect(sent).toHaveLength(1);
   expect(sent[0]!.type).toBe("image/jpeg");
@@ -248,6 +250,7 @@ test("deleting an item with no activity asks first, then goes to Your Items with
   await page.getByRole("button", { name: "Delete item" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Delete item" }).click();
   await expect(page).toHaveURL(/\/your-items$/);
+  await pageLoaded(page); // the toast follows the real Your Items read (#137)
   await expect(page.locator(".toast")).toContainText("Your item is deleted.");
   expect(saved[0]!.method).toBe("DELETE");
 });

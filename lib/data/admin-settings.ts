@@ -32,7 +32,7 @@ export async function adminSettingsIn(tx: Tx): Promise<AdminSettings | null> {
 
 /**
  * Saves the event settings (SPEC §7.1). Dates arrive as wall times in the chosen zone. New
- * dates go through setEventDatesIn, the same path Jump to uses, so winners are cleared or
+ * dates go through setEventDatesIn, the same path the demo bar's Event phase uses, so winners are cleared or
  * finalized to match and proofs re-checked.
  */
 export async function saveSettingsIn(tx: Tx, input: SettingsInput): Promise<{ ok: true } | AdminRefusal | { ok: false; code: "invalid"; message: string; problems: SettingsProblem[] }> {

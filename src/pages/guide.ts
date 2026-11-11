@@ -1,4 +1,4 @@
-// The 5-minute tour (/guide; owner, guide plan; DECISIONS entries 127 and 128). The scenarios are
+// Things to try, the guide (/guide; owner, guide plan; DECISIONS entries 127 and 128). The scenarios are
 // static HTML, so the page reads without JavaScript and with ?demo=off. This script adds each
 // scenario's Set me up: it says first what it will change on the shared demo, sets the viewer
 // (just this browser) and the phase (everyone) with the demo bar's own rules, checks that the

@@ -1,4 +1,4 @@
-// Jump to "Submissions open" clears bids, purchases and proofs (owner, 7A review; DECISIONS
+// Event phase "Submissions open" clears bids, purchases and proofs (owner, 7A review; DECISIONS
 // #124), through the demo bar as a visitor would; and the tour's Set me up for real (DECISIONS #128). It empties the shared dev data, so it runs in
 // `npm run check:visual`, one test at a time, never beside the parallel specs; Restore runs after.
 import { expect, test, type APIRequestContext } from "@playwright/test";
@@ -37,7 +37,9 @@ test("the tour's Set me up, for real: Win and donate moves the shared demo to Bi
   await expect(status).toContainText("Viewing as Jules Ferreira, Bidding ended.", { timeout: 15_000 });
   await expect(status).toContainText("Jules won");
   await expect(page.locator('[data-demo-bar="page"] .demo-bar__who')).toHaveText("Viewing as Jules Ferreira (employee)");
-  await expect(page.locator("[data-shell-banner] .banner")).toContainText("Winners, please donate and upload proof by");
+  // The Guide shows no phase banner (v1.25); the demo bar's pressed phase says where the event is.
+  await expect(page.locator('[data-demo-bar="page"] .demo-bar__jump-buttons .btn[aria-pressed="true"]')).toHaveText("Bidding ended");
+  await expect(page.locator("[data-shell-banner] .banner")).toHaveCount(0);
   await status.getByRole("link", { name: "Go to Your Items" }).click();
   await expect(page.getByText("You won").first()).toBeVisible();
 });

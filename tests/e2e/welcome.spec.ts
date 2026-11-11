@@ -165,7 +165,7 @@ test("See more things to try goes to the Guide, which never shows it; a first vi
   await expect(welcome(page)).toBeVisible({ timeout: 15_000 });
   await tour(page).click();
   await expect(page).toHaveURL(/\/guide$/);
-  await expect(page.getByRole("heading", { level: 1, name: "Try it: a 5-minute tour" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Things to try" })).toBeVisible();
   await expectNoWelcome(page);
 
   // Someone who starts on the Guide has found the tour already.

@@ -1,4 +1,4 @@
-// The 5-minute tour (owner, guide plan; SPEC v1.21; DECISIONS entries 127 and 128). Set me up
+// The guide, Things to try (owner, guide plan; SPEC v1.21, v1.25; DECISIONS entries 127 and 128). Set me up
 // runs against a mocked demo: these specs run beside others on the shared dev data, so the app
 // state, the demo actions and the reads behind each check are answered here, and nothing on
 // dev changes. The real setup runs in demo-jump.spec.ts, one test at a time.
@@ -82,7 +82,9 @@ test("Set me up that moves the phase says so for everyone first, then jumps, the
   expect(f.sent.map((s) => JSON.parse(s))).toEqual([{ action: "jump", to: "ended" }]);
   // The shell redrew from the new state, so the next scenario in that phase moves nothing.
   await expect(scenario(page, "4. Review as admin").locator("[data-guide-effect]")).toHaveText("Just you: viewing as Maya.");
-  await expect(page.locator("[data-shell-banner] .banner")).toContainText("Winners, please donate and upload proof by");
+  // The Guide shows no phase banner (v1.25); the demo bar's pressed phase says where the event is.
+  await expect(page.locator('[data-demo-bar="page"] .demo-bar__jump-buttons .btn[aria-pressed="true"]')).toHaveText("Bidding ended");
+  await expect(page.locator("[data-shell-banner] .banner")).toHaveCount(0);
 });
 
 test("Submit an item asks before clearing, and Cancel sends nothing", async ({ page }) => {
@@ -124,9 +126,9 @@ test("when the needed state is gone, it says what happened and offers Restore (w
   expect(f.sent.map((s) => JSON.parse(s).action)).not.toContain("restore");
 });
 
-test("the tour is linked from the footer and the demo bar: the strip when wide, the open bar when narrow", async ({ page }) => {
+test("the guide is linked from the footer and the demo bar: the strip when wide, the open bar when narrow", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator(".site-footer").getByRole("link", { name: "Take the 5-minute tour" })).toHaveAttribute("href", "/guide");
+  await expect(page.locator(".site-footer").getByRole("link", { name: "Things to try" })).toHaveAttribute("href", "/guide");
   // Home's own "New here?" line gave way to the welcome dialog (DECISIONS #138).
   await expect(page.getByRole("main").getByRole("link", { name: /New here\?/ })).toHaveCount(0);
   const bar = page.locator('[data-demo-bar="page"]');
@@ -142,12 +144,33 @@ test("the tour is linked from the footer and the demo bar: the strip when wide, 
   await expect(bar.locator(".demo-bar__tour--open")).toBeVisible();
   // On the tour itself, the links say it's the current page.
   await page.goto("/guide");
-  await expect(page.locator(".site-footer").getByRole("link", { name: "Take the 5-minute tour" })).toHaveAttribute("aria-current", "page");
+  await expect(page.locator(".site-footer").getByRole("link", { name: "Things to try" })).toHaveAttribute("aria-current", "page");
 });
 
-test("with ?demo=off the tour still reads, without Set me up", async ({ page }) => {
+test("with ?demo=off the guide still reads, without Set me up", async ({ page }) => {
   await page.goto("/guide?demo=off");
-  await expect(page.getByRole("heading", { level: 1, name: "Try it: a 5-minute tour" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Things to try" })).toBeVisible();
   await expect(page.getByRole("button", { name: /Set me up/ })).toHaveCount(0);
   await expect(page.getByRole("region", { name: "1. Get outbid" }).getByRole("listitem")).toHaveCount(4);
+});
+
+test("the guide shows no phase banner, but a failed load still says so there (v1.25)", async ({ page }) => {
+  await page.goto("/guide");
+  await expect(page).toHaveTitle("Things to try · Kestrel Gives");
+  await expect(page.locator("[data-shell-demo] .demo-bar")).toBeVisible(); // the app state is in
+  await expect(page.locator("[data-shell-banner] .banner")).toHaveCount(0);
+  // The slot stays for load errors.
+  await page.route("**/api/app", (route) => route.fulfill({ status: 500, json: { ok: false, error: "The demo is resting." } }));
+  await page.reload();
+  await expect(page.locator("[data-shell-banner] .banner--danger")).toContainText("The demo couldn't load");
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+});
+
+test("the footer: Things to try, Design system, then How this was built, in the same tab (v1.25)", async ({ page }) => {
+  await page.goto("/");
+  const links = page.locator(".site-footer a");
+  await expect(links).toHaveText(["Things to try", "Design system", "How this was built"]);
+  const built = page.locator(".site-footer").getByRole("link", { name: "How this was built" });
+  await expect(built).toHaveAttribute("href", "https://derekpcollins.com/work/kestrel-gives/");
+  await expect(built).not.toHaveAttribute("target", /.*/);
 });

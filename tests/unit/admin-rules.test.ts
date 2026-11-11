@@ -190,7 +190,7 @@ describe("Not scheduled yet and before submissions open (SPEC v1.17 §7.1, DECIS
     assert.equal(up.title, "Submissions open soon");
     assert.match(up.text, /^Submissions open on Thursday, November 5 at 1:30 PM EST\.$/);
   });
-  test("no Submit link, no Jump to button pressed, and tiles say why", () => {
+  test("no Submit link, no Event phase button pressed, and tiles say why", () => {
     assert.ok(!navLinks("unscheduled").some((l) => l.key === "submit"));
     assert.ok(!navLinks("upcoming").some((l) => l.key === "submit"));
     assert.equal(currentJump({ phase: "unscheduled", endingSoon: false, proofDeadline: null }, now), null);

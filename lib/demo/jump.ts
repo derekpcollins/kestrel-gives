@@ -1,4 +1,5 @@
-// Jump to (SPEC §3.1, DECISIONS #81): moves the current event's dates relative to now so a
+// Event phase, the demo bar's jumps ("Jump to" before v1.25; SPEC §3.1, DECISIONS #81): moves the
+// current event's dates relative to now so a
 // visitor can see each phase. The clock is never faked; the real time-window rules run.
 import type { Id, Tx } from "../data/db.ts";
 import { setEventDatesIn, type DatesResult } from "../data/event-dates.ts";
@@ -86,7 +87,7 @@ export type JumpOutcome =
   | { status: "cooldown"; retryAfterSeconds: number };
 
 /**
- * One Jump to, as the demo bar asks for it, under the demo lock. "Submissions open" also clears
+ * One jump, as the demo bar asks for it, under the demo lock. "Submissions open" also clears
  * activity, so it follows Restore's rules too: refused within the global cooldown, and logged so
  * it starts one, counted from when it finished (#142). Other jumps only move the dates, as before (#81).
  */

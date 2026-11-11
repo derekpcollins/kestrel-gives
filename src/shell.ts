@@ -57,7 +57,9 @@ export async function startShell(): Promise<Shell> {
       headerKey = key;
       headerSlot?.replaceChildren(renderSiteHeader(state, page));
     }
-    if (bannerSlot) updatePhaseBanner(bannerSlot, state);
+    // No phase message on the guide (SPEC v1.25 §8): its scenarios say the phase they need. The
+    // slot stays for "The demo couldn't load", which still shows there.
+    if (bannerSlot && page !== "guide") updatePhaseBanner(bannerSlot, state);
     if (bar) updateDemoBar(bar, state);
     document.dispatchEvent(new CustomEvent<AppState>("kg:state", { detail: state }));
     scheduleRefresh(state);

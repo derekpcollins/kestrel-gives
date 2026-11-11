@@ -124,7 +124,7 @@ describe("demo controls (rolled back)", () => {
     assert.deepEqual(await tryRestoreIn(db, "manual", clear, () => clear), { status: "restored", hadUploads: false });
   });
 
-  test("Jump to Submissions open clears bids, purchases and proofs with their uploaded files; items, photos and cancellations stay (#124)", async () => {
+  test("Event phase: Submissions open clears bids, purchases and proofs with their uploaded files; items, photos and cancellations stay (#124)", async () => {
     await db.query(`DELETE FROM demo_restores`);
     // A proof someone uploaded in this environment, so its file is listed for deleting.
     const person = (await ids(`SELECT id FROM users WHERE first_name = 'Jules'`))[0]!;

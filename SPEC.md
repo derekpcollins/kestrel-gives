@@ -1,6 +1,6 @@
 # Kestrel Gives — Build Spec & Conformance Rules
 
-**Status:** v1.24 · Owner: Derek Collins · Last updated: Nov 6, 2026
+**Status:** v1.25 · Owner: Derek Collins · Last updated: Nov 11, 2026
 
 This document describes what to build and the rules every contribution must follow, whether a person or an AI agent writes it. Read it in full before writing any code. If something here conflicts with a request, stop and ask.
 
@@ -24,7 +24,7 @@ This is a **from-memory recreation** of a tool I designed and built at a previou
   - **Exception 2:** "Kestrel" is used as a generic word (a bird). It does not refer to any real company. The logo MUST be an original wordmark that doesn't resemble any existing Kestrel brand.
 - MUST NOT imitate any real company's visual identity.
 - The README MUST include: "Recreated from memory after leaving Netflix. No original code, designs, or data were used."
-- The site footer MUST include: "Kestrel is a fictional organization, and this is a demo." (v1.19) It also links to the 5-minute tour and the design system (v1.21).
+- The site footer MUST include: "Kestrel is a fictional organization, and this is a demo." (v1.19) It also links to the Guide, "Things to try", and the design system (v1.21; renamed v1.25), then "How this was built", the owner's case study, opened in the same tab (v1.25).
 
 ## 3. Scope
 
@@ -37,16 +37,16 @@ This is a **from-memory recreation** of a tool I designed and built at a previou
 - Demo controls (section 3.1)
 
 ### 3.1 Demo controls
-A slim bar pinned to the top of every page, in the normal page flow (it never overlays content), visually distinct from the app (its own background treatment and a "Demo" label). It is a design-system component like any other.
+A slim bar pinned to the top of every page, in the normal page flow (it never overlays content), visually distinct from the app (its own background treatment and a "Demo" label). It is a design-system component like any other. (v1.25) It is dark in both light and dark mode, darker than the dark page, with butter hazard stripes, so it is the most distinct element on the page either way; its controls use the bar's own colors in both modes, and the open bar is compact (36px controls; section 6).
 - **Viewing as:** a select listing every seeded user with their role. The choice is stored in a cookie; the API reads it to know who is acting. Changes are announced ("Now viewing as …, admin").
-- **Jump to:** submission window / live / ending soon / ended / 30+ days after. Moves the stored event dates relative to now. "Ending soon" is live with bidding closing in under 24 hours (the threshold in section 10). (Ending soon added v1.8.) It MUST NOT fake the clock; the real time-window rules are what get exercised.
+- **Event phase** (called "Jump to" before v1.25): buttons in the event's own order, Submissions open / Bidding live / Ending soon / Bidding ended / 30+ days after, shown to everyone. Moves the stored event dates relative to now. "Ending soon" is live with bidding closing in under 24 hours (the threshold in section 10). (Ending soon added v1.8.) It MUST NOT fake the clock; the real time-window rules are what get exercised.
   - **Submission window clears activity** (v1.20): that phase can't have any, so this jump also deletes every bid, purchase and proof (with the proofs' uploaded files). Items stay. The demo bar says so in a confirmation before it happens ("Submissions open clears bids, purchases and proofs. Restore demo data brings them back."). It follows Restore's lock and cooldown rules. The other jumps only move the dates.
-- **Restore demo data:** resets everything to the seeded state (including email templates), behind a confirmation dialog. It also deletes the files visitors uploaded in this environment (v1.13; section 4).
-- **Shared and self-repairing** (v1.11): anyone can use Jump to and Restore demo data, and everyone sees the same data. A short global cooldown (about 10 seconds, counted from when the last Restore or clearing jump finished; v1.24) stops repeated Restores. A daily scheduled job (Vercel cron) runs the same Restore, so the demo returns to the live phase every day; the bar says the demo is shared and resets daily. This is the only scheduled job (section 7.1).
-- Collapsible to a thin strip using `<details>`; collapsed state is remembered.
-- **Tour link** (v1.21): "New here? Take the 5-minute tour" links to the Guide (section 8). It's in the open bar, and in the collapsed strip where it fits (from the small breakpoint).
+- **Restore demo data:** resets everything to the seeded state (including email templates), behind a confirmation dialog. In the bar it is a danger-outline button, so it reads as cautious and matches its red confirmation (v1.25). It also deletes the files visitors uploaded in this environment (v1.13; section 4).
+- **Shared and self-repairing** (v1.11): anyone can use Event phase and Restore demo data, and everyone sees the same data. A short global cooldown (about 10 seconds, counted from when the last Restore or clearing jump finished; v1.24) stops repeated Restores. A daily scheduled job (Vercel cron) runs the same Restore, so the demo returns to the live phase every day; the open bar and the welcome dialog say the demo is shared and resets daily (v1.25: in the open bar only, not the strip). This is the only scheduled job (section 7.1).
+- Collapsible to a thin strip using `<details>`; collapsed state is remembered. The strip is one line at every width (v1.25): the label, who you're viewing as (cut short with an ellipsis if needed) and, where it fits, the Guide link.
+- **Guide link** (v1.21; v1.25 wording): "Things to try" links to the Guide (section 8). It's in the open bar, and in the collapsed strip where it fits (from the small breakpoint).
 - **About this demo** (v1.24): a button in the open bar that reopens the welcome dialog.
-- **Welcome dialog** (v1.24): a first visit to any page opens "Welcome to the Kestrel Gives demo": what the demo is, four things to try with the bar, and that Restore demo data puts everything back. Two actions: **Start exploring** closes it; **Take the 5-minute tour** goes to the Guide. It opens once the page's data has loaded, never on top of another dialog (then it waits for a later page load), never on the Guide (which counts as seeing it), and never with `?demo=off`. It's remembered in `localStorage` from the moment it opens; if storage is unavailable, it opens on Home only, at most once per page load. It reuses the dialog component, and fits a 390px-wide phone without scrolling; on a shorter screen (a phone held sideways) its content scrolls inside the dialog with both actions always in view.
+- **Welcome dialog** (v1.24): a first visit to any page opens "Welcome to the Kestrel Gives demo": what the demo is ("A demo of an auction and instant sale tool I designed and built at a previous job, rebuilt from memory with fictional people and data. Switch who you're viewing as and where the event is, and try it out."; v1.25), that everyone shares it and it resets daily, four numbered things to try with the bar, and that Restore demo data puts everything back. Two actions: **Start exploring** closes it; **See more things to try** goes to the Guide (v1.25). An × at the top right, named "Close", and a click on the backdrop also close it (v1.25). It opens once the page's data has loaded, never on top of another dialog (then it waits for a later page load), never on the Guide (which counts as seeing it), and never with `?demo=off`. It's remembered in `localStorage` from the moment it opens; if storage is unavailable, it opens on Home only, at most once per page load. It reuses the dialog component, and fits a 390px-wide phone without scrolling; on a shorter or narrower screen (a phone held sideways, or 320px wide since v1.25) its content scrolls inside the dialog with both actions always in view.
 - Exposed to assistive tech as a region labeled "Demo controls."
 - Hidden when the URL includes `?demo=off` (used for clean case-study screenshots).
 - This mock login is NOT security. A real deployment would use company login and pass a security review, and would not include demo controls.
@@ -153,10 +153,11 @@ There is no inherited design system, so this project defines its own, from scrat
 - MUST meet **WCAG 2.2 AA**, in both light and dark mode.
 - MUST use semantic HTML first, and ARIA only when no native element works.
 - Everything MUST work with a keyboard alone, with visible focus states. No interaction may require dragging (photo reordering uses arrow buttons).
-- Interactive targets are at least 44px (`--size-target`). 36px (`--size-target-sm`) is allowed only in dense rows (tables) and the toast's dismiss button; never below WCAG 2.2's 24px. Links inside running text are exempt, as in WCAG 2.5.8. (Added v1.6.)
+- Interactive targets are at least 44px (`--size-target`). 36px (`--size-target-sm`) is allowed only in dense rows (tables), the toast's dismiss button, the welcome dialog's close button and the open demo bar's controls (v1.25); never below WCAG 2.2's 24px. Links inside running text are exempt, as in WCAG 2.5.8. (Added v1.6.)
 - Status changes (outbid, bid placed, sold out, phase changes, demo user switched) MUST be announced to screen readers.
 - MUST respect `prefers-reduced-motion`.
 - **Dark mode ships now**, following `prefers-color-scheme`. There is no manual toggle.
+- **Dialogs** (v1.25): Escape closes any dialog except while its request runs. A click on the backdrop closes the info dialog and counts as Cancel on confirm and danger dialogs; dialogs with typed input (a reason, or type-to-confirm) ignore it, so nothing typed is lost. A press counts only if it starts and ends on the backdrop, and never while a request runs.
 
 ## 7. Product and business rules
 
@@ -259,7 +260,7 @@ Site header with the Kestrel wordmark and: **Home**, **Silent Auction**, **Insta
 One responsive, mobile-first site, not a separate app. Every screen MUST work from 360px wide up (the design target), and at 320px nothing may scroll or be cut off sideways (WCAG 2.2 reflow, 1.4.10). The only exceptions are regions meant to scroll sideways, such as a wide table. Layouts start from the phone and add columns as space allows (section 5, Breakpoints). The browser checks run at 390px and 1280px, plus a reflow check at 320px (section 12).
 
 ### Phase banners
-A banner just below the header shows the current phase message, for example "Submissions are open until Nov 14," "Bidding opens Nov 17 at 9:00 AM," "Bidding ends in 2 days," "Bidding has ended. Winners, please upload proof by Dec 1." One banner at a time.
+A banner just below the header shows the current phase message, for example "Submissions are open until Nov 14," "Bidding opens Nov 17 at 9:00 AM," "Bidding ends in 2 days," "Bidding has ended. Winners, please upload proof by Dec 1." One banner at a time. The Guide shows none (v1.25): its scenarios name the phase they need; a failure to load still shows there.
 
 ### Screen list
 - **Home**, matching the original:
@@ -274,7 +275,7 @@ A banner just below the header shows the current phase message, for example "Sub
 - **Your Items** (personal dashboard), four sections: *My bids* (winning or outbid), *Won & purchased* (with proof status and days left), *My donated items* (with edit), and *Cancelled* (shown only if something was cancelled).
 - **Proof upload** (section 7.6).
 - **Giving platform stub** (section 3).
-- **Guide** (v1.21), `/guide`, "Try it: a 5-minute tour" for first-time visitors (portfolio reviewers): six scenarios (get outbid; buy the last one; win and donate, review as admin and change the outcome as one story; submit an item last, since its phase clears activity), each with who to view as, which phase, numbered steps, and one line on why it works that way; then "Also try" (dark mode, a phone, keyboard only, 200% zoom) and a closing line on Restore. Each scenario has **Set me up**, which says before the click what it changes (the viewer is just you; the phase is everyone), then sets the viewer and the phase with the demo bar's own rules (only Submissions open asks first, with its cooldown), never restores on its own, and checks that the state the scenario needs is still there (finding items by title, never by id). If it's gone, it says what happened and points to Restore demo data. With `?demo=off` the steps stay and the buttons go. It meets the same conformance checks as every screen.
+- **Guide** (v1.21), `/guide`, "Things to try" (v1.25; "Try it: a 5-minute tour" before) for first-time visitors (portfolio reviewers): six scenarios (get outbid; buy the last one; win and donate, review as admin and change the outcome as one story; submit an item last, since its phase clears activity), each with who to view as, which phase, numbered steps, and one line on why it works that way; then "Also try" (dark mode, a phone, keyboard only, 200% zoom) and a closing line on Restore. Each scenario has **Set me up**, which says before the click what it changes (the viewer is just you; the phase is everyone), then sets the viewer and the phase with the demo bar's own rules (only Submissions open asks first, with its cooldown), never restores on its own, and checks that the state the scenario needs is still there (finding items by title, never by id). If it's gone, it says what happened and points to Restore demo data. With `?demo=off` the steps stay and the buttons go. It meets the same conformance checks as every screen.
 - **Admin Dashboard:**
   - **Totals:** silent auction total, instant sale total, and grand total, each shown as **pledged** (winning bids and purchases) and **confirmed** (approved proofs only). (v1.17) A proof is one combined amount per person, so: the **grand confirmed** total is the sum of the amounts on approved proofs; the **silent auction** and **instant sale confirmed** totals are the winning bids and purchases owed by people whose latest proof is approved. A line under the totals shows where the approved amounts differ from what those people owe ("Approved proofs: $1,240 against $1,300 owed by those people, $60 short"). So the two sale-type figures can add up to a different number than the grand confirmed total.
   - **People:** employees with their bids, wins, purchases, and proof status.

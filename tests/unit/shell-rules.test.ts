@@ -1,5 +1,6 @@
 // The shell's rules (SPEC §3.1, §8): nav links per phase and the pressed Event phase button.
 import assert from "node:assert/strict";
+import { readdirSync, readFileSync } from "node:fs";
 import { describe, test } from "node:test";
 import { JUMP_TARGETS } from "../../lib/demo/jump.ts";
 import { JUMPS, PHASE_LABEL, SHARED_NOTE, TOUR_LINK, currentJump, navLinks, pageKeyFor } from "../../src/components/shell-rules.ts";
@@ -54,3 +55,18 @@ describe("which nav link is current", () => {
   });
 });
 
+
+describe("the site footer (SPEC §2, v1.25)", () => {
+  test("every page says the demo line, then Things to try, Design system and How this was built", () => {
+    const dir = new URL("../../public/", import.meta.url);
+    const pages = readdirSync(dir).filter((f) => f.endsWith(".html"));
+    assert.equal(pages.length, 10);
+    for (const file of pages) {
+      const footer = readFileSync(new URL(file, dir), "utf8").match(/<footer class="site-footer">([\s\S]*?)<\/footer>/)?.[1] ?? "";
+      assert.match(footer, /Kestrel is a fictional organization, and this is a demo\./, file);
+      const links = [...footer.matchAll(/<a href="([^"]+)"[^>]*>([^<]+)<\/a>/g)].map((m) => `${m[2]} → ${m[1]}`);
+      assert.deepEqual(links, ["Things to try → /guide", "Design system → /design-system/", "How this was built → https://derekpcollins.com/work/kestrel-gives/"], file);
+      assert.doesNotMatch(footer, /target=/, `${file}: same tab`);
+    }
+  });
+});

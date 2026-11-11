@@ -1,4 +1,4 @@
-// The 5-minute tour's rules (owner, guide plan; DECISIONS entries 127 and 128): every scenario
+// The guide's rules (Things to try; owner, guide plan; DECISIONS entries 127 and 128): every scenario
 // is set up with real demo targets, says what it changes before the click, and checks that
 // the state it needs is still there, by title and name, never by numeric id.
 import assert from "node:assert/strict";
@@ -24,7 +24,7 @@ const me = (wins: Array<{ kind: "won" | "bought"; title: string }>, status: "pen
 const proof = (first: string, status: "pending" | "approved" | "rejected"): AdminProof =>
   ({ status, person: { id: "77", firstName: first, lastName: "X" } }) as unknown as AdminProof;
 
-test("every scenario uses a seeded person and a real Jump to target, in the owner's order", () => {
+test("every scenario uses a seeded person and a real Event phase target, in the owner's order", () => {
   assert.deepEqual(SCENARIOS.map((s) => s.id), ["outbid", "last-one", "win", "review", "change", "submit"]);
   const firsts = USERS.map((u) => u.first);
   const jumps = JUMPS.map((j) => j.value);

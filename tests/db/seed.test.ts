@@ -141,11 +141,11 @@ describe("seed", () => {
     assert.deepEqual(proofs, ["approved", "pending", "rejected"]);
     assert.ok(!statuses.includes("Ending soon"), "the default demo is calm: bidding closes in about two days");
 
-    // Jump to "Ending soon": bidding closes in under 24 hours.
+    // Event phase "Ending soon": bidding closes in under 24 hours.
     await db.query(`UPDATE events SET bidding_closes_at = now() + interval '20 hours'`);
     assert.ok([...(await tileWords("Jules", "live")).values()].some((w) => w.status === "Ending soon"), "ending soon");
 
-    // Jump to "Bidding ended": winners are finalized; Jules won what Jules was winning.
+    // Event phase "Bidding ended": winners are finalized; Jules won what Jules was winning.
     await db.query(`UPDATE events SET bidding_closes_at = now() - interval '1 hour'`);
     assert.equal(await finalizeWinnersIn(db, (await db.query<{ id: string }>(`SELECT id FROM events`)).rows[0]!.id), true);
     const ended = await tileWords("Jules", "ended");

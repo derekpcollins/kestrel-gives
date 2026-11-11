@@ -4,7 +4,7 @@
 //
 // "In every seeded state" (DECISIONS entry 121): every screen as seeded (live), then each other
 // phase and the "just reset" state on the screens that phase changes, not the full
-// cross-product. Each state test sets its own state (Restore, then Jump to or a real Reset as
+// cross-product. Each state test sets its own state (Restore, then an Event phase jump or a real Reset as
 // Maya) and Restore runs after the last, so the tests share the one dev database and must run
 // one at a time: `npm run check:visual` passes --workers=1.
 //

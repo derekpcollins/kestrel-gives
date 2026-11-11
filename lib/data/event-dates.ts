@@ -1,4 +1,4 @@
-// Changing the current event's dates (SPEC §7.1, §3.1). Shared by Jump to (the demo bar) and
+// Changing the current event's dates (SPEC §7.1, §3.1). Shared by Event phase (the demo bar) and
 // the admin's event settings, so both treat winners the same way (DECISIONS #81, #111):
 // - Bidding open again, or the dates cleared, after winners were set: the winners are cleared
 //   and the proofs of everyone who had won are re-checked, since their totals drop.

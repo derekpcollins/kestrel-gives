@@ -1,4 +1,4 @@
-// The 5-minute tour's rules (/guide; owner, guide plan; DECISIONS entries 127 and 128). Pure,
+// The guide's rules (Things to try, /guide; owner, guide plan; DECISIONS entries 127 and 128). Pure,
 // with no DOM, so node:test covers them: each scenario's viewer and phase, what Set me up will
 // change on the shared demo, and the checks that the state a scenario needs is still there.
 // Scenarios find items and people by title and name, never by numeric id, because another
