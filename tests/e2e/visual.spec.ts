@@ -1,6 +1,6 @@
 // Conformance check 6 (SPEC §12.6): full-page screenshots for a person to review, light and
 // dark at 390px and 1280px, with demo controls hidden (?demo=off). Nothing is compared
-// automatically.
+// automatically. The one exception is the welcome dialog, which needs the demo on (below).
 //
 // "In every seeded state" (DECISIONS entry 121): every screen as seeded (live), then each other
 // phase and the "just reset" state on the screens that phase changes, not the full
@@ -15,6 +15,7 @@
 import { test, type APIRequestContext, type Browser, type BrowserContext, type FullProject, type Page } from "@playwright/test";
 import { SCREENS, viewAs, type Screen } from "./screens.ts";
 import { WELCOME_SEEN } from "./welcome-seen.ts";
+import { WELCOME } from "../../src/components/welcome-rules.ts";
 
 type State = "live" | "submission" | "ending-soon" | "ended" | "after" | "reset";
 
@@ -66,13 +67,16 @@ async function setState(request: APIRequestContext, state: State): Promise<void>
 /** The views: every light or dark project in the config (not the 320px reflow one). */
 const views = (projects: readonly FullProject[]) => projects.filter((p) => p.use.colorScheme && p.use.viewport);
 
-/** A context per view, with the HTTP cache off (see the route below), closed after `run`. */
-async function inEveryView(browser: Browser, projects: readonly FullProject[], baseURL: string | undefined, run: (page: Page, view: string) => Promise<void>): Promise<void> {
+/**
+ * A context per view, with the HTTP cache off (see the route below), closed after `run`. Each
+ * starts with the welcome seen, unless a first visit is what's being shot.
+ */
+async function inEveryView(browser: Browser, projects: readonly FullProject[], baseURL: string | undefined, run: (page: Page, view: string) => Promise<void>, firstVisit = false): Promise<void> {
   const opened: BrowserContext[] = [];
   try {
     await Promise.all(views(projects).map(async (p) => {
       const { colorScheme, viewport, userAgent, deviceScaleFactor, isMobile, hasTouch } = p.use;
-      const context = await browser.newContext({ colorScheme, viewport, userAgent, deviceScaleFactor, isMobile, hasTouch, baseURL: baseURL ?? p.use.baseURL, storageState: WELCOME_SEEN });
+      const context = await browser.newContext({ colorScheme, viewport, userAgent, deviceScaleFactor, isMobile, hasTouch, baseURL: baseURL ?? p.use.baseURL, storageState: firstVisit ? { cookies: [], origins: [] } : WELCOME_SEEN });
       opened.push(context);
       // vercel dev leaks an open file on every 304 answer; routing turns off the browser's cache
       // so each file comes back 200 and nothing leaks (DECISIONS entry 122).
@@ -124,6 +128,25 @@ test("every screen, as seeded (live)", async ({ browser, request, baseURL }, tes
   test.setTimeout(300_000);
   await setState(request, "live");
   await shootAll(browser, testInfo.config.projects, SCREENS, "visual-review/", baseURL);
+});
+
+// The welcome dialog (DECISIONS entries 138 and 139) only exists with the demo on, so it's shot
+// apart from the screens: Home on a first visit with the dialog open, the window only, since the
+// dialog sits over it (visual-review/welcome/).
+test("welcome: Home on a first visit, with the dialog open", async ({ browser, request, baseURL }, testInfo) => {
+  test.setTimeout(120_000);
+  await setState(request, "live");
+  const home = screen("home");
+  await inEveryView(browser, testInfo.config.projects, baseURL, async (page, view) => {
+    await viewAs(page, home, baseURL);
+    await page.goto(home.path);
+    const dialog = page.getByRole("dialog", { name: WELCOME.title });
+    await dialog.waitFor({ state: "visible", timeout: 20_000 });
+    await page.evaluate(`Promise.all([...document.images].map((img) => img.decode().catch(() => undefined)))`);
+    // Its entrance animation finished (loading shimmers repeat forever, so they don't count).
+    await page.waitForFunction("document.getAnimations().every((a) => a.playState !== 'running' || a.effect?.getComputedTiming().iterations === Infinity)");
+    await page.screenshot({ path: `visual-review/welcome/home-${view}.png` });
+  }, true);
 });
 
 for (const [state, screens] of Object.entries(STATES) as [Exclude<State, "live">, readonly Screen[]][]) {

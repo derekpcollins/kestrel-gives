@@ -90,6 +90,7 @@ test("employees see For admins only, with no section nav, and the API isn't aske
   const asked: string[] = [];
   page.on("request", (r) => { if (r.url().includes("/api/admin")) asked.push(r.url()); });
   await page.goto("/admin/people");
+  await pageLoaded(page);
   await expect(page.getByRole("heading", { name: "For admins only" })).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Admin sections" })).toBeHidden();
   await expect(page).toHaveTitle("Admin Dashboard · Kestrel Gives");
@@ -117,6 +118,7 @@ test("a 403 from the API shows For admins only", async ({ page }) => {
   await viewAs(page, "1");
   await page.route(/\/api\/admin\?view=summary$/, (route) => route.fulfill({ status: 403, json: { ok: false, code: "admins-only", error: "Only admins can use the Admin Dashboard." } }));
   await page.goto("/admin");
+  await pageLoaded(page);
   await expect(page.getByRole("heading", { name: "For admins only" })).toBeVisible();
 });
 

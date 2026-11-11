@@ -1,7 +1,7 @@
 // Demo bar (DESIGN-SYSTEM.md › Demo bar; SPEC §3.1). Remembers whether it's collapsed,
 // announces who you're viewing as and where the event moved, and removes itself for
-// ?demo=off. On the gallery page it only raises demo:viewing-as, demo:jump and demo:restore
-// events. On app pages renderDemoBar() builds it from the app state and passes actions that
+// ?demo=off. On the gallery page it only raises demo:viewing-as, demo:jump, demo:restore and
+// demo:about events. On app pages renderDemoBar() builds it from the app state and passes actions that
 // call the API; each control shows the button loading state while its request runs, and
 // updateDemoBar() refreshes it in place so focus stays where it was.
 import type { AppState } from "../app-state.ts";
@@ -11,8 +11,10 @@ import { el } from "./dom.ts";
 import { readItem, writeItem } from "./local-store.ts";
 import { icon } from "./icons.ts";
 import { showToast } from "./toast.ts";
+import { openWelcome } from "./welcome.ts";
 
 const COLLAPSED_KEY = "kestrel-demo-bar-collapsed";
+const ABOUT_LABEL = "About this demo";
 
 export type { JumpValue };
 
@@ -51,6 +53,8 @@ export function renderDemoBar(state: AppState, actions: DemoBarActions): HTMLEle
           ),
         ),
         el("button", { className: "btn btn--secondary", attrs: { type: "button", "data-demo-restore": "" } }, icon("trash", { size: "sm" }), "Restore demo data"),
+        // Reopens the welcome (SPEC v1.24 §3.1). A button, since it opens a dialog.
+        el("button", { className: "demo-bar__about", text: ABOUT_LABEL, attrs: { type: "button", "data-demo-about": "" } }),
         tourLink("demo-bar__tour demo-bar__tour--open", TOUR_LINK.open),
       ),
     ),
@@ -150,6 +154,12 @@ export function enhanceDemoBar(bar: HTMLElement, actions?: DemoBarActions): void
       return;
     }
     if (await confirmRestore(actions.restore)) announce(status, "Demo data restored");
+  });
+
+  // The welcome again; focus comes back here when it closes.
+  bar.querySelector<HTMLButtonElement>("[data-demo-about]")?.addEventListener("click", () => {
+    if (actions) void openWelcome();
+    else bar.dispatchEvent(new CustomEvent("demo:about", { bubbles: true, detail: {} }));
   });
 }
 

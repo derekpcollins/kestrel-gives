@@ -48,8 +48,12 @@
    open bar (phones start collapsed, so Home has its own line). On a wider bar it sits in the strip,
    open or collapsed, in room the summary keeps for it before the chevron. It's outside the
    <summary> (a link inside the toggle would be nested controls), so it's placed over that room. */
-.demo-bar__tour { color: var(--color-on-inverse); font: var(--type-label); text-decoration: underline; text-decoration-thickness: var(--border-thin); text-underline-offset: var(--space-1); border-radius: var(--radius-sm); }
-.demo-bar__tour:hover { text-decoration-thickness: var(--border-thick); }
+.demo-bar__tour, .demo-bar__about { color: var(--color-on-inverse); font: var(--type-label); text-decoration: underline; text-decoration-thickness: var(--border-thin); text-underline-offset: var(--space-1); border-radius: var(--radius-sm); }
+.demo-bar__tour:hover, .demo-bar__about:hover { text-decoration-thickness: var(--border-thick); }
+/* About this demo (SPEC v1.24 §3.1): reopens the welcome dialog, so it's a button, styled like the
+   tour link beside it. Open bar only, on a line with Restore demo data; its height meets WCAG
+   2.2's minimum target size. */
+.demo-bar__about { align-self: center; min-height: var(--space-6); padding: 0; border: 0; background: none; cursor: pointer; }
 .demo-bar__tour--open { align-self: center; flex-basis: 100%; }
 .demo-bar__tour-room, .demo-bar__strip-tour { display: none; }
 @container demo-bar (min-width: 40rem) {

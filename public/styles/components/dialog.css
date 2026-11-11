@@ -23,6 +23,12 @@
 .dialog__word { white-space: nowrap; }
 .dialog__body { display: grid; gap: var(--space-3); color: var(--color-text); }
 .dialog__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-3); padding-top: var(--space-2); }
+/* Below --breakpoint-sm the actions fill the row: side by side at matching widths when they fit,
+   each full width when they wrap, so a stack never right-aligns at two widths (owner, welcome
+   Stage 2 review). The order stays the DOM order, so what's seen and Tab agree. */
+@media (width < 40rem) {
+  .dialog__actions > * { flex: 1 1 0; }
+}
 .dialog--danger .dialog__title, .dialog--type-to-confirm .dialog__title { color: var(--color-danger); }
 
 /* The item being confirmed: thumbnail, title, the computed amount. */
@@ -38,6 +44,9 @@ img.dialog__item-thumb { display: block; object-fit: cover; } /* the item's cove
 .dialog--info[open] { display: flex; flex-direction: column; }
 .dialog--info .dialog__form { flex: 0 1 auto; min-height: 0; grid-template-rows: auto minmax(0, 1fr) auto; }
 .dialog--info .dialog__body { overflow-y: auto; overscroll-behavior: contain; }
+/* While it scrolls, a divider above the actions says there's more than the cut-off line shows
+   (dialog.ts sets the class only then). */
+.dialog--info .dialog__body--scrolls { padding-bottom: var(--space-3); border-bottom: var(--border-thin) solid var(--color-border); }
 .dialog__steps { display: grid; gap: var(--space-2); margin: 0; padding-left: var(--space-6); }
 
 .dialog--static { position: static; display: block; margin: 0; width: 100%; animation: none; }

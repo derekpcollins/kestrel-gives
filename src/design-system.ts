@@ -13,6 +13,7 @@ import type { TileContext } from "./components/item-tile-rules.ts";
 import { enhanceTableScroll } from "./components/table.ts";
 import { showToast } from "./components/toast.ts";
 import { createUploader } from "./components/uploader.ts";
+import { openWelcome } from "./components/welcome.ts";
 
 hydrateIcons();
 
@@ -133,3 +134,6 @@ document.addEventListener("click", (event) => {
   if (make) void confirmDialog(make());
 });
 document.addEventListener("demo:restore", () => void confirmDialog(dialogs.restore!()));
+// The info variant is the welcome itself, from the row's button or a specimen's About this demo.
+document.addEventListener("demo:about", () => void openWelcome());
+document.querySelector("[data-demo-welcome]")?.addEventListener("click", () => void openWelcome());

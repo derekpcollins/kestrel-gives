@@ -216,7 +216,8 @@ export interface InfoOptions {
 /**
  * Opens an info dialog (DECISIONS entry 139): something to read and a way on, no request.
  * When it's taller than the screen (a phone held sideways), only the body scrolls, between the
- * title and the actions, and becomes a focusable, named region so a keyboard can scroll it.
+ * title and the actions, with a divider above the actions, and becomes a focusable, named region
+ * so a keyboard can scroll it.
  */
 export function infoDialog(options: InfoOptions): Promise<void> {
   const id = `dialog-${++count}`;
@@ -248,16 +249,20 @@ export function infoDialog(options: InfoOptions): Promise<void> {
   const dismiss = button(options.dismissLabel, "btn");
   dismiss.type = "button";
   dismiss.addEventListener("click", () => dialog.close());
-  // Dismiss first, as in every dialog here (entry 139); here the dismiss is the primary.
-  actions.append(dismiss, link);
+  // The primary on the right (or below, when they stack), as in every dialog here (entry 139),
+  // so visual order and Tab order agree; first focus still goes to the dismiss.
+  actions.append(link, dismiss);
 
   content.append(title, body, actions);
   dialog.append(content);
 
   // A scrolling region needs to take focus to be scrolled from the keyboard (WCAG 2.1.1), but
   // when nothing scrolls that would be a stop with nothing to do, so it's only there when needed.
+  // So is the divider above the actions, the cue that there's more to read.
   const scrollable = new ResizeObserver(() => {
-    if (body.scrollHeight > body.clientHeight) {
+    const scrolls = body.scrollHeight > body.clientHeight;
+    body.classList.toggle("dialog__body--scrolls", scrolls);
+    if (scrolls) {
       body.tabIndex = 0;
       body.setAttribute("role", "region");
       body.setAttribute("aria-labelledby", title.id);
