@@ -19,7 +19,7 @@ The photos in the screenshots are the demo's seed photos, from Pixabay, credited
 
 ## Take the tour
 
-The demo is shared: everyone sees the same data, and it restores itself every day. The bar across the top is for trying it out. The [5-minute tour](https://kestrel-gives.vercel.app/guide) (`/guide`) walks through the main flows; its **Set me up** buttons use these same controls and say first what they change.
+The demo is shared: everyone sees the same data, and it restores itself every day. The bar across the top is for trying it out, and a welcome dialog on your first visit points the way (**About this demo** in the bar opens it again). The [5-minute tour](https://kestrel-gives.vercel.app/guide) (`/guide`) walks through the main flows; its **Set me up** buttons use these same controls and say first what they change.
 
 - **Viewing as:** be any of the seven seeded people. Jules is an employee; Maya and Theo are admins and see the **Admin Dashboard** in the avatar menu.
 - **Jump to:** move the event to another phase: submissions open, bidding live, ending soon, bidding ended, or 30+ days after. It moves the event's dates, never the clock, so the real rules apply. **Submissions open** also clears every bid, purchase and proof, since that phase can't have any, and asks first.

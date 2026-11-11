@@ -46,7 +46,7 @@ img.dialog__item-thumb { display: block; object-fit: cover; } /* the item's cove
 .dialog--info .dialog__body { overflow-y: auto; overscroll-behavior: contain; }
 /* While it scrolls, a divider above the actions says there's more than the cut-off line shows
    (dialog.ts sets the class only then). */
-.dialog--info .dialog__body--scrolls { padding-bottom: var(--space-3); border-bottom: var(--border-thin) solid var(--color-border); }
+.dialog--info .dialog__body--scrolls { padding-bottom: var(--space-3); border-bottom: var(--border-thin) solid var(--color-border-strong); }
 .dialog__steps { display: grid; gap: var(--space-2); margin: 0; padding-left: var(--space-6); }
 
 .dialog--static { position: static; display: block; margin: 0; width: 100%; animation: none; }

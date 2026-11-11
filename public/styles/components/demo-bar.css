@@ -45,7 +45,7 @@
 .demo-bar { container: demo-bar / inline-size; }
 
 /* The tour link (SPEC v1.21 §3.1; owner, guide plan). On a narrow bar (under --breakpoint-sm) it is the last thing in the
-   open bar (phones start collapsed, so Home has its own line). On a wider bar it sits in the strip,
+   open bar (phones start collapsed, so the welcome dialog points the way). On a wider bar it sits in the strip,
    open or collapsed, in room the summary keeps for it before the chevron. It's outside the
    <summary> (a link inside the toggle would be nested controls), so it's placed over that room. */
 .demo-bar__tour, .demo-bar__about { color: var(--color-on-inverse); font: var(--type-label); text-decoration: underline; text-decoration-thickness: var(--border-thin); text-underline-offset: var(--space-1); border-radius: var(--radius-sm); }
