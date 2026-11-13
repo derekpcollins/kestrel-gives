@@ -1056,6 +1056,11 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 - **Caught or hard:** the full check failed three times before passing, not because of A3. `vercel dev` leaves its function workers running (about 50 per run), and one server had carried all three runs. Each run got slower (3, then 5 failures), and then the functions stopped answering (52 failures, `NO_RESPONSE_FROM_FUNCTION`). On a fresh server, one real gap was left: two `submit.spec` tests waited only 5 s for the toast after the redirect, but the toast appears once the next page's real read finishes. They now wait for the page to load first, as #137 does everywhere else. Restart the dev server before each full check.
 - **Checks:** branch A's full check (`npm run check`, fresh server), exit 0: deps, seed images, tokens, types; unit 339, DB 122, a11y and keyboard 325, reflow 22, visual 9.
 
+### 2026-11-13 — The local browser checks run on 3 workers
+- **Built:** `playwright.config.ts` sets `workers` to 3 instead of the default 4; `PLAYWRIGHT_WORKERS` overrides it, for a cloud check later (DECISIONS #149). Test-only.
+- **Caught or hard:** B1's gate had failed twice at 4 workers, each time on different tests, all page-load timeouts late in light-1280 under `vercel dev`. Stopped instead of patching tests one by one.
+- **Checks:** B1's gate on a fresh server at 3 workers, exit 0 on the first run (see B1's entry). The browser step took 13.6 minutes (it was about 11–12 at 4), and the gate about 36.
+
 ## Moving development back to Guardian
 
 ### 2026-11-15 — Guardian setup and baseline check
