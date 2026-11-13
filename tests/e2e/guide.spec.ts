@@ -174,3 +174,24 @@ test("the footer: Things to try, Design system, then How this was built, in the 
   await expect(built).toHaveAttribute("href", "https://derekpcollins.com/work/kestrel-gives/");
   await expect(built).not.toHaveAttribute("target", /.*/);
 });
+
+// Visible changes B1: the links are spaced by a gap, not a left margin, so whichever one wraps
+// starts flush with the text's left edge. At 320 How this was built wraps; at 1280 all three share a line.
+test("the footer's links wrap flush at 320 and share a line at 1280 (B1)", async ({ page }) => {
+  type Edges = { left: number; links: { x: number; y: number }[] };
+  const edges = async () => (await page.evaluate(`(() => {
+    const p = document.querySelector(".site-footer > p");
+    const left = p.getBoundingClientRect().left + parseFloat(getComputedStyle(p).paddingLeft);
+    const links = [...p.querySelectorAll("a")].map((a) => a.getBoundingClientRect());
+    return { left, links: links.map((r) => ({ x: Math.round(r.left), y: Math.round(r.top) })) };
+  })()`)) as Edges;
+  await page.setViewportSize({ width: 320, height: 800 });
+  await page.goto("/");
+  let { left, links } = await edges();
+  const rows = [...new Set(links.map((l) => l.y))];
+  expect(rows.length).toBeGreaterThan(1);
+  for (const row of rows) expect(links.find((l) => l.y === row)!.x).toBe(Math.round(left)); // each row's first link is flush
+  await page.setViewportSize({ width: 1280, height: 800 });
+  ({ links } = await edges());
+  expect(new Set(links.map((l) => l.y)).size).toBe(1);
+});

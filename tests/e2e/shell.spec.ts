@@ -3,6 +3,7 @@
 // change the shared dev data, so they run one at a time in one project and put the event
 // back to live at the end.
 import { expect, test, type Page } from "@playwright/test";
+import { PAGE_LOAD_MS } from "./page-load.ts";
 
 test.describe.configure({ mode: "serial" });
 // Only light-1280 runs these tests. The other projects still load this file in their own
@@ -19,7 +20,8 @@ async function open(page: Page, path = "/") {
   await page.goto(path);
   await page.addScriptTag({ content: 'localStorage.removeItem("kestrel-demo-bar-collapsed")' });
   await page.goto(path);
-  await expect(banner(page)).toBeVisible();
+  // The banner follows the first app-state read, so it gets the page-load wait (#137), not the default 5 s.
+  await expect(banner(page)).toBeVisible({ timeout: PAGE_LOAD_MS });
 }
 
 test.afterAll(async ({ request }, info) => {
@@ -261,5 +263,30 @@ test("demo bar: the strip is one line at 320, 390 and 1280; the open bar is comp
       expect(h, `${width}px`).toBeLessThan(44);
     }
     await expect(bar(page).locator("[data-demo-restore]")).toHaveClass(/btn--danger-outline/);
+  }
+});
+
+// Visible changes B1: the header shows the event mark, light or dark, by the color scheme; exactly
+// one is visible and it has loaded. The gallery's panes force their own scheme, so their marks follow
+// the pane, not the system.
+test("header: one event mark per theme, loaded, and the gallery's panes follow the pane", async ({ page }) => {
+  const visibleMark = async () => {
+    const shown = page.locator(".site-header__mark img:visible");
+    await expect(shown).toHaveCount(1);
+    expect(await shown.evaluate((img) => { const i = img as unknown as { complete: boolean; naturalWidth: number }; return i.complete && i.naturalWidth > 0; })).toBe(true);
+    return shown.getAttribute("class");
+  };
+  for (const scheme of ["light", "dark"] as const) {
+    await page.emulateMedia({ colorScheme: scheme });
+    await page.goto("/");
+    await expect(page.locator(".site-header__mark img")).toHaveCount(2);
+    expect(await visibleMark()).toBe(`site-header__mark-${scheme}`);
+    await expect(page.locator(".site-header__mark img").first()).toHaveAttribute("alt", "");
+  }
+  await page.emulateMedia({ colorScheme: "dark" }); // the system is dark; the light pane still shows the light mark
+  await page.goto("/design-system/");
+  for (const pane of ["light", "dark"]) {
+    const marks = page.locator(`.gallery__pane--${pane} .site-header__mark img:visible`);
+    expect(await marks.evaluateAll((imgs) => [...new Set(imgs.map((i) => i.className))])).toEqual([`site-header__mark-${pane}`]);
   }
 });
