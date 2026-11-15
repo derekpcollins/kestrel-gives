@@ -5,8 +5,9 @@
 .phase-banner { max-width: var(--size-content); margin: var(--space-4) auto 0; padding-inline: var(--space-4); }
 .site-footer { border-top: var(--border-thin) solid var(--color-border); color: var(--color-text-muted); font: var(--type-caption); }
 .site-footer > p { max-width: var(--size-content); margin: 0 auto; padding: var(--space-6) var(--space-4); }
-/* The footer's links (Things to try, the design system, How this was built) keep apart when they share a line. */
-.site-footer a + a { margin-left: var(--space-3); }
+/* The sentence, then the links (Things to try, the design system, How this was built), spaced by a
+   gap rather than a margin, so a link that wraps starts flush with the line above (owner, B1). */
+.site-footer > p { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-3); }
 /* A titled section of a page (Home's How to participate and Where donations go). */
 .home-section { display: grid; gap: var(--space-4); padding-top: var(--space-4); }
 /* Browse pages: the item count and the sort above the grid. The sort keeps its own width and

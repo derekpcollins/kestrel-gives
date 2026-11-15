@@ -92,11 +92,14 @@ describe("SEED_PHOTOS_BASE_URL is checked, never echoed", () => {
 });
 
 describe("image files never go in git", () => {
-  test("flags images under seed or photo paths, except the two placeholders; charity logos and their sources are fine", () => {
+  test("flags images under seed or photo paths, except the two placeholders; charity logos, the Kestrel marks and their sources are fine", () => {
     assert.deepEqual(
       forbiddenImages([
         "public/seed/placeholder-photo.png", "public/seed/proofs/placeholder-proof.png",
         "public/brand/charities/lantern-paws.png", "design/source/charities/lantern-paws.png",
+        // The event mark's transparent sources and its header sizes (visible changes B1).
+        "design/source/logos/kestrel-gives-event-mark-transparent.png", "design/source/logos/kestrel-gives-event-mark-transparent-dark.png",
+        "public/brand/kestrel-gives-event-mark-light-80.png", "public/brand/kestrel-gives-event-mark-dark-160.png",
         "public/seed/candles-1.jpg", "public/seed/photos/a.webp", ".seed-photos/originals/x.JPG", "assets/photos/y.png", "public/seed/new.png",
         "public/brand/logo.png", "design/screenshots/a.png", "lib/seed/photos.ts", "public/seed/charities/placeholder-logo.png",
       ]),

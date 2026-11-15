@@ -4,8 +4,16 @@
 .site-header { container: site-header / inline-size; position: relative; z-index: var(--layer-header); background: var(--color-surface); border-bottom: var(--border-thin) solid var(--color-border); }
 .site-header__inner { display: flex; align-items: center; gap: var(--space-2); max-width: var(--size-content); margin: 0 auto; padding: var(--space-2) var(--space-4); }
 .site-header__brand { display: inline-flex; flex: 0 1 auto; align-items: center; gap: var(--space-2); min-height: var(--size-target); min-width: 0; border-radius: var(--radius-md); color: var(--color-text); text-decoration: none; font: var(--type-heading-3); }
-.site-header__mark { display: inline-grid; place-items: center; flex: none; border-radius: var(--radius-sm); background: var(--color-mark-backing); padding: var(--space-1); }
-.site-header__mark img { display: block; width: var(--size-mark-header); height: var(--size-mark-header); }
+/* The event mark, light or dark (owner, visible changes B1): two images and the color scheme picks one.
+   Not <picture>, which would keep following the system after a manual theme choice (E). The
+   dark file is the owner's own dark-background art, so there's no tile behind it any more. */
+.site-header__mark { display: inline-flex; flex: none; }
+.site-header__mark img { display: block; width: auto; height: var(--size-mark-header); }
+.site-header__mark .site-header__mark-dark { display: none; }
+@media (prefers-color-scheme: dark) {
+  .site-header__mark .site-header__mark-light { display: none; }
+  .site-header__mark .site-header__mark-dark { display: block; }
+}
 .site-header__nav { margin-left: auto; flex: none; }
 /* When space is tight the name wraps to two lines before anything else moves. */
 .site-header__name { min-width: 0; }

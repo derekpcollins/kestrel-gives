@@ -374,15 +374,15 @@ How forms behave, for every component below:
 
 ## Site header and nav
 
-**Purpose:** the org mark and name, the main nav (Home, Silent Auction, Instant Sale, Your Items, and Submit an Item during the submission window only), and the person (SPEC §8).
+**Purpose:** the event mark and name, the main nav (Home, Silent Auction, Instant Sale, Your Items, and Submit an Item during the submission window only), and the person (SPEC §8).
 
 - **Markup:** `<header class="site-header">` > `.site-header__inner` with:
-  - `.site-header__brand`: `.site-header__mark` (org mark, `alt=""`) and `.site-header__name`
+  - `.site-header__brand`: `.site-header__mark` (the event mark: two images, `.site-header__mark-light` and `.site-header__mark-dark`, both `alt=""`) and `.site-header__name`
   - `<nav class="site-header__nav" aria-label="Main">`: `.site-header__menu-button` and `ul.site-header__links` of `a.site-header__link`
   - `.site-header__end`: a profile menu or an avatar
   - Behavior: `enhanceSiteHeader()` in `src/components/disclosure.ts`.
 - **Collapsing:** the header is a size container. Below `--breakpoint-lg` (64rem) **of its own width**, the links collapse behind a **Menu** button (a disclosure). They open as a panel under the header, and Escape or a click outside closes it. The full nav needs about 52rem, and 64rem is the next named breakpoint (DECISIONS #57). Without JavaScript the links simply show, wrapped.
-- **Mark:** in light mode no backing; in dark mode it sits on the art's own white (`--color-mark-backing`, #39).
+- **Mark:** the heart-and-kestrel event mark, `--size-mark-header` (40px) tall, from the owner's transparent light and dark files (visible changes B1). The color scheme shows one: `prefers-color-scheme` for now, the gallery's panes by their own scheme. No tile behind it in either mode, because the dark file is made for dark backgrounds. Not `<picture>`, which would keep following the system after a manual theme choice.
 - **States (links):** default; hover (muted fill); active (deeper fill); focus (ring); **current page** (`aria-current="page"`: accent text and a bar, so it isn't shown by color alone; the bar is under the link when expanded and beside it in the collapsed panel). Disabled: N/A (a link that doesn't apply is left out, like Submit an Item outside the window). Loading, error and empty: N/A.
 - **States (Menu button):** the quiet button's states, plus open: `aria-expanded="true"` and the icon changes to `close`. Its accessible name stays "Menu".
 - **Accessibility:** one `<nav aria-label="Main">`. Every link and button is 44px tall. Focus stays on the Menu button when the panel opens, and Tab moves into the links.

@@ -51,6 +51,7 @@ describe("welcome dialog: its words", () => {
     assert.ok(WELCOME.steps[1].includes(PHASE_LABEL), "step 2 names Event phase (v1.25)");
     const ended = JUMPS.find((j) => j.value === "ended")?.label;
     assert.ok(ended && WELCOME.steps[3].includes(ended));
+    assert.equal(WELCOME.steps[3], "As an admin, move the event to Bidding ended, then check Totals in the Admin Dashboard.", "step 4 says move, not jump (B1)");
     assert.match(WELCOME.closing, /^Restore demo data /);
   });
   test("it says what the bar says about sharing and resets, on its own line (v1.25)", () => {

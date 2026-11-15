@@ -1056,6 +1056,16 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 - **Caught or hard:** the full check failed three times before passing, not because of A3. `vercel dev` leaves its function workers running (about 50 per run), and one server had carried all three runs. Each run got slower (3, then 5 failures), and then the functions stopped answering (52 failures, `NO_RESPONSE_FROM_FUNCTION`). On a fresh server, one real gap was left: two `submit.spec` tests waited only 5 s for the toast after the redirect, but the toast appears once the next page's real read finishes. They now wait for the page to load first, as #137 does everywhere else. Restart the dev server before each full check.
 - **Checks:** branch A's full check (`npm run check`, fresh server), exit 0: deps, seed images, tokens, types; unit 339, DB 122, a11y and keyboard 325, reflow 22, visual 9.
 
+### 2026-11-13 — The local browser checks run on 3 workers
+- **Built:** `playwright.config.ts` sets `workers` to 3 instead of the default 4; `PLAYWRIGHT_WORKERS` overrides it, for a cloud check later (DECISIONS #149). Test-only.
+- **Caught or hard:** B1's gate had failed twice at 4 workers, each time on different tests, all page-load timeouts late in light-1280 under `vercel dev`. Stopped instead of patching tests one by one.
+- **Checks:** B1's gate on a fresh server at 3 workers, exit 0 on the first run (see B1's entry). The browser step took 13.6 minutes (it was about 11–12 at 4), and the gate about 36.
+
+### 2026-11-13 — B1: the event mark, the footer, welcome step 4
+- **Built:** the header shows the heart-and-kestrel event mark, light or dark by `prefers-color-scheme`, 40px tall (`--size-mark-header`), two `<img>`s with one shown; the dark mode's white tile and `--color-mark-backing` are gone (the dark file is made for dark backgrounds). Web files at 80 and 160px, cropped and resized with `sips` from the owner's sources (committed in `design/source/logos/`), no pixel edits (#39); one 756×1084 box per mark removes the invisible margin specks. The gallery's ten header specimens use it, and each pane's mark follows the pane. The footer's links sit in a wrapping flex row with a gap, so a wrapped link sits flush at 320. Welcome step 4: "As an admin, move the event to Bidding ended, then check Totals in the Admin Dashboard." DESIGN-SYSTEM's Site header entry.
+- **Caught or hard:** each source's bounding box ran nearly to the canvas edges because of 1,572 (light) and 596 (dark) pixels at alpha ≤ 2/255; found by reading the alpha channel, not by eye. The plan's 64/128 sizes assumed the old 32px slot; at 40px they're 80/160. The header stays 61px tall. The gate failed twice at 4 workers on unrelated page-load timeouts; it passed at 3 (the entry above).
+- **Checks:** `check:quick` at the everything level, fresh server, 3 workers, exit 0: deps, seed images, tokens, types; unit 339, DB 122, a11y and keyboard 327, reflow 22, visual 9.
+
 ## Moving development back to Guardian
 
 ### 2026-11-15 — Guardian setup and baseline check

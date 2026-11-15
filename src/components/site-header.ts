@@ -23,11 +23,12 @@ export function renderSiteHeader(state: AppState | null, page: PageKey): HTMLEle
     el("span", { className: "site-header__menu-icon" }, icon("menu")),
     el("span", { className: "site-header__menu-label", text: "Menu" }),
   );
-  const mark = el("img", { attrs: { src: "/brand/kestrel-org-mark-64.png", srcset: "/brand/kestrel-org-mark-64.png 1x, /brand/kestrel-org-mark-128.png 2x", width: "64", height: "64", alt: "" } });
+  // The event mark in both themes; site-header.css shows the one that matches (owner, visible changes B1).
+  const markImg = (theme: "light" | "dark") => el("img", { className: `site-header__mark-${theme}`, attrs: { src: `/brand/kestrel-gives-event-mark-${theme}-80.png`, srcset: `/brand/kestrel-gives-event-mark-${theme}-80.png 1x, /brand/kestrel-gives-event-mark-${theme}-160.png 2x`, width: "55", height: "80", alt: "" } });
 
   const header = el("header", { className: "site-header" },
     el("div", { className: "site-header__inner" },
-      el("a", { className: "site-header__brand", attrs: { href: "/" } }, el("span", { className: "site-header__mark" }, mark), el("span", { className: "site-header__name", text: "Kestrel Gives" })),
+      el("a", { className: "site-header__brand", attrs: { href: "/" } }, el("span", { className: "site-header__mark" }, markImg("light"), markImg("dark")), el("span", { className: "site-header__name", text: "Kestrel Gives" })),
       el("nav", { className: "site-header__nav", attrs: { "aria-label": "Main" } }, menuButton, links),
       el("div", { className: "site-header__end" }, state?.viewer ? renderProfile(state.viewer) : null),
     ),

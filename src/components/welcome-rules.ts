@@ -14,7 +14,7 @@ export const WELCOME = {
     "Switch between the seven people with Viewing as, including two admins.",
     "Move the event between phases with Event phase.",
     "Bid on a Silent Auction item, then switch to someone else and outbid it.",
-    "As an admin, jump to Bidding ended, then check Totals in the Admin Dashboard.",
+    "As an admin, move the event to Bidding ended, then check Totals in the Admin Dashboard.",
   ],
   closing: "Restore demo data puts everything back.",
   dismiss: "Start exploring",
