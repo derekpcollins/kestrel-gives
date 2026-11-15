@@ -2,7 +2,7 @@
 // Pure, so tests/unit/quick-map.test.ts covers it; scripts/check-quick.ts runs what it picks.
 //
 // Each changed file is matched against the rules in order and the first match wins:
-//   - "none": docs and design sources, which no test reads (the fast checks still run);
+//   - "none": docs, design sources and Claude Code settings, which no test reads (the fast checks still run);
 //   - "everything": shared code (shell, components, tokens and base CSS, the data layer's core,
 //     the seed, migrations, configs, shared test helpers), and any file no rule knows;
 //   - an area: its database files, its own browser specs, and the axe and reflow checks for its
@@ -22,7 +22,7 @@ const E2E = (name: string) => `tests/e2e/${name}.spec.ts`;
 const ADMIN_SCREENS = ["admin", "admin-totals", "admin-people", "admin-proofs", "admin-items", "admin-settings", "admin-templates", "admin-reset"];
 
 /** Docs, design sources and review notes: nothing beyond the fast checks. */
-const NONE: readonly RegExp[] = [/\.md$/, /^docs\//, /^design\//, /^\.review\//, /^\.gitignore$/, /^public\/fonts\/.*\.txt$/];
+const NONE: readonly RegExp[] = [/\.md$/, /^\.claude\//, /^docs\//, /^design\//, /^\.review\//, /^\.gitignore$/, /^public\/fonts\/.*\.txt$/];
 
 /** The quick check's own files: the unit tests cover them. */
 const FAST_ONLY: readonly RegExp[] = [/^scripts\/(check-deps|check-tokens|check-no-seed-images|check-quick|token-rules|quick-map|jpeg-metadata)\.ts$/];
