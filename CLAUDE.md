@@ -9,6 +9,7 @@ A demo web app for running a yearly charity auction: silent auction and instant-
 ## Commands
 
 - `npm run build`: compiles the front end and the component CSS. Touches no database.
+- `NODE_ENV=test node --test 'tests/unit/**/*.test.ts'`: the unit tests without `.env.local`, as Vercel's build runs them. Touches no database.
 - `npm start`: `tsc --watch`, the CSS watcher and `vercel dev` (uses `dev`).
 - `npm run check:quick`: fast checks plus the DB and browser tests mapped from changed files (uses `dev`).
 - `npm run check`: all eight conformance checks, about 30 minutes (uses `dev`). For pushes to `main`, milestone ends, and schema, seed or demo-control changes.
@@ -18,7 +19,7 @@ A demo web app for running a yearly charity auction: silent auction and instant-
 
 - Never commit or push to `main`. Always work on a branch and open a PR. Merging to `main` needs the owner's approval.
 - Every PR gets a Vercel preview URL (it appears on the PR). Review it before merging.
-- `npm run build` must pass before every commit.
+- `npm run build`, `npm run check:types` and the unit tests (the command above) must pass before every commit. Vercel's build runs all three, so a failure there breaks the preview.
 - Run every gating command with `set -o pipefail` or without pipes. Never commit after a gate whose exit code you haven't seen.
 - Never run `npm run build:vercel` locally. It's Vercel's build step and runs `scripts/deploy-db.ts`.
 - Never run `vercel env pull .env.local` (or `vercel env pull` with no file name, which writes `.env.local`). The Development environment has no Neon variables, so it would drop `DATABASE_URL` and both `NEON_*` keys. Refresh `VERCEL_OIDC_TOKEN` with the README's steps.
