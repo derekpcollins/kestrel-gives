@@ -22,7 +22,7 @@ A demo web app for running a yearly charity auction: silent auction and instant-
 - `npm run build`, `npm run check:types` and the unit tests (the command above) must pass before every commit. Vercel's build runs all three, so a failure there breaks the preview.
 - Run every gating command with `set -o pipefail` or without pipes. Never commit after a gate whose exit code you haven't seen.
 - Never run `npm run build:vercel` locally. It's Vercel's build step and runs `scripts/deploy-db.ts`.
-- Never run `vercel env pull .env.local` (or `vercel env pull` with no file name, which writes `.env.local`). The Development environment has no Neon variables, so it would drop `DATABASE_URL` and both `NEON_*` keys. Refresh `VERCEL_OIDC_TOKEN` with the README's steps.
+- Never run `vercel env pull .env.local` (or `vercel env pull` with no file name, which writes `.env.local`). It replaces the whole file with Vercel's Development values, which could repoint or drop `DATABASE_URL` and both `NEON_*` keys. Refresh `VERCEL_OIDC_TOKEN` with the README's steps.
 - Never run anything against the Neon `main` branch, and never pass `--allow-main`.
 - One machine at a time on `dev`. Before anything that touches it (`npm start`, `check`, `check:quick`, `test:db`, the browser checks, `db:*`), confirm no other machine is using it. Tests reseed `dev`.
 - Restart the dev server before each full check: `vercel dev` leaves function workers running and slows later runs.
