@@ -73,7 +73,7 @@ Vercel CLI commands may rewrite .env.local; run npm run db:check afterward.
 
 #### Refreshing `VERCEL_OIDC_TOKEN`
 
-The token lasts about 12 hours. Don't run `vercel env pull .env.local`: the Development environment has no Neon variables, so it would replace the file and drop `DATABASE_URL` and both `NEON_*` keys. Instead, pull into a separate gitignored file, copy only the token across, and delete the pull:
+The token lasts about 12 hours. Don't run `vercel env pull .env.local` (or `vercel env pull` with no file name): it replaces the whole file with whatever Vercel's Development environment holds at that moment. Development now carries the same `DATABASE_URL` and `NEON_*` values as `.env.local`, but if those ever change or disappear on Vercel, a plain pull would silently repoint or drop them. Instead, pull into a separate gitignored file, copy only the token across, and delete the pull:
 
 ```sh
 vercel env pull .env.vercel-pull --environment=development --yes
@@ -95,6 +95,8 @@ None of this prints the token. If the pull fails with `challenge_required`, run 
 #### One machine at a time on `dev`
 
 Only one machine runs anything against the Neon `dev` branch at a time: checks, `npm start`, measurements. Tests reseed `dev`, so two machines at once interfere with each other's results and timings.
+
+When development moves to another machine, stop everything on the old one and rename its `.env.local` (for example to `.env.local.retired`), so nothing there can reach `dev` by accident.
 
 ### Database
 
