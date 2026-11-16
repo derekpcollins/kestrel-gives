@@ -1084,4 +1084,4 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 - **Owner stepped in** (mid-stage): shrink the headline until "Make something." fits on one line at the narrowest width. `--text-4xl`'s floor went to 32px (36 at 390, 48 from about 600px), and each sentence is an `inline-block`, so it breaks between the sentences. At 320 "Make something." is 265px in a 288px column.
 - **Caught or hard:** brand coral is 2.9:1 on the light page, short of 3:1 even for large text, so the light-mode "Gives" is #E8554A (3.4:1); dark mode uses the brand coral itself. At 390×844 How to participate starts at about 637px.
 - **Tests:** `home.spec` checks the lockup, the h1's words, the lead, no event label, the order and centering at 390 and 1280, the sizes (h1 > lockup words > lead > body), one line per sentence at 320, and How to participate on the first screen at 390. The reset offer's focus check now names the new h1.
-
+- **Checks:** `check:quick` at the everything level (tokens.css is shared), fresh server, 3 workers, exit 0: deps, seed images, tokens, types; unit 339, DB 122, a11y and keyboard 330, reflow 22, visual 9.
