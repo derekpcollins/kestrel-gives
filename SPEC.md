@@ -1,6 +1,6 @@
 # Kestrel Gives — Build Spec & Conformance Rules
 
-**Status:** v1.25 · Owner: Derek Collins · Last updated: Nov 11, 2026
+**Status:** v1.26 · Owner: Derek Collins · Last updated: Nov 16, 2026
 
 This document describes what to build and the rules every contribution must follow, whether a person or an AI agent writes it. Read it in full before writing any code. If something here conflicts with a request, stop and ask.
 
@@ -141,8 +141,8 @@ There is no inherited design system, so this project defines its own, from scrat
 - Starter component list: button, text input, textarea, select, date-time input, form field (label + help + error), radio card, card, item tile, badge/status pill, table, dialog, toast, banner, empty state, page header, site header and nav, profile menu, avatar (with top-bidder crown), photo uploader (with reorder), photo carousel, demo bar.
 - **Logos:**
   - **Marks:** the Kestrel org mark (the teal bird) and the Kestrel Gives event mark (the bird holding a heart) are the owner's own raster artwork, kept in `design/source/logos/`. They MUST be used unmodified: no redrawing, recoloring, or tracing. The only allowed changes are cropping whitespace and resizing or exporting (PNG at 1x and 2x, in `public/brand/`).
-  - **Dark mode:** the marks' white face and chest are part of the art, so in dark mode the marks sit on a light rounded tile in the art's own white. The Home hero (event mark with the lettering) is a light card in both modes, because the event mark's file has its white background built in.
-  - **Hero lockup:** the event mark, then "Kestrel" in brand teal over "gives" in brand coral, both live text in the heading font (`--type-hero`). There's no hand-drawn lettering, no heart over the i (the mark carries the heart), and no swash. The whole lockup has one accessible name, "Kestrel Gives". Brand teal and coral are sampled from the event mark.
+  - **Dark mode:** the marks' white face and chest are part of the art, so in dark mode the org mark sits on a light rounded tile in the art's own white. The event mark has the owner's own transparent light and dark versions (v1.26), so in the header and the Home hero it shows the version for the color scheme, with no tile or card.
+  - **Hero lockup** (v1.26): the event mark with "Kestrel Gives" beneath it, live text in the heading font (`--type-hero`), "Kestrel" in teal and "Gives" in coral (brand colors, adjusted only where needed for 3:1 large-text contrast on each page). There's no hand-drawn lettering, no heart over the i (the mark carries the heart), and no swash. The whole lockup has one accessible name, "Kestrel Gives". It introduces the headline on Home, so it is never the largest text there.
   - **Favicon:** the org mark as-is, padded to a square (16 and 32px, transparent). The Apple touch icon (180px) is the org mark placed on a white square, since iOS shows transparency as black. A dedicated small mark MAY come later.
   - **Charities** (v1.20, v1.22): the owner's own files, used unmodified (no redrawing, recoloring, or tracing; resizing and compressing are allowed). The originals stay in `design/source/charities/`; the site serves resized, compressed copies at 2x the displayed size from `public/brand/charities/`. On Home and the giving page each card stacks the logo, big, over the name and the description, on a light tile in dark mode. The logo spells the name, so it's decorative (`alt=""`).
 - **Avatars:** initials on a token-colored circle. No photos of people.
@@ -264,10 +264,9 @@ A banner just below the header shows the current phase message, for example "Sub
 
 ### Screen list
 - **Home**, matching the original:
-  1. A big, colorful **Kestrel Gives** event wordmark as the hero (original, built from tokens, with a dark-mode version)
-  2. A description of the event
-  3. **How to participate** (submit, bid or buy, donate once, upload proof)
-  4. Cards for the three charities, noting that donations are split equally among them
+  1. **Hero** (v1.26), centered, top to bottom: the hero lockup; the headline "Make something. Give something." as the page's h1 and its largest text; and one line about the event a step above body size: "Each year, Kestrel's designers donate things they make and do. Coworkers bid on them, and every dollar goes to three charities." No event-name label and no further description. At 390px wide, How to participate starts on the first screen.
+  2. **How to participate** (submit, bid or buy, donate once, upload proof)
+  3. Cards for the three charities, noting that donations are split equally among them
   No item lists on Home. On a first visit, the welcome dialog (section 3.1) introduces the demo (v1.24; it replaced v1.21's "New here?" line above the hero).
 - **Silent Auction** and **Instant Sale:** separate browse pages, each a grid of item tiles. Sort by newest, price, or (silent auction) most bids. No search.
 - **Item page** (section 7.3).

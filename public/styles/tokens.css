@@ -87,11 +87,16 @@
   --color-crown:           light-dark(#FFD86B, #FFD86B); /* top-bidder crown fill */
   --color-crown-stroke:    light-dark(#6E4B00, #6E4B00);
 
-  /* ---------- Color: brand (fixed; only on the light mark tile and hero card) ---------- */
+  /* ---------- Color: brand (fixed; sampled from the marks, shown on the token sheet) ---------- */
   --color-brand-teal:      light-dark(#036765, #036765); /* sampled from the event mark */
   --color-brand-coral:     light-dark(#F86256, #F86256); /* sampled; 3.06:1 on white, never body text */
   --color-brand-butter:    light-dark(#FFD86B, #FFD86B); /* hero swash */
   --color-mark-tile:       light-dark(#FEFEFE, #FEFEFE); /* the art's own white */
+  /* The hero lockup's live words on the page (B2): teal and coral that read on both pages.
+     Large text (22px+ heavy): Kestrel 6.4:1 and 8.5:1; Gives 3.4:1 (brand coral, darkened
+     just enough for 3:1 on the light page) and 5.6:1 (brand coral itself). */
+  --color-lockup-kestrel:  light-dark(#036765, #5CC8C0);
+  --color-lockup-gives:    light-dark(#E8554A, #F86256);
 
   /* ---------- Type: families ---------- */
   /* System fonts for body, UI, and numbers. Plus Jakarta Sans only for the hero lockup and
@@ -110,8 +115,8 @@
   --text-xl:   1.375rem; /* 22 */
   --text-2xl:  1.75rem;  /* 28 */
   --text-3xl:  clamp(1.75rem, 1.4rem + 1.5vw, 2.25rem); /* fluid 28 → 36, max from ~900px */
-  --text-4xl:  clamp(2.25rem, 1.6rem + 2.8vw, 3rem);    /* fluid 36 → 48, max from ~800px */
-  --text-5xl:  clamp(2.5rem, 1.5rem + 4.5vw, 4.5rem);   /* fluid 40 → 72, hero lockup only */
+  --text-4xl:  clamp(2rem, 0.857rem + 5.71vw, 3rem);    /* fluid 32 at 320 → 36 at 390 → 48 from ~600px (B2: "Make something." fits one line at 320) */
+  --text-5xl:  clamp(2.5rem, 1.5rem + 4.5vw, 4.5rem);   /* fluid 40 → 72; unused since B2 (the token sheet still shows it) */
 
   --weight-regular:  400;
   --weight-medium:   500;
@@ -119,7 +124,6 @@
   --weight-bold:     700;
   --weight-heavy:    800;
 
-  --leading-lockup: 0.95; /* the two stacked words of the hero lockup */
   --leading-tight:  1.15;
   --leading-snug:   1.3;
   --leading-normal: 1.5;
@@ -129,7 +133,7 @@
   --tracking-label: 0.08em;   /* uppercase eyebrow labels */
 
   /* ---------- Type: roles (use with the font shorthand: font: var(--type-body)) ---------- */
-  --type-hero:      var(--weight-heavy) var(--text-5xl)/var(--leading-lockup) var(--font-heading);  /* hero lockup words; with --tracking-lockup */
+  --type-hero:      var(--weight-heavy) var(--text-2xl)/var(--leading-tight) var(--font-heading);   /* hero lockup words, under the mark; with --tracking-lockup */
   --type-display:   var(--weight-heavy) var(--text-4xl)/var(--leading-tight) var(--font-heading);   /* Home headline */
   --type-heading-1: var(--weight-heavy) var(--text-2xl)/var(--leading-tight) var(--font-heading);   /* page titles */
   --type-heading-2: var(--weight-bold) var(--text-xl)/var(--leading-snug) var(--font-heading);      /* section headings */
@@ -168,7 +172,7 @@
   --size-avatar-md:   2.25rem; /* 36: header */
   --size-avatar-lg:   3rem;    /* 48: profile menu */
   --size-mark-header: 2.5rem;  /* 40: the event mark's height in the header (it's portrait; the width follows) */
-  --size-lockup-mark: calc(var(--text-5xl) * 2.6); /* event mark in the hero lockup, scaled with the words */
+  --size-lockup-mark: clamp(6rem, 4.6rem + 5.5vw, 9rem); /* event mark in the hero lockup: fluid 96 → 144 (files are 160 and 320 tall) */
   --size-tile-min:    16rem;   /* item grid: tiles wrap at this width, no breakpoints */
   --size-charity-logo: 10rem;  /* 160: charity logos on Home and giving (files are 2x) */
   --size-step-number: 2.5rem; /* 40: the numbered circles in How to participate */
