@@ -79,6 +79,10 @@ test("Home at 320: each sentence of the headline is one line", async ({ page }) 
   await pageLoaded(page);
   const lines = await page.evaluate(`[...document.querySelectorAll(".hero__line")].map((s) => s.getClientRects().length)`);
   expect(lines).toEqual([1, 1]);
+  // Each period is kerned in to the g: the font's own spacing left a visible gap (B2 review).
+  const gaps = await page.evaluate(`[...document.querySelectorAll(".hero__period")].map((p) => p.getBoundingClientRect().left - p.previousSibling.parentNode.getBoundingClientRect().left - (() => { const r = document.createRange(); r.selectNodeContents(p.previousSibling); return r.getBoundingClientRect().width; })())`) as number[];
+  expect(gaps).toHaveLength(2);
+  for (const gap of gaps) expect(gap).toBeLessThan(-2);
 });
 
 // At 390 How to participate starts on the first screen, under the demo bar, header and banner.

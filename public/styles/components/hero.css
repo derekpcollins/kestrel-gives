@@ -6,4 +6,7 @@
 .hero__title { max-width: var(--size-content-narrow); margin: 0; font: var(--type-display); letter-spacing: var(--tracking-tight); text-wrap: balance; }
 /* Each sentence stays whole, so a narrow screen breaks between them, never inside one. */
 .hero__line { display: inline-block; }
+/* The heading font's heavy period has a wide left sidebearing and no kerning pair with g, so
+   it sat more than twice as far from the g as the word's other letters sit apart (B2 review). */
+.hero__period { margin-inline-start: var(--kern-display-period); }
 .hero__lead { max-width: var(--size-content-narrow); margin: 0; font: var(--type-body-lg); text-wrap: pretty; }

@@ -131,6 +131,7 @@
   --tracking-tight: -0.015em; /* display and heading-1 */
   --tracking-lockup: -0.03em; /* hero lockup */
   --tracking-label: 0.08em;   /* uppercase eyebrow labels */
+  --kern-display-period: -0.1em; /* pulls the Home headline's periods in to the word's own spacing (B2 review) */
 
   /* ---------- Type: roles (use with the font shorthand: font: var(--type-body)) ---------- */
   --type-hero:      var(--weight-heavy) var(--text-2xl)/var(--leading-tight) var(--font-heading);   /* hero lockup words, under the mark; with --tracking-lockup */
@@ -172,7 +173,7 @@
   --size-avatar-md:   2.25rem; /* 36: header */
   --size-avatar-lg:   3rem;    /* 48: profile menu */
   --size-mark-header: 2.5rem;  /* 40: the event mark's height in the header (it's portrait; the width follows) */
-  --size-lockup-mark: clamp(6rem, 4.6rem + 5.5vw, 9rem); /* event mark in the hero lockup: fluid 96 → 144 (files are 160 and 320 tall) */
+  --size-lockup-mark: clamp(4.5rem, 3.45rem + 4.125vw, 6.75rem); /* event mark in the hero lockup: fluid 72 → 108, a quarter smaller after the B2 review (files are 160 and 320 tall) */
   --size-tile-min:    16rem;   /* item grid: tiles wrap at this width, no breakpoints */
   --size-charity-logo: 10rem;  /* 160: charity logos on Home and giving (files are 2x) */
   --size-step-number: 2.5rem; /* 40: the numbered circles in How to participate */
