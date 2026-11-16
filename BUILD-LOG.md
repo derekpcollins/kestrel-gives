@@ -1089,3 +1089,4 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 
 - **Checks** (after the review fixes): `check:quick` at the everything level, fresh server, 3 workers, exit 0: deps, seed images, tokens, types; unit 339, DB 122, a11y and keyboard 330, reflow 22, visual 9. At 390×844, How to participate starts at 637px, the same as before: the mark saves about 24px, but the seeded banner now wraps to three lines ("Bidding ends in 47 hours, on Wednesday…") instead of two.
 - **Owner stepped in** (after the review): the smaller mark felt too small. It went to fluid 84 → 126px, then, still too small, to 92 → 138px.
+- **Checks** (at 92 → 138px): `check:quick` at the everything level, fresh server, 3 workers, exit 0: deps, seed images, tokens, types; unit 339, DB 122, a11y and keyboard 330, reflow 22, visual 9. At 390×844, How to participate starts at 657px (the seeded banner is three lines).
