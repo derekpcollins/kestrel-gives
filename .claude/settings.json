@@ -1,14 +1,38 @@
 {
   "permissions": {
     "deny": [
-      "Bash(git push *main)",
-      "Bash(git -C * push *main)",
-      "Bash(git -c * push *main)",
+      "Bash(git push * main)",
+      "Bash(git push * main *)",
+      "Bash(git push *:main)",
+      "Bash(git push *:main *)",
+      "Bash(git -C * push * main)",
+      "Bash(git -C * push * main *)",
+      "Bash(git -C * push *:main)",
+      "Bash(git -C * push *:main *)",
+      "Bash(git -c * push * main)",
+      "Bash(git -c * push * main *)",
+      "Bash(git -c * push *:main)",
+      "Bash(git -c * push *:main *)",
       "Bash(npm run build:vercel)",
       "Bash(npm run build:vercel *)",
       "Bash(vercel env pull)",
       "Bash(vercel env pull .env.local*)",
       "Bash(vercel env pull -*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PROJECT_DIR}/.claude/hooks/guard-push.py\"",
+            "timeout": 15,
+            "onFailure": "block"
+          }
+        ]
+      }
     ]
   }
 }
