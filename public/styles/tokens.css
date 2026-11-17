@@ -116,6 +116,7 @@
   --text-2xl:  1.75rem;  /* 28 */
   --text-3xl:  clamp(1.75rem, 1.4rem + 1.5vw, 2.25rem); /* fluid 28 → 36, max from ~900px */
   --text-4xl:  clamp(2rem, 0.857rem + 5.71vw, 3rem);    /* fluid 32 at 320 → 36 at 390 → 48 from ~600px (B2: "Make something." fits one line at 320) */
+  --text-lockup: clamp(1.875rem, 1.5rem + 1.9vw, 2.5rem); /* fluid 30 at 320 → 40 from ~840px: the hero lockup's words, always under the h1 (B2 review) */
   --text-5xl:  clamp(2.5rem, 1.5rem + 4.5vw, 4.5rem);   /* fluid 40 → 72; unused since B2 (the token sheet still shows it) */
 
   --weight-regular:  400;
@@ -134,7 +135,7 @@
   --kern-display-period: -0.1em; /* pulls the Home headline's periods in to the word's own spacing (B2 review) */
 
   /* ---------- Type: roles (use with the font shorthand: font: var(--type-body)) ---------- */
-  --type-hero:      var(--weight-heavy) var(--text-2xl)/var(--leading-tight) var(--font-heading);   /* hero lockup words, under the mark; with --tracking-lockup */
+  --type-hero:      var(--weight-heavy) var(--text-lockup)/var(--leading-tight) var(--font-heading); /* hero lockup words, under the mark; with --tracking-lockup */
   --type-display:   var(--weight-heavy) var(--text-4xl)/var(--leading-tight) var(--font-heading);   /* Home headline */
   --type-heading-1: var(--weight-heavy) var(--text-2xl)/var(--leading-tight) var(--font-heading);   /* page titles */
   --type-heading-2: var(--weight-bold) var(--text-xl)/var(--leading-snug) var(--font-heading);      /* section headings */

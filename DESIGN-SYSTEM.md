@@ -468,7 +468,7 @@ How forms behave, for every component below:
 **Purpose:** the event's mark and name at the top of Home (DECISIONS #47, #150).
 
 - **Markup:** `<div class="lockup" role="img" aria-label="Kestrel Gives">` > `img.lockup__mark.lockup__mark--light` and `img.lockup__mark.lockup__mark--dark` (both `alt=""`; the color scheme shows one, like the header's mark), then `.lockup__words` > `.lockup__kestrel` + `.lockup__gives` ("Kestrel Gives" on one line, beneath the mark). On Home it sits above the page's h1, not inside it.
-- **Tokens:** `--type-hero` (heavy, `--text-2xl`) and `--tracking-lockup` for the words; `--size-lockup-mark` (fluid 132 → 199px) for the mark, from the 200 and 400px files; `--color-lockup-kestrel` and `--color-lockup-gives` (teal and coral that pass 3:1 large text on each page).
+- **Tokens:** `--type-hero` (heavy, `--text-lockup`, fluid 30 → 40px) and `--tracking-lockup` for the words; `--size-lockup-mark` (fluid 132 → 199px) for the mark, from the 200 and 400px files; `--color-lockup-kestrel` and `--color-lockup-gives` (teal and coral that pass 3:1 large text on each page).
 - **States:** default only (it isn't interactive). Every other state is N/A.
 - **Accessibility:** one name, "Kestrel Gives", instead of the mark and two separate words.
 - **Do:** keep it smaller than the headline it introduces; let the mark follow the color scheme. **Don't:** put it back on a card, recolor, redraw or crop the mark beyond whitespace (logo rule, #39).
