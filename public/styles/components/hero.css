@@ -1,15 +1,12 @@
-/* Hero (DESIGN-SYSTEM.md): the top of Home. The lockup inside the page's h1, then the
-   event's name and description. On phones the lockup and overline are centered and the
-   paragraphs left-aligned, like the headings and cards below; side by side once the
-   page is wide enough. */
-.hero { display: grid; justify-items: center; gap: var(--space-6); padding-block: var(--space-8) var(--space-4); text-align: center; }
-.hero__title { margin: 0; }
-.hero__text { display: grid; gap: var(--space-3); justify-self: stretch; max-width: var(--size-content-narrow); margin-inline: auto; text-align: start; }
-.hero__event { text-align: center; font: var(--type-overline); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--color-text-muted); }
-.hero__lead { font: var(--type-body-lg); }
-.hero__more { color: var(--color-text-muted); }
-@media (min-width: 64rem) {
-  .hero { grid-template-columns: auto 1fr; justify-items: start; align-items: center; gap: var(--space-12); text-align: start; }
-  .hero__text { margin-inline: 0; }
-  .hero__event { text-align: start; }
-}
+/* Hero (DESIGN-SYSTEM.md; owner, visible changes B2): the top of Home, one centered column at
+   every width. The lockup, then the headline as the page's h1 and the largest text, then
+   one lead a step above body size. Kept short so How to participate starts on or near the
+   first screen of a phone. */
+.hero { display: grid; justify-items: center; gap: var(--space-4); padding-block: var(--space-6) var(--space-4); text-align: center; }
+.hero__title { max-width: var(--size-content-narrow); margin: 0; font: var(--type-display); letter-spacing: var(--tracking-tight); text-wrap: balance; }
+/* Each sentence stays whole, so a narrow screen breaks between them, never inside one. */
+.hero__line { display: inline-block; }
+/* The heading font's heavy period has a wide left sidebearing and no kerning pair with g, so
+   it sat more than twice as far from the g as the word's other letters sit apart (B2 review). */
+.hero__period { margin-inline-start: var(--kern-display-period); }
+.hero__lead { max-width: var(--size-content-narrow); margin: 0; font: var(--type-body-lg); text-wrap: pretty; }

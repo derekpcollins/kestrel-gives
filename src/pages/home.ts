@@ -1,17 +1,12 @@
-// Home (SPEC §8): the hero, description and How to participate are in the HTML; this fills
-// in the event's name, the proof deadline's length and the charities from the app state, and
-// after a Reset on the shared demo, the offer to restore it.
+// Home (SPEC §8): the hero and How to participate are in the HTML; this fills in the proof
+// deadline's length and the charities from the app state, and after a Reset on the shared
+// demo, the offer to restore it.
 import type { AppState } from "../app-state.ts";
 import { el } from "../components/dom.ts";
 import { renderResetOffer } from "../components/reset-offer.ts";
 import { proofDaysWords } from "./home-rules.ts";
 
 export function showHome(state: AppState): void {
-  const name = document.querySelector<HTMLElement>("[data-event-name]");
-  if (name && state.event) {
-    name.textContent = state.event.name;
-    name.hidden = false;
-  }
   const days = proofDaysWords(state.event);
   const daysSlot = document.querySelector<HTMLElement>("[data-proof-days]");
   if (daysSlot && days) daysSlot.textContent = days;

@@ -1,5 +1,5 @@
-// Home (SPEC §8) against the real API on dev: the lockup as the h1, the description, How
-// to participate in order, and the three charities from the database, with no item lists.
+// Home (SPEC §8) against the real API on dev: the lockup, the headline as the h1 and the
+// lead, How to participate in order, and the three charities from the database, with no item lists.
 // Read-only, so it can run beside the other specs.
 import { expect, test } from "@playwright/test";
 import { pageLoaded } from "./page-load.ts";
@@ -10,8 +10,13 @@ test.beforeEach(({}, info) => test.skip(info.project.name !== "light-1280", "con
 test("Home: hero, how to participate, and the charities from the data", async ({ page }) => {
   await page.goto("/");
   await pageLoaded(page);
-  await expect(page.getByRole("heading", { level: 1, name: "Kestrel Gives" })).toBeVisible();
-  await expect(page.locator("[data-event-name]")).toHaveText("Kestrel Gives 2026");
+  const hero = page.locator(".hero");
+  await expect(hero.getByRole("img", { name: "Kestrel Gives" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Make something. Give something.");
+  await expect(hero.locator(".hero__lead")).toHaveText("Each year, Kestrel's designers donate things they make and do. Coworkers bid on them, and every dollar goes to three charities.");
+  // No event label and none of the old instructional paragraphs (owner, visible changes B2).
+  await expect(hero).not.toContainText("Kestrel Gives 2026");
+  await expect(hero.locator("p")).toHaveCount(1);
 
   const steps = page.getByRole("region", { name: "How to participate" }).getByRole("listitem");
   await expect(steps.getByRole("heading")).toHaveText(["Submit an item", "Bid or buy", "Donate once", "Upload proof"]);
@@ -41,15 +46,52 @@ test("Home: hero, how to participate, and the charities from the data", async ({
   expect(await page.locator("main").innerText()).not.toMatch(/\b(pay|paid|payment|checkout)\b/i);
 });
 
-test("Home on a phone: the description is left-aligned; only the overline is centered", async ({ page }) => {
+// Visible changes B2: one centered column, top to bottom the lockup, the h1, the lead. The
+// headline is the largest text, the lockup's words aren't, and the lead is a step above body.
+for (const width of [390, 1280]) {
+  test(`Home hero at ${width}: centered, in order, the headline the largest text`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto("/");
+    await pageLoaded(page);
+    const box = async (sel: string) => (await page.locator(sel).filter({ visible: true }).first().boundingBox())!;
+    const [mark, words, title, lead] = [await box(".lockup__mark"), await box(".lockup__words"), await box(".hero__title"), await box(".hero__lead")];
+    expect(mark.y + mark.height).toBeLessThanOrEqual(words.y);
+    expect(words.y + words.height).toBeLessThanOrEqual(title.y);
+    expect(title.y + title.height).toBeLessThanOrEqual(lead.y);
+    const center = (await box("main")).x + (await box("main")).width / 2;
+    for (const b of [mark, words, title, lead]) expect(Math.abs(b.x + b.width / 2 - center)).toBeLessThanOrEqual(2);
+    const style = (sel: string) => page.evaluate(`(() => { const s = getComputedStyle(document.querySelector("${sel}")); return [parseFloat(s.fontSize), s.textAlign]; })()`) as Promise<[number, string]>;
+    const [titleSize, titleAlign] = await style(".hero__title");
+    const [wordsSize] = await style(".lockup__words");
+    const [leadSize, leadAlign] = await style(".hero__lead");
+    const [bodySize] = await style(".steps__text");
+    expect(titleSize).toBeGreaterThan(wordsSize);
+    expect(leadSize).toBeGreaterThan(bodySize);
+    expect(leadSize).toBeLessThan(wordsSize);
+    expect([titleAlign, leadAlign]).toEqual(["center", "center"]);
+  });
+}
+
+// At 320, the narrowest width, each sentence of the headline stays on one line (owner, B2 review).
+test("Home at 320: each sentence of the headline is one line", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 640 });
+  await page.goto("/");
+  await pageLoaded(page);
+  const lines = await page.evaluate(`[...document.querySelectorAll(".hero__line")].map((s) => s.getClientRects().length)`);
+  expect(lines).toEqual([1, 1]);
+  // Each period is kerned in to the g: the font's own spacing left a visible gap (B2 review).
+  const gaps = await page.evaluate(`[...document.querySelectorAll(".hero__period")].map((p) => p.getBoundingClientRect().left - p.previousSibling.parentNode.getBoundingClientRect().left - (() => { const r = document.createRange(); r.selectNodeContents(p.previousSibling); return r.getBoundingClientRect().width; })())`) as number[];
+  expect(gaps).toHaveLength(2);
+  for (const gap of gaps) expect(gap).toBeLessThan(-2);
+});
+
+// At 390 How to participate starts on the first screen, under the demo bar, header and banner.
+test("Home at 390: How to participate starts on the first screen", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
   await pageLoaded(page);
-  await expect(page.locator("[data-event-name]")).toBeVisible();
-  const align = (sel: string) => page.evaluate(`getComputedStyle(document.querySelector("${sel}")).textAlign`);
-  expect(await align(".hero__lead")).toMatch(/^(start|left)$/);
-  expect(await align(".hero__more")).toMatch(/^(start|left)$/);
-  expect(await align(".hero__event")).toBe("center");
+  const heading = (await page.getByRole("heading", { level: 2, name: "How to participate" }).boundingBox())!;
+  expect(heading.y + heading.height).toBeLessThanOrEqual(844);
 });
 
 
@@ -80,5 +122,5 @@ test("after a Reset, Home offers Restore demo data above the hero; once restored
   await page.getByRole("dialog", { name: "Restore demo data?" }).getByRole("button", { name: "Restore demo data" }).click();
   await expect(page.getByText("Demo data restored.")).toBeVisible();
   await expect(page.locator("[data-reset-offer]")).toHaveCount(0);
-  await expect(page.getByRole("heading", { level: 1, name: "Kestrel Gives" })).toBeFocused();
+  await expect(page.getByRole("heading", { level: 1, name: "Make something. Give something." })).toBeFocused();
 });

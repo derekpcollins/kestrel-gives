@@ -465,24 +465,25 @@ How forms behave, for every component below:
 
 ## Hero lockup
 
-**Purpose:** the event's name on Home (DECISIONS #47).
+**Purpose:** the event's mark and name at the top of Home (DECISIONS #47, #150).
 
-- **Markup:** `<div class="lockup lockup--card" role="img" aria-label="Kestrel Gives">` > `img.lockup__mark` (`alt=""`) and `.lockup__words` > `.lockup__kestrel` + `.lockup__gives`. On Home it sits inside the page's h1.
-- **Tokens:** `--type-hero` and `--tracking-lockup` for the words; `--size-lockup-mark` scales the mark with them; the brand teal and coral on `--color-mark-tile`.
+- **Markup:** `<div class="lockup" role="img" aria-label="Kestrel Gives">` > `img.lockup__mark.lockup__mark--light` and `img.lockup__mark.lockup__mark--dark` (both `alt=""`; the color scheme shows one, like the header's mark), then `.lockup__words` > `.lockup__kestrel` + `.lockup__gives` ("Kestrel Gives" on one line, beneath the mark). On Home it sits above the page's h1, not inside it.
+- **Tokens:** `--type-hero` (heavy, `--text-lockup`, fluid 30 → 40px) and `--tracking-lockup` for the words; `--size-lockup-mark` (fluid 132 → 199px) for the mark, from the 200 and 400px files; `--color-lockup-kestrel` and `--color-lockup-gives` (teal and coral that pass 3:1 large text on each page).
 - **States:** default only (it isn't interactive). Every other state is N/A.
 - **Accessibility:** one name, "Kestrel Gives", instead of the mark and two separate words.
-- **Do:** use the card in both modes (the mark's file is white). **Don't:** recolor, redraw or crop the mark beyond whitespace (logo rule, #39).
-- **Figma:** *Hero lockup* · no variants.
+- **Do:** keep it smaller than the headline it introduces; let the mark follow the color scheme. **Don't:** put it back on a card, recolor, redraw or crop the mark beyond whitespace (logo rule, #39).
+- **Figma:** *Hero lockup* · Scheme = light / dark (2).
 
 ## Hero
 
-**Purpose:** the top of Home (SPEC §8): the hero lockup inside the page's h1, then the event's name, a lead paragraph and a short description.
+**Purpose:** the top of Home (SPEC §8): the hero lockup, the headline as the page's h1, and one lead (visible changes B2, DECISIONS #150).
 
-- **Classes:** `section.hero` > `h1.hero__title` (holding the *Hero lockup*) and `.hero__text` > `p.hero__event` (overline, filled from the data), `p.hero__lead`, `p.hero__more`.
-- **Layout:** stacked on phones, with the lockup and overline centered and the paragraphs left-aligned like the headings and cards below; from 64rem, the lockup and text sit side by side, left-aligned.
-- **States:** default only; nothing in it is interactive. The event name stays `hidden` until the data arrives. Every other state is N/A.
-- **Accessibility:** the h1's name is "Kestrel Gives" (from the lockup's `role="img"`).
-- **Do:** keep the lead to one or two sentences. **Don't:** put item lists here (SPEC §8).
+- **Classes:** `section.hero` > *Hero lockup*, `h1.hero__title` (two `span.hero__line`s, "Make something." and "Give something.", each period in a `span.hero__period`) and `p.hero__lead`.
+- **Type:** the h1 is `--type-display` with `--tracking-tight`, the largest text on Home; each period is pulled in by `--kern-display-period` (−0.1em), since the heading font's heavy period has a wide left sidebearing and no kerning pair with g; the lead is `--type-body-lg`, a step above body.
+- **Layout:** one centered column at every width, the h1 and lead capped at `--size-content-narrow`. Each `.hero__line` is `inline-block`, so a narrow screen breaks between the sentences, never inside one. Short on purpose: at 390 How to participate starts on the first screen.
+- **States:** default only; nothing in it is interactive. Every other state is N/A.
+- **Accessibility:** the h1's name is "Make something. Give something."; after a Restore from the reset offer, focus goes to it.
+- **Do:** keep the lead to one sentence or two. **Don't:** add an event-name label, instructions or item lists here (SPEC §8).
 - **Figma:** *Hero* · Width = 390 / 1280 (2).
 
 ## Steps
