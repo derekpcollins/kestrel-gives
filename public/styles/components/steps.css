@@ -1,7 +1,7 @@
 /* Steps (DESIGN-SYSTEM.md): a short numbered list of what to do, in order (How to
    participate on Home). An <ol>, so the order is real; the circles repeat its numbers. */
 .steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(var(--size-tile-min), 100%), 1fr)); gap: var(--space-4); counter-reset: step; }
-.steps__item { counter-increment: step; display: grid; align-content: start; gap: var(--space-2); padding: var(--space-4); border: var(--border-thin) solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+.steps__item { counter-increment: step; display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); padding: var(--space-4); border: var(--border-thin) solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
 /* The numbered circle, shared with the welcome dialog's steps (owner, visible changes A2). */
 .steps__item::before, .dialog__steps > li::before {
   content: counter(step);
@@ -16,6 +16,12 @@
 }
 .steps__title { font: var(--type-heading-3); }
 .steps__text { color: var(--color-text-muted); }
+/* The card's last line (owner, visible changes B3): links when the step is open to this person
+   now, muted text when it isn't. Pinned to the bottom so the lines in a row share a baseline.
+   Nothing else about the card changes: no dimming, disabled buttons, icons or badges. */
+.steps__action { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); margin: auto 0 0; padding-top: var(--space-2); color: var(--color-text-muted); }
+.steps__action:empty { display: none; }
+.steps__sep { color: var(--color-text-muted); }
 /* In the welcome dialog the circle is smaller, beside a line of body text (dialog.css lays out the list).
    Here, after the shared rule, so it wins regardless of file order. */
 .dialog__steps > li::before { width: var(--size-step-number-sm); height: var(--size-step-number-sm); font: var(--type-label); font-weight: var(--weight-bold); }

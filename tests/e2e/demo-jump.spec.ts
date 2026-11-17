@@ -81,3 +81,44 @@ test("Submissions open: the dialog says what goes, then bids, purchases and proo
   const items = (await (await request.get("/api/items?type=instant")).json()) as { items: { id: string | number; remaining: number }[] };
   expect(items.items.find((i) => String(i.id) === "13")?.remaining).toBeGreaterThan(0); // sold out in the seed; stock is full again
 });
+
+// Visible changes B3, on the real data: after the close Home reads each person's own total and
+// proof. Jules owes and hasn't uploaded; Dev's proof is approved; an admin can always submit.
+// Then Submissions open clears every bid and purchase, so after the close nobody owes anything.
+test("Home's How to participate lines after the close, for real: who owes, whose proof is approved, and nobody after a clear", async ({ page, request, baseURL }) => {
+  test.setTimeout(90_000);
+  await restore(request);
+  const jump = async (to: string) => {
+    for (let tries = 0; tries < 5; tries++) {
+      const r = await request.post("/api/demo", { data: { action: "jump", to } });
+      if (r.ok()) return (await r.json()) as { people: { id: string; firstName: string }[] };
+      if (r.status() !== 429) throw new Error(`Jump to ${to} answered ${r.status()}`);
+      await new Promise((done) => setTimeout(done, (Number(r.headers()["retry-after"] ?? "10") + 1) * 1000));
+    }
+    throw new Error("Jump stayed in its cooldown");
+  };
+  const { people } = await jump("ended");
+  const id = (first: string) => people.find((p) => p.firstName === first)!.id;
+  const lines = page.locator("[data-step-line]");
+  const home = async (first: string) => {
+    await page.context().addCookies([{ name: "kg_viewer", value: id(first), url: baseURL! }]);
+    await page.goto("/?demo=off");
+    await pageLoaded(page);
+    await expect(lines.nth(3)).not.toBeEmpty({ timeout: 15_000 });
+  };
+  await home("Jules");
+  await expect(lines.nth(0)).toHaveText(/^Submissions closed on /);
+  await expect(lines.nth(2).getByRole("link", { name: "See what you owe" })).toBeVisible();
+  await expect(lines.nth(3).getByRole("link", { name: "Upload proof" })).toBeVisible();
+  await home("Dev");
+  await expect(lines.nth(3)).toHaveText("Proof approved");
+  await home("Maya");
+  await expect(lines.nth(0).getByRole("link", { name: "Submit an item" })).toBeVisible();
+
+  await jump("submission"); // waits out Restore's shared cooldown if it's still running
+  await jump("ended");
+  await home("Jules");
+  await expect(lines.nth(2)).toHaveText("Nothing to donate");
+  await expect(lines.nth(3)).toHaveText("Nothing to donate");
+});
+

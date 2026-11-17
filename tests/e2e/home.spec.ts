@@ -124,3 +124,73 @@ test("after a Reset, Home offers Restore demo data above the hero; once restored
   await expect(page.locator("[data-reset-offer]")).toHaveCount(0);
   await expect(page.getByRole("heading", { level: 1, name: "Make something. Give something." })).toBeFocused();
 });
+
+// Visible changes B3: the line under each How to participate card, in every Event phase, for
+// an employee who owes, one who owes nothing, and an admin. The app state is the real one with
+// the phase and dates moved and the viewer's role set; /api/me answers with a total and proof,
+// so nothing writes. Every line's wording is covered in tests/unit/home-rules.test.ts; this
+// checks the page draws them, links them, and asks for the totals only once bidding has ended.
+test("How to participate: each card's line in every phase, for an employee who owes, one who owes nothing, and an admin", async ({ page }) => {
+  test.setTimeout(90_000);
+  const H = 3_600_000, D = 24 * H;
+  const now = Date.now();
+  const iso = (ms: number) => new Date(now + ms).toISOString();
+  const PHASES = {
+    "Submissions open": { phase: "submission", endingSoon: false, submissionsOpenAt: iso(-D), biddingOpensAt: iso(3 * D), biddingClosesAt: iso(7 * D), proofDeadline: iso(14 * D) },
+    "Bidding live": { phase: "live", endingSoon: false, submissionsOpenAt: iso(-7 * D), biddingOpensAt: iso(-D), biddingClosesAt: iso(3 * D), proofDeadline: iso(10 * D) },
+    "Ending soon": { phase: "live", endingSoon: true, submissionsOpenAt: iso(-7 * D), biddingOpensAt: iso(-3 * D), biddingClosesAt: iso(5 * H), proofDeadline: iso(7 * D) },
+    "Bidding ended": { phase: "ended", endingSoon: false, submissionsOpenAt: iso(-12 * D), biddingOpensAt: iso(-6 * D), biddingClosesAt: iso(-D), proofDeadline: iso(6 * D) },
+    "30+ days after": { phase: "ended", endingSoon: false, submissionsOpenAt: iso(-42 * D), biddingOpensAt: iso(-36 * D), biddingClosesAt: iso(-31 * D), proofDeadline: iso(-24 * D) },
+  } as const;
+  const PEOPLE = { "employee who owes": { role: "employee", totalCents: 12_500 }, "employee who owes nothing": { role: "employee", totalCents: 0 }, admin: { role: "admin", totalCents: 4_000 } } as const;
+  let phase: keyof typeof PHASES = "Submissions open";
+  let person: keyof typeof PEOPLE = "employee who owes";
+  let meRequests = 0;
+  await page.route(/\/api\/app$/, async (route) => {
+    const app = await (await route.fetch()).json();
+    return route.fulfill({ json: { ...app, now: new Date(now).toISOString(), demoReset: false, viewer: { ...app.viewer, role: PEOPLE[person].role }, event: { ...app.event, ...PHASES[phase] } } });
+  });
+  await page.route(/\/api\/me$/, async (route) => {
+    meRequests++;
+    return route.fulfill({ json: { ok: true, proof: { totalCents: PEOPLE[person].totalCents, latest: null, deadline: PHASES[phase].proofDeadline, totalChanged: false, blocked: PEOPLE[person].totalCents > 0 ? null : { code: "nothing-owed", message: "" } } } });
+  });
+
+  const lines = page.locator("[data-step-line]");
+  const SALES = ["Silent auction", "Instant sale"];
+  for (const p of Object.keys(PHASES) as (keyof typeof PHASES)[]) {
+    for (const who of Object.keys(PEOPLE) as (keyof typeof PEOPLE)[]) {
+      phase = p; person = who; meRequests = 0;
+      await page.goto("/?demo=off");
+      await pageLoaded(page);
+      const ended = PHASES[p].phase === "ended";
+      if (ended) await expect(lines.nth(3)).not.toBeEmpty();
+      const admin = PEOPLE[who].role === "admin";
+      const owes = PEOPLE[who].totalCents > 0;
+      const linkNames = (i: number) => lines.nth(i).getByRole("link").allInnerTexts();
+      const label = `${p}, ${who}`;
+      // 1. Submit an item: a link in the submission window, and always for admins.
+      expect(await linkNames(0), label).toEqual(admin || p === "Submissions open" ? ["Submit an item"] : []);
+      if (!admin && p !== "Submissions open") await expect(lines.nth(0), label).toHaveText(/^Submissions closed on /);
+      // 2. Both sales while bidding is live; muted words otherwise.
+      expect(await linkNames(1), label).toEqual(PHASES[p].phase === "live" ? SALES : []);
+      if (p === "Submissions open") await expect(lines.nth(1), label).toHaveText(/^Opens when bidding starts on /);
+      if (ended) await expect(lines.nth(1), label).toHaveText(/^Bidding ended on /);
+      // 3 and 4 wait for the close, then follow what the person owes.
+      if (!ended) {
+        for (const i of [2, 3]) await expect(lines.nth(i), label).toHaveText(/^Opens when bidding ends on /);
+      } else if (!owes) {
+        for (const i of [2, 3]) await expect(lines.nth(i), label).toHaveText("Nothing to donate");
+      } else {
+        await expect(lines.nth(2).getByRole("link", { name: "See what you owe" }), label).toHaveAttribute("href", "/your-items");
+        await expect(lines.nth(3).getByRole("link", { name: "Upload proof" }), label).toHaveAttribute("href", "/your-items/proof");
+        if (p === "30+ days after") await expect(lines.nth(3), label).toContainText("Was due ");
+        else await expect(lines.nth(3), label).toHaveText("Upload proof");
+      }
+      // The totals are read only once bidding has ended, never before.
+      expect(meRequests, label).toBe(ended ? 1 : 0);
+    }
+  }
+  // No card is dimmed and nothing is disabled: the cards look the same in every state.
+  await expect(page.locator(".steps__item [disabled], .steps__item [aria-disabled]")).toHaveCount(0);
+});
+
