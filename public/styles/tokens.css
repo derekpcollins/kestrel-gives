@@ -173,7 +173,7 @@
   --size-avatar-md:   2.25rem; /* 36: header */
   --size-avatar-lg:   3rem;    /* 48: profile menu */
   --size-mark-header: 2.5rem;  /* 40: the event mark's height in the header (it's portrait; the width follows) */
-  --size-lockup-mark: clamp(6.9rem, 5.28rem + 6.36vw, 10.35rem); /* event mark in the hero lockup: fluid 110 → 166, set by the owner's review (files are 160 and 320 tall) */
+  --size-lockup-mark: clamp(8.25rem, 6.33rem + 7.63vw, 12.45rem); /* event mark in the hero lockup: fluid 132 → 199, set by the owner's review (files are 200 and 400 tall) */
   --size-tile-min:    16rem;   /* item grid: tiles wrap at this width, no breakpoints */
   --size-charity-logo: 10rem;  /* 160: charity logos on Home and giving (files are 2x) */
   --size-step-number: 2.5rem; /* 40: the numbered circles in How to participate */
