@@ -39,6 +39,7 @@ The work ran in seven milestones: design system, data, app shell, browsing and b
 - [`BUILD-LOG.md`](BUILD-LOG.md): dated entries for each stage: what was built, what was hard, where the owner stepped in, and how long each milestone took.
 - [`DESIGN-SYSTEM.md`](DESIGN-SYSTEM.md): every component, its states and its do's and don'ts, with the [gallery](https://kestrel-gives.vercel.app/design-system/) (source in [`public/design-system/`](public/design-system/)).
 - [`CREDITS.md`](CREDITS.md): the heading font and the seed photos.
+- [`LICENSE`](LICENSE): the code and docs are MIT. The Kestrel and Kestrel Gives marks, the charity logos, the seed photos and the font are not covered; the file says what applies to each.
 
 ## Stack
 
