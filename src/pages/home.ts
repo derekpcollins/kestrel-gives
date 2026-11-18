@@ -40,7 +40,7 @@ async function readProof(): Promise<StepProofState> {
       return "failed";
     }
     const { proof } = (await response.json()) as MeAnswer;
-    return { totalCents: proof.totalCents, approved: proof.blocked?.code === "approved", deadline: proof.deadline };
+    return { totalCents: proof.totalCents, approved: proof.blocked?.code === "approved", pending: proof.latest?.status === "pending", deadline: proof.deadline };
   } catch {
     return "failed";
   }

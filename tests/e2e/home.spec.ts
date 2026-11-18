@@ -126,11 +126,11 @@ test("after a Reset, Home offers Restore demo data above the hero; once restored
 });
 
 // Visible changes B3: the line under each How to participate card, in every Event phase, for
-// an employee who owes, one who owes nothing, and an admin. The app state is the real one with
+// an employee who owes, one whose proof is waiting for review, one who owes nothing, and an admin. The app state is the real one with
 // the phase and dates moved and the viewer's role set; /api/me answers with a total and proof,
 // so nothing writes. Every line's wording is covered in tests/unit/home-rules.test.ts; this
 // checks the page draws them, links them, and asks for the totals only once bidding has ended.
-test("How to participate: each card's line in every phase, for an employee who owes, one who owes nothing, and an admin", async ({ page }) => {
+test("How to participate: each card's line in every phase, for an employee who owes, one waiting for review, one who owes nothing, and an admin", async ({ page }) => {
   test.setTimeout(90_000);
   const H = 3_600_000, D = 24 * H;
   const now = Date.now();
@@ -142,7 +142,13 @@ test("How to participate: each card's line in every phase, for an employee who o
     "Bidding ended": { phase: "ended", endingSoon: false, submissionsOpenAt: iso(-12 * D), biddingOpensAt: iso(-6 * D), biddingClosesAt: iso(-D), proofDeadline: iso(6 * D) },
     "30+ days after": { phase: "ended", endingSoon: false, submissionsOpenAt: iso(-42 * D), biddingOpensAt: iso(-36 * D), biddingClosesAt: iso(-31 * D), proofDeadline: iso(-24 * D) },
   } as const;
-  const PEOPLE = { "employee who owes": { role: "employee", totalCents: 12_500 }, "employee who owes nothing": { role: "employee", totalCents: 0 }, admin: { role: "admin", totalCents: 4_000 } } as const;
+  const PEOPLE = {
+    "employee who owes": { role: "employee", totalCents: 12_500, pending: false },
+    "employee waiting for review": { role: "employee", totalCents: 12_500, pending: true },
+    "employee who owes nothing": { role: "employee", totalCents: 0, pending: false },
+    admin: { role: "admin", totalCents: 4_000, pending: false },
+  } as const;
+  const pendingProof = { status: "pending", amountCents: 12_500, owedCents: 12_500, rejectionReason: null, createdAt: iso(-H), imageUrl: "" };
   let phase: keyof typeof PHASES = "Submissions open";
   let person: keyof typeof PEOPLE = "employee who owes";
   let meRequests = 0;
@@ -152,7 +158,7 @@ test("How to participate: each card's line in every phase, for an employee who o
   });
   await page.route(/\/api\/me$/, async (route) => {
     meRequests++;
-    return route.fulfill({ json: { ok: true, proof: { totalCents: PEOPLE[person].totalCents, latest: null, deadline: PHASES[phase].proofDeadline, totalChanged: false, blocked: PEOPLE[person].totalCents > 0 ? null : { code: "nothing-owed", message: "" } } } });
+    return route.fulfill({ json: { ok: true, proof: { totalCents: PEOPLE[person].totalCents, latest: PEOPLE[person].pending ? pendingProof : null, deadline: PHASES[phase].proofDeadline, totalChanged: false, blocked: PEOPLE[person].totalCents > 0 ? null : { code: "nothing-owed", message: "" } } } });
   });
 
   const lines = page.locator("[data-step-line]");
@@ -178,12 +184,15 @@ test("How to participate: each card's line in every phase, for an employee who o
       // 3 and 4 wait for the close, then follow what the person owes.
       if (!ended) {
         for (const i of [2, 3]) await expect(lines.nth(i), label).toHaveText(/^Opens when bidding ends on /);
+        // The month and day are joined by a non-breaking space, so they never wrap apart (B3 review).
+        expect(await lines.nth(2).textContent(), label).toMatch(/[A-Z][a-z]+\u00a0\d/);
       } else if (!owes) {
         for (const i of [2, 3]) await expect(lines.nth(i), label).toHaveText("Nothing to donate");
       } else {
         await expect(lines.nth(2).getByRole("link", { name: "See what you owe" }), label).toHaveAttribute("href", "/your-items");
         await expect(lines.nth(3).getByRole("link", { name: "Upload proof" }), label).toHaveAttribute("href", "/your-items/proof");
-        if (p === "30+ days after") await expect(lines.nth(3), label).toContainText("Was due ");
+        if (PEOPLE[who].pending) await expect(lines.nth(3), label).toContainText("Waiting for review");
+        else if (p === "30+ days after") await expect(lines.nth(3), label).toContainText("Was due ");
         else await expect(lines.nth(3), label).toHaveText("Upload proof");
       }
       // The totals are read only once bidding has ended, never before.

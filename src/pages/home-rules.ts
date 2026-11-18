@@ -27,6 +27,8 @@ export interface StepProof {
   totalCents: number;
   /** Approved and still matching the total (proofBlock's "approved"). */
   approved: boolean;
+  /** The latest proof is waiting for an admin's review. */
+  pending: boolean;
   deadline: string | null;
 }
 
@@ -58,7 +60,7 @@ export function stepLines(
   now: Date,
   timeZone?: string,
 ): StepLines {
-  const on = (iso: string | null | undefined) => (iso ? dateWords(new Date(iso), now, timeZone) : null);
+  const on = (iso: string | null | undefined) => (iso ? stepDate(new Date(iso), now, timeZone) : null);
   const muted = (text: string): StepPart[] => [{ text }];
   const noDates = muted("Dates aren't set yet");
   const phase = event?.phase ?? "unscheduled";
@@ -91,9 +93,16 @@ export function stepLines(
   if (proof.totalCents <= 0) return [submit, bid, muted("Nothing to donate"), muted("Nothing to donate")];
   const owe: StepPart[] = [{ link: "See what you owe", href: STEP_LINKS.yourItems }];
   if (proof.approved) return [submit, bid, owe, muted("Proof approved")];
+  // A new upload is still allowed while one waits for review, as on Your Items (owner, B3 review).
+  const upload: StepPart = { link: "Upload proof", href: STEP_LINKS.proof };
+  if (proof.pending) return [submit, bid, owe, [upload, { text: "Waiting for review" }]];
   // Late uploads are still accepted (SPEC §7.6; owner, B3), so the link stays after the deadline.
   const deadline = proof.deadline ? new Date(proof.deadline) : null;
-  const upload: StepPart = { link: "Upload proof", href: STEP_LINKS.proof };
   const late = deadline && deadline.getTime() <= now.getTime();
-  return [submit, bid, owe, late ? [upload, { text: `Was due ${dateWords(deadline, now, timeZone)}` }] : [upload]];
+  return [submit, bid, owe, late ? [upload, { text: `Was due ${stepDate(deadline, now, timeZone)}` }] : [upload]];
+}
+
+/** The phase banner's date words, with a non-breaking space so the month and day never wrap apart (owner, B3 review). */
+export function stepDate(date: Date, now: Date, timeZone?: string): string {
+  return dateWords(date, now, timeZone).replace(/(\p{L}) (\d)/u, "$1\u00a0$2");
 }

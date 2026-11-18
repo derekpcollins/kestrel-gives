@@ -1104,3 +1104,9 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 - **Tests:** `home-rules.test.ts` covers each line in every phase (submission, live, ending soon, ended, 30+ days after, upcoming, unscheduled) for an employee who owes, one who owes nothing and an admin, plus approved, loading and failed, and when Home reads the totals. `home.spec` draws every phase for those three people on stubbed state and counts the /api/me requests. `demo-jump.spec` checks the lines after a real close (Jules owes, Dev approved, Maya submits), then after a real clear (nothing to donate).
 
 - **Checks:** `check:quick` (the fast checks plus Home's mapped tests), exit 0. Then branch B's full check, `npm run check`, on a restarted server, 3 workers, 14:06–14:35 EST, exit 0: deps, seed images, tokens, types; unit 346, DB 122, a11y and keyboard 331, reflow 22, visual 10.
+
+### 2026-11-18 — B3 review fixes
+- **Built (owner, B3 review):** card dates join the month and day with a non-breaking space (`stepDate()` in `home-rules.ts`), so "November 15" never wraps apart at 390. A proof waiting for review now shows "Upload proof" followed by muted "Waiting for review", the same pattern as late proof's "Was due [date]". SPEC v1.27 §8 and DECISIONS #151 amended in place (v1.27 hadn't merged).
+- **My call:** after the deadline, a pending proof shows "Waiting for review", not "Was due …", since the person has already uploaded.
+- **Tests:** unit tests now expect the non-breaking space and cover pending in the window and after it, plus a `stepDate()` case for another year. `home.spec` adds an employee whose proof waits for review and checks the space on the page.
+- **Checks:** `check:quick` exit 0 (unit 347; home and demo-jump specs, axe, reflow). No full check, per the brief. Retook `visual-review/b3/participate-bidding-live-{light,dark}-390.png`.
