@@ -1116,3 +1116,14 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 - **My calls:** the sort announcement still includes the count ("Sorted by price: low to high. 9 items."), since it's only spoken after a change. Source order is heading, description, sort, so tab and reading order match the phone layout at every width. Your Items' tiles get the same bottom-pinned price.
 - **Tests:** `browse.spec` checks there's no count, the sort's position at 1280 and 390 on both pages, and that prices are level in every row (with a seeded row whose titles wrap to different lengths).
 - **Checks:** `check:quick` exit 0; the shared CSS changed, so it ran everything: deps, seed images, tokens, types, rules, DB, a11y, reflow, visual. Screenshots in `visual-review/c/`.
+
+### 2026-11-18 — D: Submit, Edit and the item page (branch C+D, part 2)
+- **Owner, checkpoint C:** approved as built; the sort announcement keeps its count.
+- **Built:**
+  - Submit (SPEC v1.28 §7.3, DECISIONS #153): the photo uploader moved out of the disabled `fieldset#item-rest`, so photos go in before a sale type. Submit stays usable; pressed early, the summary lists the sale type and, with no photos, the photos. The rest unlocks with a type.
+  - Photo controls on Submit and Edit (#154): Remove is a round × badge in each thumbnail's top-right corner ("Remove photo N"); the arrows are borderless; all are 28px targets (new `--size-target-xs`) with `--space-2` between the arrows; the end arrows stay visible, disabled. The proof page's one-file uploader is unchanged.
+  - Item page (#155): the back link, then the photos alone in the left column and, on the right, title and donor, the amount panel and action, About this item, Bid history. Phones stack them, photos first.
+- **Caught or hard:** `page-header.css` loads after `item-page.css`, so the header's padding beat `.item-page__header` and the title sat 24px below the photos; the layout test caught it and the selector became `.page-header.item-page__header`. A comment with a raw "28px" failed check:tokens.
+- **Tests:** `submit.spec` covers photos before a type and what the summary lists at each step; `keyboard.spec` covers the 28px controls, the badge's corner, borderless and still-visible end arrows, and the gallery demo's new summary; `item.spec` checks column and stacking order at 1280 and 390.
+- **Also:** the owner asked about a license; MIT for code and docs with the marks, logos, photos and font excluded went in as its own PR (#9).
+- **Checks:** `check:quick` exit 0; the shared CSS changed, so it ran everything (deps, seed images, tokens, types, rules, DB, a11y, reflow, visual). Screenshots in `visual-review/d/`.

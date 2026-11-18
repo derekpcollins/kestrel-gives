@@ -1,6 +1,7 @@
 // Submit an Item (/submit) and Edit item (/items/<id>/edit, a rewrite to the same page)
 // (SPEC §7.3; DECISIONS #94, #98).
-// - The sale type comes first; the rest stays disabled until one is chosen (SPEC §7.3).
+// - Photos can be added at any time; the rest stays disabled until a sale type is chosen, and
+//   Submit, always usable, lists what's missing (SPEC v1.28 §7.3).
 // - Photos are resized as they're picked (#93) and uploaded when the form is saved. An upload
 //   that worked keeps its id, so a retry after a failed save doesn't upload it again.
 // - Problems the browser can find show under each field with a summary (DESIGN-SYSTEM.md ›

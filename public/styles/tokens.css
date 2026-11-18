@@ -165,6 +165,7 @@
   --size-px:          1px;     /* one CSS pixel: the visually-hidden pattern */
   --size-target:      2.75rem; /* 44: minimum height for buttons and inputs */
   --size-target-sm:   2.25rem; /* 36: small buttons in dense rows (tables); still above WCAG's 24 */
+  --size-target-xs:   1.75rem; /* 28: photo controls on Submit and Edit; never below WCAG's 24 */
   --size-icon-sm:     1rem;    /* 16: in pills and small buttons */
   --size-icon-md:     1.25rem; /* 20: in buttons, banners, toasts */
   --size-icon-lg:     1.5rem;  /* 24: standalone, empty states (the drawing grid) */

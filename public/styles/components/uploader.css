@@ -1,5 +1,5 @@
 /* Photo uploader (DESIGN-SYSTEM.md): add up to five photos, reorder with arrow buttons,
-   remove. Behavior in src/components/uploader.ts. */
+   remove with the × badge on each thumbnail. Behavior in src/components/uploader.ts. */
 .uploader { display: grid; gap: var(--space-3); }
 .uploader__add {
   display: flex;
@@ -19,11 +19,19 @@
 
 .uploader__list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-3); }
 .uploader__list[hidden] { display: none; }
-/* Each photo is as wide as its control row: three full-size (44px) buttons. */
+/* Each photo keeps its width from before the small controls (three 44px buttons and their gaps). */
 .uploader__item { position: relative; display: grid; gap: var(--space-2); width: calc(var(--size-target) * 3 + var(--space-1) * 2); }
 .uploader__thumb { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: var(--radius-md); background: var(--color-surface-muted); }
 .uploader__cover { position: absolute; top: var(--space-1); left: var(--space-1); background: var(--color-surface); color: var(--color-text); box-shadow: var(--shadow-sm); }
-.uploader__actions { display: flex; justify-content: space-between; gap: var(--space-1); }
+.uploader__actions { display: flex; justify-content: center; gap: var(--space-2); }
+/* The photo list's controls are --size-target-xs targets (owner, visible changes D; above WCAG 2.5.8's floor).
+   Remove is a round × badge in the thumbnail's top-right corner, raised so it reads over any photo.
+   The arrows are borderless, and the disabled ones at the ends stay visible, without a fill. */
+.uploader__remove, .uploader__move { min-height: var(--size-target-xs); width: var(--size-target-xs); }
+.uploader__remove { position: absolute; top: var(--space-1); right: var(--space-1); background: var(--color-surface); color: var(--color-text); border-color: var(--color-border-strong); box-shadow: var(--shadow-sm); }
+.uploader__remove:hover { background: var(--color-surface-muted); }
+.uploader__move[aria-disabled="true"]:not([aria-busy="true"]) { background: transparent; border-color: transparent; }
+.uploader__cover { max-width: calc(100% - var(--size-target-xs) - var(--space-3)); }
 .uploader__problems { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-1); }
 
 /* Uploading: a spinner over the thumbnail until storage confirms (wired in Milestone 5). */

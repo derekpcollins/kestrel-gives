@@ -173,7 +173,8 @@ function item(photo: Photo, index: number, total: number): HTMLLIElement {
   img.className = "uploader__thumb";
   img.src = photo.url;
   img.alt = `${photoPositionLabel(index, total)}: ${photo.name}`;
-  li.append(img);
+  const n = index + 1;
+  li.append(img, button("remove", "close", `Remove photo ${n}`, false, "btn btn--icon uploader__remove", "sm"));
   if (index === 0) {
     const cover = document.createElement("span");
     cover.className = "pill uploader__cover";
@@ -183,23 +184,32 @@ function item(photo: Photo, index: number, total: number): HTMLLIElement {
   }
   const actions = document.createElement("div");
   actions.className = "uploader__actions";
-  const n = index + 1;
+  // Borderless arrows; the ends stay visible, disabled (owner, visible changes D).
   actions.append(
-    button("left", "chevron-left", `Move photo ${n} left`, index === 0),
-    button("right", "chevron-right", `Move photo ${n} right`, index === total - 1),
-    button("remove", "trash", `Remove photo ${n}`, false),
+    button("left", "chevron-left", `Move photo ${n} left`, index === 0, MOVE),
+    button("right", "chevron-right", `Move photo ${n} right`, index === total - 1, MOVE),
   );
   li.append(actions);
   return li;
 }
 
-function button(action: string, name: "chevron-left" | "chevron-right" | "trash", label: string, disabled: boolean): HTMLButtonElement {
+const MOVE = "btn btn--quiet btn--icon uploader__move";
+
+/** The one-file uploader keeps full 44px secondary buttons; the photo list passes its own classes. */
+function button(
+  action: string,
+  name: "chevron-left" | "chevron-right" | "trash" | "close",
+  label: string,
+  disabled: boolean,
+  className = "btn btn--secondary btn--icon",
+  size?: "sm",
+): HTMLButtonElement {
   const b = document.createElement("button");
   b.type = "button";
-  b.className = "btn btn--secondary btn--icon"; // full 44px target
+  b.className = className;
   b.dataset.action = action;
   b.setAttribute("aria-label", label);
   if (disabled) b.setAttribute("aria-disabled", "true");
-  b.append(icon(name));
+  b.append(size ? icon(name, { size }) : icon(name));
   return b;
 }
