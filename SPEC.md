@@ -1,6 +1,6 @@
 # Kestrel Gives — Build Spec & Conformance Rules
 
-**Status:** v1.26 · Owner: Derek Collins · Last updated: Nov 16, 2026
+**Status:** v1.27 · Owner: Derek Collins · Last updated: Nov 17, 2026
 
 This document describes what to build and the rules every contribution must follow, whether a person or an AI agent writes it. Read it in full before writing any code. If something here conflicts with a request, stop and ask.
 
@@ -265,7 +265,10 @@ A banner just below the header shows the current phase message, for example "Sub
 ### Screen list
 - **Home**, matching the original:
   1. **Hero** (v1.26), centered, top to bottom: the hero lockup; the headline "Make something. Give something." as the page's h1 and its largest text; and one line about the event a step above body size: "Each year, Kestrel's designers donate things they make and do. Coworkers bid on them, and every dollar goes to three charities." No event-name label and no further description. At 390px wide, How to participate starts on the first screen.
-  2. **How to participate** (submit, bid or buy, donate once, upload proof)
+  2. **How to participate** (submit, bid or buy, donate once, upload proof). (v1.27) Each card ends in one short line for the person viewing: a link when the step is open to them now, muted text when it isn't. Nothing else changes: no dimmed cards, disabled buttons, icons or badges. Dates are the event's, in the phase banner's words, with the month and day joined by a non-breaking space so they never wrap apart.
+     - **Submit an item:** the link "Submit an item" in the submission window, and always for admins (section 7.3). Otherwise "Submissions open on [date]" before, "Submissions closed on [date]" after (the day bidding opened), or "Dates aren't set yet".
+     - **Bid or buy:** the links "Silent auction" and "Instant sale" while bidding is live (Ending soon included). Otherwise "Opens when bidding starts on [date]" before, "Bidding ended on [date]" after, or "Dates aren't set yet".
+     - **Donate once** and **Upload proof**, before the close: "Opens when bidding ends on [date]" (or "Dates aren't set yet"). After it, Home reads the person's donation total and proof (only then, never before) and shows: if they owe nothing, "Nothing to donate" on both; otherwise the link "See what you owe" (Your Items) and, on Upload proof, "Proof approved" once their proof is approved for their current total, or the link "Upload proof". While their proof waits for review, the link stays (a new upload is allowed, as on Your Items), followed by "Waiting for review". Uploads after the deadline are still accepted (section 7.6), so after it the link stays, followed by "Was due [date]". If the totals can't be read, both cards link to Your Items.
   3. Cards for the three charities, noting that donations are split equally among them
   No item lists on Home. On a first visit, the welcome dialog (section 3.1) introduces the demo (v1.24; it replaced v1.21's "New here?" line above the hero).
 - **Silent Auction** and **Instant Sale:** separate browse pages, each a grid of item tiles. Sort by newest, price, or (silent auction) most bids. No search.

@@ -1,17 +1,57 @@
 // Home (SPEC §8): the hero and How to participate are in the HTML; this fills in the proof
-// deadline's length and the charities from the app state, and after a Reset on the shared
-// demo, the offer to restore it.
+// deadline's length, each card's last line (B3), the charities from the app state, and after
+// a Reset on the shared demo, the offer to restore it. Once bidding has ended (never before)
+// it reads the viewer's total and proof from GET /api/me for cards 3 and 4.
 import type { AppState } from "../app-state.ts";
 import { el } from "../components/dom.ts";
+import { fetchWithTimeout } from "../components/loading.ts";
 import { renderResetOffer } from "../components/reset-offer.ts";
-import { proofDaysWords } from "./home-rules.ts";
+import type { MeAnswer } from "../me-api.ts";
+import { needsProof, proofDaysWords, stepLines, type StepPart, type StepProofState } from "./home-rules.ts";
 
 export function showHome(state: AppState): void {
   const days = proofDaysWords(state.event);
   const daysSlot = document.querySelector<HTMLElement>("[data-proof-days]");
   if (daysSlot && days) daysSlot.textContent = days;
+  showSteps(state);
   showCharities(state);
   showResetOffer(state);
+}
+
+let stepRequest = 0;
+
+/** Each How to participate card's line; after the close, cards 3 and 4 wait for /api/me. */
+function showSteps(state: AppState): void {
+  const request = ++stepRequest;
+  const draw = (proof: StepProofState) => {
+    if (request !== stepRequest) return; // a newer state (another viewer or phase) took over
+    const lines = stepLines(state.event, state.viewer?.role ?? null, proof, new Date(state.now));
+    document.querySelectorAll<HTMLElement>("[data-step-line]").forEach((slot, i) => slot.replaceChildren(...stepParts(lines[i] ?? [])));
+  };
+  draw(null);
+  if (needsProof(state.event)) void readProof().then(draw);
+}
+
+async function readProof(): Promise<StepProofState> {
+  try {
+    const response = await fetchWithTimeout("/api/me", { headers: { Accept: "application/json" }, credentials: "same-origin" });
+    if (!response.ok) {
+      await response.text().catch(() => "");
+      return "failed";
+    }
+    const { proof } = (await response.json()) as MeAnswer;
+    return { totalCents: proof.totalCents, approved: proof.blocked?.code === "approved", pending: proof.latest?.status === "pending", deadline: proof.deadline };
+  } catch {
+    return "failed";
+  }
+}
+
+/** Links and muted words, with a middle dot between them (decorative, so hidden from screen readers). */
+function stepParts(parts: StepPart[]): Node[] {
+  return parts.flatMap((part, i) => [
+    ...(i > 0 ? [el("span", { className: "steps__sep", text: "·", attrs: { "aria-hidden": "true" } })] : []),
+    "link" in part ? el("a", { className: "link", text: part.link, attrs: { href: part.href } }) : el("span", { text: part.text }),
+  ]);
 }
 
 /** After a Reset on the shared demo, offer Restore right away, above the hero (SPEC v1.17 §7.8). */

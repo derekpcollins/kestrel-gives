@@ -490,11 +490,12 @@ How forms behave, for every component below:
 
 **Purpose:** a short numbered list of what to do, in order (How to participate on Home).
 
-- **Classes:** `ol.steps` > `li.steps__item` > `h3.steps__title` and `p.steps__text`. The number circle is generated from a CSS counter (`--size-step-number`, accent-soft fill). The welcome *Dialog*'s `ol.dialog__steps` shares the same circle rule at `--size-step-number-sm` (v1.25; DECISIONS #147).
+- **Classes:** `ol.steps` > `li.steps__item` > `h3.steps__title`, `p.steps__text` and, on Home, `p.steps__action` (v1.27). The number circle is generated from a CSS counter (`--size-step-number`, accent-soft fill). The welcome *Dialog*'s `ol.dialog__steps` shares the same circle rule at `--size-step-number-sm` (v1.25; DECISIONS #147).
 - **Layout:** intrinsic, like the item grid: items wrap at `--size-tile-min`, so four across on a wide page and one per row on a phone.
-- **States:** default only. Hover, focus, active, disabled, loading, error and empty: N/A (not interactive; never empty).
+- **Action line** (visible changes B3, DECISIONS #151): `p.steps__action` is the card's last line, pinned to the bottom (the item is a flex column; the line takes `margin-top: auto`) so the lines in a row share a bottom edge. It holds `a.link`s when the step is open to the viewer now, or a muted `span` when it isn't; two parts are separated by a `span.steps__sep` middle dot (`aria-hidden`). Empty lines are hidden. Home's script fills it from `stepLines()` in `src/pages/home-rules.ts`.
+- **States:** default. Links in the action line take *Link*'s hover, focus and active. **Not available yet / any more:** muted words, never a disabled control or a dimmed card. **Loading:** after the close, Donate once and Upload proof have no line until the viewer's totals arrive. **Error:** if they can't be read, both link to Your Items. Empty: N/A.
 - **Accessibility:** a real `<ol>`, so screen readers announce "list, 4 items" and the order; the drawn numbers are decoration that matches.
-- **Do:** start each title with a verb. **Don't:** link the whole step; put a link in the text if one is needed.
+- **Do:** start each title with a verb; keep the action line to a few words. **Don't:** link the whole step, dim a card, or add icons or badges to say a step is closed.
 - **Figma:** *Step* · no variants; *Steps* is an auto-layout of four.
 
 ## Charity card
