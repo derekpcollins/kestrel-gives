@@ -91,6 +91,42 @@ test("employees submit during the submission window; the form starts from the ev
   expect(results.violations).toEqual([]);
 });
 
+// Visible changes D (SPEC v1.28 §7.3): photos before a sale type; Submit stays usable and lists what's missing.
+test("photos can be added before a sale type; Submit lists what's missing; the rest waits for the type", async ({ page }) => {
+  await as(page, "3", "submission");
+  const seen = await saves(page, () => ({ status: 500, json: {} }));
+  await page.goto("/submit");
+  await expect(page.locator("[data-submit-form]")).toBeVisible();
+  const submit = page.getByRole("button", { name: "Submit item" });
+  const summary = page.locator(".error-summary");
+
+  // Nothing chosen, nothing added: Submit is usable and lists both.
+  await expect(submit).toBeEnabled();
+  await expect(submit).not.toHaveAttribute("aria-disabled");
+  await submit.click();
+  await expect(summary).toBeFocused();
+  await expect(summary.getByRole("link")).toHaveText([/Choose a sale type\.$/, /Add at least one photo\.$/]);
+
+  // Photos go in before a type; the title and the rest stay disabled.
+  await expect(page.locator(".uploader__input")).toBeEnabled();
+  await page.locator(".uploader__input").setInputFiles([
+    { name: "a.png", mimeType: "image/png", buffer: await picture(page, 800, 600) },
+    { name: "b.png", mimeType: "image/png", buffer: await picture(page, 800, 600) },
+  ]);
+  await expect(page.locator(".uploader__thumb")).toHaveCount(2);
+  await expect(page.getByLabel("Title")).toBeDisabled();
+  await submit.click();
+  await expect(summary.getByRole("link")).toHaveText([/Choose a sale type\.$/]);
+
+  // Choosing a type keeps the photos and opens the rest; then the missing fields are listed.
+  await page.getByLabel("Silent auction").check();
+  await expect(page.getByLabel("Title")).toBeEnabled();
+  await expect(page.locator(".uploader__thumb")).toHaveCount(2);
+  await submit.click();
+  await expect(summary.getByRole("link")).toHaveText([/Enter a title\.$/, /Enter a description\.$/]);
+  expect(seen).toHaveLength(0); // nothing was sent
+});
+
 test("while bidding is live, only admins can submit", async ({ page }) => {
   await as(page, "3", "live");
   await page.goto("/submit");

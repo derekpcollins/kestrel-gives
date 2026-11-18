@@ -12,12 +12,14 @@ test("submit-an-item demo: sale type unlocks the form; errors are summarized and
   const form = page.locator("#demo-form");
   await expect(form.locator("#demo-title-input")).toBeDisabled(); // inside the disabled fieldset
 
-  // Submitting with nothing chosen: the summary takes focus and names the sale type.
+  // Submitting with nothing chosen: the summary takes focus and names what's missing, the sale
+  // type and the photos, which can be added before a type (visible changes D).
   await form.getByRole("button", { name: "Submit item" }).press("Enter");
   const summary = form.locator(".error-summary");
   await expect(summary).toBeFocused();
-  await expect(summary).toContainText("1 field needs attention");
+  await expect(summary).toContainText("2 fields need attention");
   await expect(summary).toContainText("Choose a sale type.");
+  await expect(summary).toContainText("Add at least one photo.");
 
   // Arrow keys choose a card (native radios); the rest unlocks.
   await form.locator("#demo-type-auction").focus();
@@ -59,10 +61,33 @@ test("photo uploader: reorder and remove with the keyboard, with announcements",
   await expect(thumbs.nth(0)).toHaveAttribute("alt", "Photo 1 of 3 (cover): a.png");
   await expect(uploader.locator(".uploader__status")).toHaveText("3 photos added. 3 of 5.");
 
-  // Every thumbnail control is a full-size target (--size-target, 44px).
-  for (const box of await uploader.locator(".uploader__actions .btn").evaluateAll((els) => els.map((el) => { const r = el.getBoundingClientRect(); return { width: r.width, height: r.height }; }))) {
-    expect(Math.min(box.width, box.height)).toBeGreaterThanOrEqual(44);
+  // Photo controls (owner, visible changes D): 28px targets with a gap between them, never under
+  // 24px; Remove is an × badge in the thumbnail's top-right corner; the arrows are borderless,
+  // and the disabled ones at the ends stay visible.
+  const first = uploader.locator(".uploader__item").first();
+  const thumbBox = (await first.locator(".uploader__thumb").boundingBox())!;
+  const removeBox = (await first.locator(".uploader__remove").boundingBox())!;
+  const arrowBoxes = [(await first.locator(".uploader__move").nth(0).boundingBox())!, (await first.locator(".uploader__move").nth(1).boundingBox())!];
+  // Page code as a string: the tests' tsconfig has no DOM lib.
+  const borders = (await page.evaluate(`[...document.querySelectorAll("#demo-form .uploader__item:first-child .uploader__move")].map((el) => getComputedStyle(el).borderTopColor)`)) as string[];
+  const right = (b: { x: number; width: number }) => b.x + b.width;
+  const geometry = {
+    thumb: { top: thumbBox.y, right: right(thumbBox) },
+    remove: { width: removeBox.width, height: removeBox.height, top: removeBox.y, right: right(removeBox) },
+    arrows: arrowBoxes.map((b, i) => ({ width: b.width, height: b.height, left: b.x, right: right(b), border: borders[i]! })),
+  };
+  for (const b of [geometry.remove, ...geometry.arrows]) {
+    expect(Math.round(b.width)).toBe(28);
+    expect(Math.round(b.height)).toBe(28);
   }
+  expect(geometry.arrows[1]!.left - geometry.arrows[0]!.right).toBeGreaterThanOrEqual(4);
+  expect(geometry.remove.top).toBeGreaterThan(geometry.thumb.top);
+  expect(geometry.remove.right).toBeLessThan(geometry.thumb.right);
+  expect(geometry.thumb.right - geometry.remove.right).toBeLessThan(12);
+  for (const a of geometry.arrows) expect(a.border).toMatch(/rgba\(0, 0, 0, 0\)|transparent/);
+  await expect(first.getByRole("button", { name: "Remove photo 1" })).toHaveClass(/uploader__remove/);
+  await expect(first.getByRole("button", { name: "Move photo 1 left" })).toBeVisible();
+  await expect(first.getByRole("button", { name: "Move photo 1 left" })).toHaveAttribute("aria-disabled", "true");
 
   // Move the cover right: focus follows the photo, and the change is announced.
   await uploader.getByRole("button", { name: "Move photo 1 right" }).press("Enter");

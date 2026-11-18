@@ -134,3 +134,22 @@ test("The refresh says nothing when someone else's bid changes and the viewer ha
   await page.waitForLoadState("networkidle");
   await expect(page.locator("[data-item-status]")).toHaveText(""); // ...and announced nothing
 });
+
+// Visible changes D (SPEC v1.28 §7.3): on desktop the photos are alone in the left column and the
+// right holds the title and donor, the price and action, the description, then the bid list; on
+// phones, the photos first, then the same order.
+test("Item page layout: photos alone on the left on desktop; on phones, photos first, then the same order", async ({ page }) => {
+  const order = [".carousel", ".page-header__title", ".page-header__description", ".item-panel__amount", "#about-title", "#history-title"];
+  const boxes = async () => Promise.all(order.map(async (s) => (await page.locator(`[data-item-content] ${s}`).first().boundingBox())!));
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("/items/1");
+  await pageLoaded(page);
+  const [photos, ...right] = await boxes();
+  for (const b of right) expect(b.x, "right column").toBeGreaterThanOrEqual(photos!.x + photos!.width);
+  for (let i = 1; i < right.length; i++) expect(right[i]!.y, `${order[i + 1]} below ${order[i]}`).toBeGreaterThan(right[i - 1]!.y);
+  expect(Math.abs(right[0]!.y - photos!.y), "the title starts level with the photos").toBeLessThan(16);
+
+  await page.setViewportSize({ width: 390, height: 900 });
+  const stacked = await boxes();
+  for (let i = 1; i < stacked.length; i++) expect(stacked[i]!.y, `${order[i]} below ${order[i - 1]}`).toBeGreaterThan(stacked[i - 1]!.y);
+});

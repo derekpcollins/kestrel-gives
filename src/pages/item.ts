@@ -150,9 +150,11 @@ function renderItem(answer: ItemAnswer, state: AppState, renderActions: RenderAc
   const text = panelText(answer, ctx);
   const back = backLink(item);
 
-  const header = el("header", { className: "page-header" },
-    el("a", { className: "link link--quiet page-header__back", attrs: { href: back.href, "data-focus-key": "back" } },
-      el("span", { attrs: { "data-icon": "chevron-left" } }), back.label),
+  // Visible changes D: the back link spans the page; then the photos alone in the left column
+  // and everything else in the right (on phones, the photos first, then the same order).
+  const backTo = el("a", { className: "link link--quiet page-header__back item-page__back", attrs: { href: back.href, "data-focus-key": "back" } },
+    el("span", { attrs: { "data-icon": "chevron-left" } }), back.label);
+  const header = el("header", { className: "page-header item-page__header" },
     el("div", { className: "page-header__row" },
       el("div", { className: "page-header__text" },
         el("h1", { className: "page-header__title", text: item.title }),
@@ -162,9 +164,9 @@ function renderItem(answer: ItemAnswer, state: AppState, renderActions: RenderAc
           el("a", { className: "btn btn--secondary btn--sm", attrs: { href: EDIT_LINK(item.id), "data-focus-key": "edit" } }, "Edit item"))
         : null));
 
-  const nodes: Node[] = [header];
+  const main: Node[] = [header];
   if (item.cancelled) {
-    nodes.push(el("div", { className: "banner banner--danger" },
+    main.push(el("div", { className: "banner banner--danger" },
       el("span", { attrs: { "data-icon": "alert" } }),
       el("div", { className: "banner__body" },
         el("p", { className: "banner__title", text: "This item has been cancelled" }),
@@ -181,12 +183,12 @@ function renderItem(answer: ItemAnswer, state: AppState, renderActions: RenderAc
     text.link ? el("a", { className: "link item-panel__link", attrs: { href: text.link.href, "data-focus-key": "next-step" }, text: text.link.label }) : null,
     el("div", { className: "item-panel__actions", attrs: { "data-item-actions": "" } }, renderActions(answer, text.action)));
 
-  nodes.push(el("div", { className: "item-layout" }, carousel(item), panel));
-  nodes.push(el("section", { className: "item-section", attrs: { "aria-labelledby": "about-title" } },
+  main.push(panel);
+  main.push(el("section", { className: "item-section", attrs: { "aria-labelledby": "about-title" } },
     el("h2", { className: "item-section__title", attrs: { id: "about-title" }, text: "About this item" }),
     el("p", { className: "item-section__text", text: item.description })));
-  if (item.type === "auction") nodes.push(bidHistory(item, new Date(state.now)));
-  return nodes;
+  if (item.type === "auction") main.push(bidHistory(item, new Date(state.now)));
+  return [backTo, el("div", { className: "item-layout" }, carousel(item), el("div", { className: "item-main" }, ...main))];
 }
 
 function carousel(item: ItemDetail): HTMLElement {
