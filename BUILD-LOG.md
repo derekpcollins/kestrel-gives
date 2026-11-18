@@ -1110,3 +1110,9 @@ Entry format: what we built, what was hard, what AI did well, where the owner st
 - **My call:** after the deadline, a pending proof shows "Waiting for review", not "Was due …", since the person has already uploaded.
 - **Tests:** unit tests now expect the non-breaking space and cover pending in the window and after it, plus a `stepDate()` case for another year. `home.spec` adds an employee whose proof waits for review and checks the space on the page.
 - **Checks:** `check:quick` exit 0 (unit 347; home and demo-jump specs, axe, reflow). No full check, per the brief. Retook `visual-review/b3/participate-bidding-live-{light,dark}-390.png`.
+
+### 2026-11-18 — C: browse pages and item tiles (branch C+D, part 1)
+- **Built:** Silent Auction and Instant Sale lose the item count; Sort by moved into the page header (`.page-header--browse`): right-aligned on the heading's row from 40rem up, under the description below it. Item tiles pin their price and detail line to the bottom (`.item-tile .card__body { align-content: end }`), so prices line up across a row (SPEC v1.28 §8, DECISIONS #152, DESIGN-SYSTEM *Browse sort*, *Page header*, *Item tile*).
+- **My calls:** the sort announcement still includes the count ("Sorted by price: low to high. 9 items."), since it's only spoken after a change. Source order is heading, description, sort, so tab and reading order match the phone layout at every width. Your Items' tiles get the same bottom-pinned price.
+- **Tests:** `browse.spec` checks there's no count, the sort's position at 1280 and 390 on both pages, and that prices are level in every row (with a seeded row whose titles wrap to different lengths).
+- **Checks:** `check:quick` exit 0; the shared CSS changed, so it ran everything: deps, seed images, tokens, types, rules, DB, a11y, reflow, visual. Screenshots in `visual-review/c/`.

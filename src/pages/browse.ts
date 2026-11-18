@@ -8,16 +8,15 @@ import { renderItemTile } from "../components/item-tile.ts";
 import { hydrateIcons } from "../components/icons.ts";
 import { fetchWithTimeout, pageLoading } from "../components/loading.ts";
 import type { BrowseAnswer, BrowseSort, ItemType } from "../items-api.ts";
-import { SORT_LABELS, countWords, emptyWords, searchForSort, sortFromSearch, sortedMessage, sortsFor, tileContext, tileView } from "./browse-rules.ts";
+import { SORT_LABELS, emptyWords, searchForSort, sortFromSearch, sortedMessage, sortsFor, tileContext, tileView } from "./browse-rules.ts";
 
 export function startBrowse(type: ItemType): void {
   const grid = document.querySelector<HTMLUListElement>("[data-browse-grid]");
   const select = document.querySelector<HTMLSelectElement>("[data-browse-sort]");
-  const count = document.querySelector<HTMLElement>("[data-browse-count]");
   const status = document.querySelector<HTMLElement>("[data-browse-status]");
   const empty = document.querySelector<HTMLElement>("[data-browse-empty]");
   const failed = document.querySelector<HTMLElement>("[data-browse-error]");
-  if (!grid || !select || !count || !status || !empty || !failed) return;
+  if (!grid || !select || !status || !empty || !failed) return;
 
   let sort: BrowseSort = sortFromSearch(location.search, type);
   let state: AppState | null = null;
@@ -47,7 +46,6 @@ export function startBrowse(type: ItemType): void {
       grid.removeAttribute("aria-busy");
       pageLoading(false);
       grid.replaceChildren();
-      count.textContent = "";
       empty.hidden = true;
       failed.hidden = false;
       return;
@@ -58,7 +56,6 @@ export function startBrowse(type: ItemType): void {
     grid.replaceChildren(...answer.items.map((item) => renderItemTile(tileView(item), ctx)));
     grid.removeAttribute("aria-busy");
     pageLoading(false);
-    count.textContent = answer.items.length ? countWords(answer.items.length) : "";
     empty.hidden = answer.items.length > 0;
     failed.hidden = true;
     if (announce) status.textContent = sortedMessage(sort, answer.items.length);
