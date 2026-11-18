@@ -19,19 +19,14 @@
     <div data-shell-header></div>
     <div data-shell-banner></div>
     <main class="page" id="main" tabindex="-1">
-      <header class="page-header">
-        <div class="page-header__row"><div class="page-header__text">
-          <h1 class="page-header__title">Instant Sale</h1>
-          <p class="page-header__description">Claim items at a set price while they last.</p>
-        </div></div>
-      </header>
-      <div class="browse-toolbar">
-        <p class="browse-toolbar__count" data-browse-count></p>
-        <div class="field browse-toolbar__sort">
+      <header class="page-header page-header--browse">
+        <h1 class="page-header__title">Instant Sale</h1>
+        <p class="page-header__description">Claim items at a set price while they last.</p>
+        <div class="field page-header__sort">
           <label class="field__label" for="sort">Sort by</label>
           <div class="select"><select class="input" id="sort" data-browse-sort></select><span data-icon="chevron-down"></span></div>
         </div>
-      </div>
+      </header>
       <p class="visually-hidden" role="status" data-browse-status></p>
       <p class="loading" role="status" data-page-loading><span class="loading__spinner" aria-hidden="true"></span><span>Loading items…</span></p>
       <ul class="item-grid" aria-label="Items" aria-busy="true" data-browse-grid data-browse-type="instant"></ul>

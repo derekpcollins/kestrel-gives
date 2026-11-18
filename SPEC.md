@@ -1,6 +1,6 @@
 # Kestrel Gives — Build Spec & Conformance Rules
 
-**Status:** v1.27 · Owner: Derek Collins · Last updated: Nov 17, 2026
+**Status:** v1.28 · Owner: Derek Collins · Last updated: Nov 18, 2026
 
 This document describes what to build and the rules every contribution must follow, whether a person or an AI agent writes it. Read it in full before writing any code. If something here conflicts with a request, stop and ask.
 
@@ -271,7 +271,7 @@ A banner just below the header shows the current phase message, for example "Sub
      - **Donate once** and **Upload proof**, before the close: "Opens when bidding ends on [date]" (or "Dates aren't set yet"). After it, Home reads the person's donation total and proof (only then, never before) and shows: if they owe nothing, "Nothing to donate" on both; otherwise the link "See what you owe" (Your Items) and, on Upload proof, "Proof approved" once their proof is approved for their current total, or the link "Upload proof". While their proof waits for review, the link stays (a new upload is allowed, as on Your Items), followed by "Waiting for review". Uploads after the deadline are still accepted (section 7.6), so after it the link stays, followed by "Was due [date]". If the totals can't be read, both cards link to Your Items.
   3. Cards for the three charities, noting that donations are split equally among them
   No item lists on Home. On a first visit, the welcome dialog (section 3.1) introduces the demo (v1.24; it replaced v1.21's "New here?" line above the hero).
-- **Silent Auction** and **Instant Sale:** separate browse pages, each a grid of item tiles. Sort by newest, price, or (silent auction) most bids. No search.
+- **Silent Auction** and **Instant Sale:** separate browse pages, each a grid of item tiles. Sort by newest, price, or (silent auction) most bids. No search. (v1.28) No item count. Sort by sits in the page header: on desktop, right-aligned on the heading's row; on phones, under the description. Each tile's price sits at its bottom, so prices line up across a row whatever the title lengths.
 - **Item page** (section 7.3).
 - **Submit an Item** and **Edit item** (section 7.3).
 - **Your Items** (personal dashboard), four sections: *My bids* (winning or outbid), *Won & purchased* (with proof status and days left), *My donated items* (with edit), and *Cancelled* (shown only if something was cancelled).

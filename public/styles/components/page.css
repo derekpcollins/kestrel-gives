@@ -10,8 +10,13 @@
 .site-footer > p { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-3); }
 /* A titled section of a page (Home's How to participate and Where donations go). */
 .home-section { display: grid; gap: var(--space-4); padding-top: var(--space-4); }
-/* Browse pages: the item count and the sort above the grid. The sort keeps its own width and
-   drops under the count when the row runs out of room. */
-.browse-toolbar { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--space-3) var(--space-4); }
-.browse-toolbar__count { font: var(--type-label); color: var(--color-text-muted); font-variant-numeric: var(--figures-amount); }
-.browse-toolbar__sort { min-width: min(100%, var(--size-tile-min)); }
+/* Browse pages (owner, visible changes C): no item count; the sort sits in the page header.
+   Phones: under the description. From the small breakpoint up: right-aligned on the heading's
+   row, its select level with the heading, with the description below both. */
+.page-header__sort { min-width: min(100%, var(--size-tile-min)); }
+@media (width >= 40rem) {
+  .page-header--browse { grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--space-4); align-items: end; }
+  .page-header--browse .page-header__title { grid-column: 1; grid-row: 1; }
+  .page-header--browse .page-header__sort { grid-column: 2; grid-row: 1; }
+  .page-header--browse .page-header__description { grid-column: 1 / -1; }
+}

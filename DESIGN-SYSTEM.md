@@ -408,7 +408,7 @@ How forms behave, for every component below:
 
 **Purpose:** the top of each page: an optional back link, the page's h1, an optional description and actions.
 
-- **Markup:** `.page-header` > `a.link.link--quiet.page-header__back` (`chevron-left` + the parent page's name), `.page-header__row` > `.page-header__text` (`h1.page-header__title`, `p.page-header__description`) and `.page-header__actions`.
+- **Markup:** `.page-header` > `a.link.link--quiet.page-header__back` (`chevron-left` + the parent page's name), `.page-header__row` > `.page-header__text` (`h1.page-header__title`, `p.page-header__description`) and `.page-header__actions`. Browse pages use `.page-header--browse` instead of the row (see *Browse sort*).
 - **States:** default. The back link and actions have their own states. Hover, focus, active, disabled, loading, error and empty: N/A.
 - **Accessibility:** exactly one h1 per page, here. The back link is 44px tall and names where it goes.
 - **Do:** keep at most one primary action. **Don't:** repeat the nav here.
@@ -452,16 +452,16 @@ How forms behave, for every component below:
 - **Do:** put page content in `.page`, starting with a *Page header*. **Don't:** put page-specific content in the shell slots.
 - **Figma:** *Page frame* · Role = Admin / Employee × Width = 390 / 1280 (4), built from the components above.
 
-## Browse toolbar
+## Browse sort
 
-**Purpose:** the item count and the sort above a browse grid (Silent Auction, Instant Sale; SPEC §8).
+**Purpose:** the sort for a browse grid (Silent Auction, Instant Sale; SPEC §8). No item count (SPEC v1.28; DECISIONS #152).
 
-- **Markup:** `.browse-toolbar` > `p.browse-toolbar__count` ("9 items") and a *Field* with a *Select* (`.browse-toolbar__sort`, label "Sort by"), then a visually hidden `role="status"`, the `ul.item-grid` and two *Empty states* (no items; couldn't load, with **Try again**). Built by `src/pages/browse.ts`; the words come from `src/pages/browse-rules.ts`.
+- **Markup:** in a *Page header* with `.page-header--browse`: the h1, the description, then a *Field* with a *Select* (`.page-header__sort`, label "Sort by"). From 40rem up the header is a two-column grid: the h1 and the sort share the first row (the sort right-aligned, its select's bottom level with the heading's), and the description spans the row below. Under 40rem they stack in source order, so the sort comes after the description. After the header: a visually hidden `role="status"`, the `ul.item-grid` and two *Empty states* (no items; couldn't load, with **Try again**). Built by `src/pages/browse.ts`; the words come from `src/pages/browse-rules.ts`.
 - **Sorts:** Newest, Price: low to high, and (silent auction only) Most bids. The sort is kept in `?sort=` (Newest leaves the URL clean), so a sorted page can be bookmarked; an unknown value falls back to Newest.
 - **States:** default. **Loading:** the grid has `aria-busy="true"` until the items arrive. **Empty:** "No silent auction items yet". **Error:** "We couldn't load the items" with **Try again**. Hover, focus, active and disabled come from *Select*.
 - **Accessibility:** changing the sort is announced once the new order is drawn ("Sorted by price: low to high. 9 items."), and focus stays on the select. Redraws after a state change (view as someone else, a jump) announce nothing.
-- **Do:** let the count and the sort wrap onto two lines on phones. **Don't:** add a search box (SPEC §8).
-- **Figma:** *Browse toolbar* · no variants; the sort is a nested *Select*.
+- **Do:** keep the sort in the header, after the description in source order, so reading and tab order match the phone layout. **Don't:** add a search box (SPEC §8), or bring back a visible item count.
+- **Figma:** *Browse sort* · Width = Desktop / Phone (2); the sort is a nested *Select*.
 
 ## Hero lockup
 
@@ -549,7 +549,7 @@ How forms behave, for every component below:
 - **Status (one, most important first):** Cancelled (danger) › after close: You won (success), Ended, Sold out › during submissions: "Opens Nov 17" › live silent auction: You're winning (success), Outbid (danger) › live instant sale: Sold out, "2 left" (warning, at 3 or fewer) › Ending soon (warning, within 24 hours of close). No status if none applies. Both thresholds live in `src/components/thresholds.ts` (SPEC §10, DECISIONS #61).
 - **States:** the card link's default, hover (lift), active and focus (ring). **Muted** (`.item-tile--muted`, ended and cancelled): the photo fades and the amount turns muted; the pill keeps full contrast. **Cancelled** appears only in Your Items, never in browse grids. Disabled: N/A (a tile always opens its item). Loading: N/A; the grid's page shows its *Loading* line until the tiles draw, with no skeletons (DECISIONS #119). Empty: the grid's *Empty state*, not the tile. Error: N/A.
 - **Accessibility:** the whole tile is one link, named by an `aria-label` of the title and the status ("Sourdough starter and a loaf a month, Outbid"; visually hidden text read with a stray space before the comma); the pill itself is `aria-hidden` so it isn't read twice. Status isn't shown by color alone: the pill has words.
-- **Layout:** tiles in a row stretch to the tallest one, with their content top-aligned, so a two-line title doesn't leave a ragged row.
+- **Layout:** tiles in a row stretch to the tallest one. The title stays at the top and the price and its detail line sit at the bottom (`.item-tile .card__body { align-content: end }`), so prices line up across a row whatever the title lengths (SPEC v1.28; DECISIONS #152).
 - **Do:** keep titles to two lines in the design; long ones wrap. **Don't:** show more than one status, or put buttons inside the tile.
 - **Figma:** *Item tile* · Type = Auction / Instant × Phase = Submission / Live / Ended (6), plus a *Muted* boolean and a *Title* text property. The status is a nested *Pill* instance (or hidden).
 

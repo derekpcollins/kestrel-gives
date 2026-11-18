@@ -13,7 +13,7 @@ test("Silent Auction: every active auction as a tile, linking to its page; cance
   await page.goto("/silent-auction");
   await pageLoaded(page);
   await expect(grid(page).getByRole("listitem")).toHaveCount(9);
-  await expect(page.locator("[data-browse-count]")).toHaveText("9 items");
+  await expect(page.locator("main")).not.toContainText("9 items"); // no item count (visible changes C)
   await expect(titles(page).first()).toHaveText(/^Weekend dog-sitting/); // newest
   await expect(grid(page)).not.toContainText("Board game night");
   for (const href of await titles(page).evaluateAll((links) => links.map((a) => a.getAttribute("href")))) expect(href).toMatch(/^\/items\/\d+$/);
@@ -68,7 +68,7 @@ test("Viewing as someone else redraws the tiles for them without announcing anyt
   await expect(page.locator(".demo-bar__who")).toContainText("Jules Ferreira");
 });
 
-test("Tiles in a row share one height, with the amount just under the title", async ({ page }) => {
+test("Tiles in a row share one height; only the number takes the amount style", async ({ page }) => {
   await page.goto("/silent-auction");
   await pageLoaded(page);
   const boxes = await grid(page).locator(".item-tile").evaluateAll((tiles) =>
@@ -81,4 +81,49 @@ test("Tiles in a row share one height, with the amount just under the title", as
   const cabin = grid(page).locator(".item-tile").filter({ hasText: "Lakeside Cabin Weekend" });
   await expect(cabin.locator(".item-tile__amount")).toHaveText("$240");
   await expect(cabin.locator(".item-tile__detail")).toHaveText(/^(Top|Winning) bid · 6 bids$/);
+});
+
+// Visible changes C: the sort's place in the header, and prices pinned to the bottom of each tile.
+test("Sort by sits right of the heading on desktop and under the description on phones", async ({ page }) => {
+  for (const path of ["/silent-auction", "/instant-sale"]) {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(path);
+    await pageLoaded(page);
+    const title = (await page.locator(".page-header__title").boundingBox())!;
+    const description = (await page.locator(".page-header__description").boundingBox())!;
+    const select = (await page.getByLabel("Sort by").boundingBox())!;
+    const header = (await page.locator(".page-header").boundingBox())!;
+    expect(Math.abs(select.y + select.height - (title.y + title.height)), `${path} 1280: level with the heading`).toBeLessThan(12);
+    expect(Math.abs(select.x + select.width - (header.x + header.width)), `${path} 1280: right-aligned`).toBeLessThan(2);
+    expect(description.y, `${path} 1280: description below`).toBeGreaterThan(select.y + select.height);
+
+    await page.setViewportSize({ width: 390, height: 900 });
+    const narrowDescription = (await page.locator(".page-header__description").boundingBox())!;
+    const narrowSelect = (await page.getByLabel("Sort by").boundingBox())!;
+    expect(narrowSelect.y, `${path} 390: under the description`).toBeGreaterThan(narrowDescription.y + narrowDescription.height);
+  }
+});
+
+test("Prices line up across a row of tiles, whatever the titles' lengths", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  for (const path of ["/silent-auction", "/instant-sale"]) {
+    await page.goto(path);
+    await pageLoaded(page);
+    const tiles = await grid(page).locator(".item-tile").evaluateAll((cards) =>
+      cards.map((card) => ({
+        top: Math.round(card.getBoundingClientRect().top),
+        bottom: card.getBoundingClientRect().bottom,
+        title: card.querySelector(".card__title")!.getBoundingClientRect().height,
+        amount: card.querySelector(".item-tile__amount")!.getBoundingClientRect().top,
+      })),
+    );
+    const rows = new Map<number, typeof tiles>();
+    for (const t of tiles) rows.set(t.top, [...(rows.get(t.top) ?? []), t]);
+    let mixed = false;
+    for (const row of rows.values()) {
+      if (new Set(row.map((t) => Math.round(t.title))).size > 1) mixed = true;
+      for (const t of row) expect(Math.abs(t.amount - row[0]!.amount), `${path}: prices level in a row`).toBeLessThan(1);
+    }
+    if (path === "/silent-auction") expect(mixed, "the seed has a row with titles of different lengths").toBe(true);
+  }
 });
